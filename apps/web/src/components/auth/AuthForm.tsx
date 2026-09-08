@@ -261,7 +261,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         return;
       }
       const isAdmin = userInfo.permissions?.some(
-        (a) => a === 'superadmin' || a === 'ROLE_SUPERADMIN',
+        (a) => a === 'superadmin' || a === 'ROLE_SUPERADMIN' || a === 'platform.superadmin',
       );
       router.push(isAdmin ? '/admin/users' : '/');
     } catch {

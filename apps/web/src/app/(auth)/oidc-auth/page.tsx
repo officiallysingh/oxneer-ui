@@ -43,7 +43,7 @@ function OidcAuthInner() {
           router.replace('/change-password');
         } else {
           const isAdmin = userInfo.permissions?.some(
-            (a) => a === 'superadmin' || a === 'ROLE_SUPERADMIN',
+            (a) => a === 'superadmin' || a === 'ROLE_SUPERADMIN' || a === 'platform.superadmin',
           );
           router.replace(isAdmin ? '/admin/users' : '/');
         }

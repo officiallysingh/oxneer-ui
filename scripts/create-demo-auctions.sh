@@ -11,6 +11,7 @@ CATEGORY_ID="${CATEGORY_ID:-}"
 SUBCATEGORY_ID="${SUBCATEGORY_ID:-}"
 MANAGED_TYPE_ID="${MANAGED_TYPE_ID:-}"
 LISTING_ID="${LISTING_ID:-}"
+PUBLISH="${PUBLISH:-true}"
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 info()  { printf "\033[1;34m[INFO]\033[0m  %s\n" "$*"; }
@@ -378,7 +379,7 @@ EOF
     "type": "MINIMUM_PARTICIPANTS_REQUIREMENT_POLICY",
     "name": "Minimum Participants",
     "description": "At least 3 participants required to start auction",
-    "order": 0,
+    "order": 1,
     "count": 3,
     "preStartValidationDuration": "PT30M"
   },
@@ -386,7 +387,7 @@ EOF
     "type": "EXTENSION_POLICY",
     "name": "Auction Extension",
     "description": "Extend auction by 5 minutes if bids placed in last 2 minutes, max 3 extensions",
-    "order": 1,
+    "order": 2,
     "reference": "FROM_AUCTION_END_TIME",
     "duration": "PT5M",
     "limit": 3
@@ -395,7 +396,7 @@ EOF
     "type": "STEP_BASED_OFFER_PRICE_POLICY",
     "name": "Step Based Price",
     "description": "Minimum bid increment decreases in steps every 10 minutes",
-    "order": 2,
+    "order": 3,
     "windowDuration": "PT10M",
     "steps": [100, 75, 50, 25, 10],
     "value": 100
@@ -404,14 +405,14 @@ EOF
     "type": "KTH_PRICE_WINNER_DETERMINATION_POLICY",
     "name": "Highest Bidder Wins",
     "description": "The highest bidder determines the winner",
-    "order": 3,
+    "order": 4,
     "kth": 1
   },
   {
     "type": "KTH_WINNER_PRICE_DETERMINATION_POLICY",
     "name": "Winner Pays Own Bid",
     "description": "Winner pays their own bid amount",
-    "order": 4,
+    "order": 5,
     "kth": 1
   }
 ]
@@ -433,14 +434,14 @@ EOF
     "type": "TNC_FORM_STEP",
     "name": "Terms & Conditions",
     "description": "Accept terms and conditions to participate",
-    "order": 0,
+    "order": 1,
     "tncText": "By participating in this auction, you agree to abide by all rules and regulations. The auctioneer reserves the right to cancel or modify the auction at any time. All bids are binding and cannot be withdrawn once placed."
   },
   {
     "type": "FORM_STEP",
     "name": "Product Details",
     "description": "Provide additional product information",
-    "order": 1,
+    "order": 2,
     "phase": "PRE_AUCTION",
     "typeId": "$MANAGED_TYPE_ID"
   },
@@ -448,13 +449,14 @@ EOF
     "type": "BANK_DETAIL_FORM_STEP",
     "name": "Bank Details",
     "description": "Provide bank details for refund purposes",
-    "order": 2
+    "order": 3,
+    "phase": "PRE_AUCTION"
   },
   {
     "type": "PAYMENT_STEP",
     "name": "Security Deposit",
     "description": "Pay security deposit to participate in auction",
-    "order": 3,
+    "order": 4,
     "phase": "PRE_AUCTION",
     "mode": "ONLINE",
     "offset": "PT1H",
@@ -498,14 +500,18 @@ EOF
 {
   "startTime": "$start_time",
   "endTime": "$end_time",
-  "publish": true
+  "publish": $PUBLISH
 }
 EOF
   )
   resp=$(http_put "$API/auctions/$auction_id/schedule" "$schedule_payload")
   parse_response "$resp"
   if [ "$LAST_HTTP_CODE" -ge 200 ] 2>/dev/null && [ "$LAST_HTTP_CODE" -lt 300 ] 2>/dev/null; then
-    ok "  Scheduled: $start_time → $end_time (published)"
+    if [ "$PUBLISH" = "true" ]; then
+      ok "  Scheduled: $start_time → $end_time (published)"
+    else
+      ok "  Scheduled: $start_time → $end_time (draft, not published)"
+    fi
   else
     warn "  Failed to schedule (HTTP $LAST_HTTP_CODE)"
   fi
@@ -541,6 +547,22 @@ main() {
     fi
     echo ""
   done
+
+  # If PUBLISH=false, publish all auctions at the end
+  if [ "$PUBLISH" = "false" ] && [ ${#created_ids[@]} -gt 0 ]; then
+    echo ""
+    info "Publishing all created auctions …"
+    for id in "${created_ids[@]}"; do
+      local pub_resp pub_code
+      pub_resp=$(curl -s -w "\n%{http_code}" -X PUT "$API/auctions/$id/publish" -H 'Content-Type: application/json')
+      pub_code=$(echo "$pub_resp" | tail -1)
+      if [ "$pub_code" -ge 200 ] 2>/dev/null && [ "$pub_code" -lt 300 ] 2>/dev/null; then
+        ok "  Published auction $id"
+      else
+        warn "  Failed to publish auction $id (HTTP $pub_code)"
+      fi
+    done
+  fi
 
   echo ""
   echo "╔══════════════════════════════════════════════════════════════╗"

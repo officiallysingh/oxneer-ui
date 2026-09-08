@@ -125,7 +125,7 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
     }
     setJoining(true);
     try {
-      await participantsApi.inviteParticipant(id, {});
+      await participantsApi.createSelfParticipant(id);
       // Reload participant to get their record with workflowStatus
       const selfP = await participantsApi.getSelfParticipant(id).catch(() => null);
       setParticipant(selfP);

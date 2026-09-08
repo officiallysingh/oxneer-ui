@@ -82,6 +82,12 @@ export const participantsApi = {
     await apiClient.post(`/api/v1/auctions/${auctionId}/participants/invitations`, data);
   },
 
+  /** Self-service: the logged-in user joins/registers themselves as a participant.
+   *  No request body. Returns 409 if the user is already a participant. */
+  createSelfParticipant: async (auctionId: string): Promise<void> => {
+    await apiClient.post(`/api/v1/auctions/${auctionId}/participants/me`, {});
+  },
+
   getAllParticipants: async (
     auctionId: string,
     filter: GetParticipantsFilter = {},

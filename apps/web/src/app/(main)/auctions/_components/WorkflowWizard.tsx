@@ -693,11 +693,11 @@ export function WorkflowWizard({ auctionId, onClose }: WorkflowWizardProps) {
       };
 
       if (type === 'TNC_FORM_STEP') {
-        rq.accepted = true;
+        // rq.accepted = true;
       } else if (type === 'BANK_DETAIL_FORM_STEP') {
         rq.bankDetailId = formData.bankDetailId as string;
       } else {
-        // FORM_STEP / PARTICIPATION_FORM_STEP / PAYMENT_STEP
+        // FORM_STEP / PARTICIPATION_FORM_STEP / PAYMENT_STEP / other
         rq.data = (formData.data as Record<string, unknown>) ?? formData;
       }
 
@@ -849,7 +849,24 @@ export function WorkflowWizard({ auctionId, onClose }: WorkflowWizardProps) {
             'FORM_STEP',
             'PARTICIPATION_FORM_STEP',
             'PAYMENT_STEP',
-          ].includes(type) && (
+          ].includes(type) &&
+          (currentStep.embedded?.properties?.length ?? 0) > 0 && (
+            <ParticipantCustomForm
+              step={currentStep}
+              onSubmit={handleStepSubmit}
+              submitting={submitting}
+              error={stepError}
+            />
+          )}
+        {currentStep &&
+          ![
+            'TNC_FORM_STEP',
+            'BANK_DETAIL_FORM_STEP',
+            'FORM_STEP',
+            'PARTICIPATION_FORM_STEP',
+            'PAYMENT_STEP',
+          ].includes(type) &&
+          (currentStep.embedded?.properties?.length ?? 0) === 0 && (
             <div className="space-y-4">
               <h3 className="font-semibold">{currentStep.name || formatLabel(type)}</h3>
               <ErrorBanner message={stepError} />

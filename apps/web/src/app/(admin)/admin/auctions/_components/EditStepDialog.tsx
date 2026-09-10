@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Loader2, Upload } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Loader2, Upload, Search, CheckCircle2 } from 'lucide-react';
 import {
   Button,
   Label,
@@ -15,7 +15,10 @@ import {
 import {
   auctionsApi,
   blobsApi,
+  metadataApi,
   AuctionWorkflowStep,
+  ManagedTypeListItemFull,
+  ManagedTypeVM,
   PolicyHeadRQ,
   WorkflowStepPhase,
 } from '@repo/api';
@@ -28,6 +31,7 @@ import {
   parseOffsetDuration,
   paymentStepData,
 } from './PolicyShared';
+import { PropertyFormPreview } from '../../metadata/_components/PropertyFormPreview';
 import { parseApiError } from '@/lib/api-errors';
 
 /** Tiptap emits "<p></p>" for an empty doc — strip tags to check for real content. */
@@ -90,6 +94,16 @@ export function EditStepDialog({
   const [valHours, setValHours] = useState('0');
   const [valMinutes, setValMinutes] = useState('0');
 
+  // FORM_STEP managed type picker
+  const [formQuery, setFormQuery] = useState('');
+  const [formSearching, setFormSearching] = useState(false);
+  const [formResults, setFormResults] = useState<ManagedTypeListItemFull[]>([]);
+  const [selectedTypeId, setSelectedTypeId] = useState<string>(step?.embedded?.typeId ?? '');
+  const [selectedType, setSelectedType] = useState<ManagedTypeListItemFull | null>(null);
+  const [selectedTypeDetail, setSelectedTypeDetail] = useState<ManagedTypeVM | null>(null);
+  const [loadingTypeDetail, setLoadingTypeDetail] = useState(false);
+  const formDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const stepType = resolveStr(step?.type);
   const isExplicit = step ? !step.implicit : false;
   const isTnCStep = stepType === 'TNC_FORM_STEP';
@@ -131,6 +145,65 @@ export function EditStepDialog({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPaymentStep]);
+
+  const searchFormTypes = useCallback((q: string) => {
+    if (formDebounceRef.current) clearTimeout(formDebounceRef.current);
+    formDebounceRef.current = setTimeout(async () => {
+      setFormSearching(true);
+      try {
+        const results = await metadataApi.searchManagedTypeListItems({
+          phrases: q.trim() ? [q.trim()] : [],
+          type: 'CUSTOM_FORM',
+        });
+        setFormResults(results);
+      } catch {
+        // silently ignore search errors
+      } finally {
+        setFormSearching(false);
+      }
+    }, 300);
+  }, []);
+
+  const handleFormQueryChange = (q: string) => {
+    setFormQuery(q);
+    searchFormTypes(q);
+  };
+
+  const selectFormType = (t: ManagedTypeListItemFull) => {
+    setSelectedType(t);
+    setSelectedTypeId(t.id);
+    setSelectedTypeDetail(null);
+    setLoadingTypeDetail(true);
+    metadataApi
+      .getManagedTypeById(t.id)
+      .then(setSelectedTypeDetail)
+      .catch(() => {})
+      .finally(() => setLoadingTypeDetail(false));
+  };
+
+  useEffect(() => {
+    if (isFormStep && isExplicit) searchFormTypes(formQuery);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFormStep, isExplicit]);
+
+  // Pre-load current type detail when editing an existing FORM_STEP
+  useEffect(() => {
+    if (isFormStep && isExplicit && step?.embedded?.typeId) {
+      setSelectedTypeId(step.embedded.typeId);
+      metadataApi
+        .getManagedTypeById(step.embedded.typeId)
+        .then((detail) => {
+          setSelectedTypeDetail(detail);
+          setSelectedType({
+            id: detail.id,
+            name: detail.name,
+            description: detail.description,
+          } as ManagedTypeListItemFull);
+        })
+        .catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step?.id]);
 
   const close = () => onOpenChange(false);
 
@@ -191,7 +264,9 @@ export function EditStepDialog({
               preStartDeadlineDuration: formatOffsetDuration(valDays, valHours, valMinutes),
             }
           : {}),
-        ...(isExplicit && isFormStep ? { phase: formStepPhase as WorkflowStepPhase } : {}),
+        ...(isExplicit && isFormStep
+          ? { phase: formStepPhase as WorkflowStepPhase, typeId: selectedTypeId || undefined }
+          : {}),
       });
       onSaved();
     } catch (err) {
@@ -288,12 +363,82 @@ export function EditStepDialog({
             )}
 
             {isExplicit && isFormStep && (
-              <p className="text-xs text-muted-foreground">
-                Phase:{' '}
-                <span className="text-foreground font-medium">
-                  {formStepPhase === 'PRE_AUCTION' ? 'Pre Auction' : 'Post Auction'}
-                </span>
-              </p>
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Phase:{' '}
+                  <span className="text-foreground font-medium">
+                    {formStepPhase === 'PRE_AUCTION' ? 'Pre Auction' : 'Post Auction'}
+                  </span>
+                </p>
+
+                <div className="space-y-1">
+                  <Label className="text-xs font-medium text-muted-foreground">Form template</Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                    <Input
+                      value={formQuery}
+                      onChange={(e) => handleFormQueryChange(e.target.value)}
+                      placeholder="Search form template by name..."
+                      className="pl-8 text-sm"
+                    />
+                    {formSearching && (
+                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground animate-spin" />
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-border bg-card shadow-lg overflow-hidden">
+                  {formSearching && !formResults.length ? (
+                    <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground text-sm">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Searching...
+                    </div>
+                  ) : formResults.length === 0 ? (
+                    <p className="text-center py-8 text-xs text-muted-foreground">
+                      No managed types found
+                    </p>
+                  ) : (
+                    <div className="max-h-64 overflow-y-auto divide-y divide-border/50">
+                      {formResults.map((t) => (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => selectFormType(t)}
+                          className={`w-full text-left px-3 py-2.5 transition-colors ${
+                            selectedTypeId === t.id ? 'bg-primary/10' : 'hover:bg-muted/30'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-foreground">{t.name}</span>
+                            {selectedTypeId === t.id && (
+                              <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                            )}
+                          </div>
+                          {t.description && (
+                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                              {t.description}
+                            </p>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {selectedType && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Form preview</Label>
+                    {loadingTypeDetail ? (
+                      <div className="flex items-center justify-center py-8 text-muted-foreground gap-2 rounded-md border border-border">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="text-xs">Loading form...</span>
+                      </div>
+                    ) : (
+                      <PropertyFormPreview properties={selectedTypeDetail?.properties ?? []} />
+                    )}
+                  </div>
+                )}
+              </div>
             )}
 
             {isExplicit && isPaymentStep && (

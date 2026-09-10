@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
@@ -242,6 +242,8 @@ const AuctionGrid = () => {
   const [selectedCategories, setSelectedCategories] = useState<SelectOption[]>([]);
   const [selectedSubCategories, setSelectedSubCategories] = useState<SelectOption[]>([]);
   const [categories, setCategories] = useState<CategoryVM[]>([]);
+  const catInstanceId = useId();
+  const subInstanceId = useId();
 
   // Fetch categories on mount
   useEffect(() => {
@@ -384,6 +386,7 @@ const AuctionGrid = () => {
               </label>
               <Select<SelectOption, true>
                 isMulti
+                instanceId={catInstanceId}
                 options={categoryOptions}
                 value={selectedCategories}
                 onChange={(vals: MultiValue<SelectOption>) => {
@@ -410,6 +413,7 @@ const AuctionGrid = () => {
               </label>
               <GroupedSubcategorySelect
                 isMulti
+                instanceId={subInstanceId}
                 categories={
                   selectedCategories.length > 0
                     ? categories.filter((c) => selectedCategories.some((s) => s.value === c.id))

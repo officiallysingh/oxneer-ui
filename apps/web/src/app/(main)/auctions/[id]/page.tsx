@@ -449,6 +449,7 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
           participant?.workflowStatus &&
           Object.keys(participant.workflowStatus).length > 0 && (
             <WorkflowStatusCard
+              workflow={workflow}
               workflowStatus={participant.workflowStatus}
               onOpenWizard={() => setWizardOpen(true)}
               allDone={workflowAllDone}
@@ -655,10 +656,12 @@ function buildPublicWorkflowNodes(workflow: AuctionWorkflowStep[]): TimelineNode
 import type { ParticipantWorkflowStepStatus } from '@repo/api';
 
 function WorkflowStatusCard({
+  workflow,
   workflowStatus,
   onOpenWizard,
   allDone,
 }: {
+  workflow: AuctionWorkflowStep[];
   workflowStatus: Record<string, ParticipantWorkflowStepStatus>;
   onOpenWizard: () => void;
   allDone: boolean;
@@ -668,6 +671,15 @@ function WorkflowStatusCard({
     const t = resolveStr(s.type);
     return t === 'COMPLETED' || t === 'DONE' || t === 'APPROVED';
   }).length;
+
+  // Build a map of step id -> step name for quick lookup
+  const stepNameById = new Map<string, string>();
+  for (const step of workflow) {
+    if (step.id) {
+      const type = resolveStr(step.type);
+      stepNameById.set(step.id, step.name || formatLabel(type) || 'Step');
+    }
+  }
 
   return (
     <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
@@ -724,7 +736,14 @@ function WorkflowStatusCard({
               ) : (
                 <div className="h-4 w-4 shrink-0 rounded-full border-2 border-current opacity-40" />
               )}
-              <span className="flex-1 truncate">{formatLabel(t) || 'Step'}</span>
+              <span className="flex-1 truncate font-medium">
+                {stepNameById.get(stepId) || formatLabel(t) || 'Step'}
+              </span>
+              <span
+                className={`text-[11px] font-medium shrink-0 ${done ? 'text-emerald-600' : pending ? 'text-amber-600' : 'text-muted-foreground'}`}
+              >
+                {formatLabel(t)}
+              </span>
               {s.updatedAt && (
                 <span className="text-[10px] text-muted-foreground shrink-0">
                   {formatDateTime(s.updatedAt)}

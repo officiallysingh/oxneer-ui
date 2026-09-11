@@ -666,20 +666,24 @@ function WorkflowStatusCard({
   onOpenWizard: () => void;
   allDone: boolean;
 }) {
-  const entries = Object.entries(workflowStatus);
-  const completedCount = entries.filter(([, s]) => {
-    const t = resolveStr(s.type);
-    return t === 'COMPLETED' || t === 'DONE' || t === 'APPROVED';
-  }).length;
-
-  // Build a map of step id -> step name for quick lookup
   const stepNameById = new Map<string, string>();
+  const stepOrderById = new Map<string, number>();
   for (const step of workflow) {
     if (step.id) {
       const type = resolveStr(step.type);
       stepNameById.set(step.id, step.name || formatLabel(type) || 'Step');
+      stepOrderById.set(step.id, step.order ?? Infinity);
     }
   }
+
+  // Sort entries by workflow step order
+  const entries = Object.entries(workflowStatus).sort(
+    ([a], [b]) => (stepOrderById.get(a) ?? Infinity) - (stepOrderById.get(b) ?? Infinity),
+  );
+  const completedCount = entries.filter(([, s]) => {
+    const t = resolveStr(s.type);
+    return t === 'COMPLETED' || t === 'DONE' || t === 'APPROVED';
+  }).length;
 
   return (
     <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">

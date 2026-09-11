@@ -27,6 +27,8 @@ import {
 import { IFSC_REGEX, ACCOUNT_NO_REGEX } from '@repo/api';
 import { Button, Input, Label, Dialog, DialogContent, DialogHeader, DialogTitle } from '@repo/ui';
 import { resolveStr, formatLabel } from '@/components/common/admin/format';
+import { buildPathWiseState } from '@/lib/pathWiseState';
+import { useManagedType } from '@/hooks/useManagedType';
 import {
   Loader2,
   CheckCircle2,
@@ -690,14 +692,24 @@ export function WorkflowWizard({ auctionId, onClose }: WorkflowWizardProps) {
       // Build the request
       const rq: import('@repo/api').ParticipantWorkflowStepRQ = {
         id: currentStep.id,
+        type,
       };
 
       if (type === 'TNC_FORM_STEP') {
         // rq.accepted = true;
       } else if (type === 'BANK_DETAIL_FORM_STEP') {
         rq.bankDetailId = formData.bankDetailId as string;
+      } else if (type === 'FORM_STEP' || type === 'PARTICIPATION_FORM_STEP') {
+        const typeId =
+          typeof currentStep.typeId === 'object'
+            ? Object.keys(currentStep.typeId)[0]
+            : (currentStep.typeId ?? '');
+        rq.embedded = {
+          typeId,
+          pathWiseState: (formData.data as Record<string, unknown>) ?? formData,
+        };
       } else {
-        // FORM_STEP / PARTICIPATION_FORM_STEP / PAYMENT_STEP / other
+        // PAYMENT_STEP / other
         rq.data = (formData.data as Record<string, unknown>) ?? formData;
       }
 
@@ -898,7 +910,11 @@ function ParticipantCustomForm({
   submitting: boolean;
   error: string | null;
 }) {
-  const properties: PropertyDef[] = step.embedded?.properties ?? [];
+  const embeddedProps: PropertyDef[] = step.embedded?.properties ?? [];
+  const { managedType, loading: loadingProps } = useManagedType(
+    embeddedProps.length === 0 ? step.typeId : null,
+  );
+  const resolvedProps = managedType?.properties ?? embeddedProps;
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -908,7 +924,7 @@ function ParticipantCustomForm({
     setValues((prev) => ({ ...prev, [name]: value }));
 
   const handleSubmit = () => {
-    const missing = properties.filter((p) => {
+    const missing = resolvedProps.filter((p) => {
       const req =
         p.required ||
         (p.validators ?? []).some((v) => {
@@ -923,7 +939,7 @@ function ParticipantCustomForm({
       return;
     }
     setValidationError(null);
-    onSubmit({ data: values });
+    onSubmit({ data: buildPathWiseState(values, managedType) });
   };
 
   return (
@@ -940,9 +956,14 @@ function ParticipantCustomForm({
         )}
       </div>
 
-      {properties.length > 0 ? (
+      {loadingProps ? (
+        <div className="flex items-center gap-2 py-6 justify-center text-muted-foreground text-sm">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Loading form fields…
+        </div>
+      ) : resolvedProps.length > 0 ? (
         <div className="rounded-lg border border-border bg-muted/10 p-5 space-y-5">
-          {properties.map((prop) => (
+          {resolvedProps.map((prop) => (
             <SingleField
               key={prop.name}
               prop={prop}

@@ -40,12 +40,16 @@ export interface ParticipantVM {
 export interface ParticipantWorkflowStepRQ {
   /** The workflow step id being completed/updated. */
   id: string;
-  /** For FORM_STEP / PARTICIPATION_FORM_STEP — field values keyed by property name. */
-  data?: Record<string, unknown>;
+  /** Step type discriminator — required by the backend for deserialization. */
+  type: string;
+  /** For FORM_STEP / PARTICIPATION_FORM_STEP — StructDto with typeId + pathWiseState. */
+  embedded?: { typeId?: string; pathWiseState?: Record<string, unknown> };
   /** For BANK_DETAIL_FORM_STEP — the id of an existing bank detail record. */
   bankDetailId?: string;
   /** For TNC_FORM_STEP — true when user accepts the terms. */
   accepted?: boolean;
+  /** Fallback for other step types. */
+  data?: Record<string, unknown>;
 }
 
 export interface PaginatedParticipants {

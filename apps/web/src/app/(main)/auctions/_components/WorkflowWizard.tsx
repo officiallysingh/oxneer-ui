@@ -28,6 +28,7 @@ import { IFSC_REGEX, ACCOUNT_NO_REGEX } from '@repo/api';
 import { Button, Input, Label, Dialog, DialogContent, DialogHeader, DialogTitle } from '@repo/ui';
 import { resolveStr, formatLabel } from '@/components/common/admin/format';
 import { buildPathWiseState } from '@/lib/pathWiseState';
+import { CancelChequeUpload } from '@/components/common/admin/CancelChequeUpload';
 import { useManagedType } from '@/hooks/useManagedType';
 import {
   Loader2,
@@ -369,7 +370,7 @@ function AddBankDialog({
         bank: form.bankId,
         ifscCode: form.ifscCode.toUpperCase(),
         accountNo: form.accountNo,
-        cancelCheck: form.cancelCheck || undefined,
+        cancelCheck: form.cancelCheck || 'false',
         primary: form.primary,
       });
       onSaved();
@@ -447,6 +448,13 @@ function AddBankDialog({
               <p className="text-xs text-destructive">{fieldErrors.accountNo}</p>
             )}
           </div>
+
+          {/* Cancel cheque */}
+          <CancelChequeUpload
+            value={form.cancelCheck}
+            onChange={(dataUrl) => set('cancelCheck', dataUrl ?? '')}
+            error={fieldErrors.cancelCheck}
+          />
 
           {/* Primary */}
           <label className="flex items-center gap-2 text-sm cursor-pointer select-none">

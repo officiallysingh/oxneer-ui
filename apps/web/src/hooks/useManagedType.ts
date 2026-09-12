@@ -36,6 +36,7 @@ export function useManagedType(typeId: string | Record<string, string> | undefin
 
     return () => {
       cancelled = true;
+      prevId.current = '';
     };
   }, [resolvedId]);
 

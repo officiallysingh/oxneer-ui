@@ -1247,7 +1247,7 @@
 
 'use client';
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   auctionsApi,
@@ -1286,6 +1286,7 @@ import {
   CreditCard,
   GitFork,
   RefreshCw,
+  Trash2,
 } from 'lucide-react';
 import {
   Button,
@@ -1295,18 +1296,16 @@ import {
   TabsTrigger,
   TabsContent,
   Card,
-  CardHeader,
-  CardTitle,
   CardContent,
   toast,
 } from '@repo/ui';
 import { StatusBadge } from '@/components/common/admin/AuctionStatusBadge';
 import { formatDateTime, formatLabel, resolveStr } from '@/components/common/admin/format';
 import { DetailRow, PageLoading, SectionCard } from '@/components/common/admin/SectionCard';
+import ConfirmDialog from '@/components/common/admin/ConfirmDialog';
 
 // ── Timeline Components ───────────────────────────────────────────────────────
 import { PoliciesTimeline } from './../../_components/timeline/PoliciesTimeline';
-import { WorkflowTimeline } from './../../_components/timeline/WorkflowTimeline';
 import { WorkflowStagesTimeline } from './../../_components/timeline/WorkflowStagesTimeline';
 import { TimelineNode } from './../../_components/timeline/types';
 import {
@@ -1361,6 +1360,7 @@ function buildScheduleTimeline(
   const endMs = endIso ? new Date(endIso).getTime() : null;
 
   // Pre-payment deadlines
+  let prePayOrder = 0;
   workflow
     .filter(
       (step) =>
@@ -1368,6 +1368,7 @@ function buildScheduleTimeline(
         (resolveStr(step.phase) === 'PRE_AUCTION' || step.prePayment === true),
     )
     .forEach((step) => {
+      prePayOrder += 1;
       const off = parseIsoDurationMs(step.offset);
       const heads = headsSummary(step.heads);
       nodes.push({
@@ -1377,7 +1378,7 @@ function buildScheduleTimeline(
         dotClass: 'bg-rose-500',
         labelClass: 'text-rose-600 dark:text-rose-400',
         borderClass: 'border-rose-500',
-        title: step.name || 'Pre Payment',
+        title: `Pre Payment ${prePayOrder}`,
         time: startMs != null ? formatDateTime(new Date(startMs - off).toISOString()) : undefined,
         subs: [
           startMs != null
@@ -1504,6 +1505,7 @@ function buildScheduleTimeline(
     });
 
     // Post-payment
+    let postPayOrder = 0;
     workflow
       .filter(
         (step) =>
@@ -1511,6 +1513,7 @@ function buildScheduleTimeline(
           (resolveStr(step.phase) === 'POST_AUCTION' || step.postPayment === true),
       )
       .forEach((step) => {
+        postPayOrder += 1;
         const off = parseIsoDurationMs(step.offset);
         const heads = headsSummary(step.heads);
         nodes.push({
@@ -1520,7 +1523,7 @@ function buildScheduleTimeline(
           dotClass: 'bg-violet-500',
           labelClass: 'text-violet-600 dark:text-violet-400',
           borderClass: 'border-violet-500',
-          title: step.name || 'Post Payment',
+          title: `Post Payment ${postPayOrder}`,
           time: formatDateTime(new Date(endMs! + off).toISOString()),
           subs: [
             `Must be settled within ${humanizeIsoDuration(off)} after the auction closes.`,
@@ -1570,6 +1573,10 @@ function buildWorkflowTimeline(
   const startMs = startIso ? new Date(startIso).getTime() : null;
   const endMs = endIso ? new Date(endIso).getTime() : null;
 
+  // Track separate counters for pre/post payment steps for naming
+  let prePaySeq = 0;
+  let postPaySeq = 0;
+
   return [...workflow]
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
     .map((step): TimelineNode => {
@@ -1577,6 +1584,20 @@ function buildWorkflowTimeline(
       const { Icon, dot, text, border } = stepTypeMeta(typeStr);
       const phase = effectiveStepPhase(step);
       const label = fmtLabel(typeStr) || 'Step';
+
+      // Payment steps get deterministic names ignoring whatever name the backend stored
+      let title: string;
+      if (typeStr === 'PAYMENT_STEP') {
+        if (phase === 'PRE_AUCTION') {
+          prePaySeq += 1;
+          title = `Pre Payment ${prePaySeq}`;
+        } else {
+          postPaySeq += 1;
+          title = `Post Payment ${postPaySeq}`;
+        }
+      } else {
+        title = step.name || label;
+      }
 
       let time: string | undefined;
       let timeTo: string | undefined;
@@ -1598,8 +1619,9 @@ function buildWorkflowTimeline(
         }
       }
 
+      // Payment steps have no free-text description shown
       const subs: string[] = [];
-      if (step.description) subs.push(step.description);
+      if (typeStr !== 'PAYMENT_STEP' && step.description) subs.push(step.description);
 
       return {
         id: step.id ?? `step-${step.order}`,
@@ -1608,7 +1630,7 @@ function buildWorkflowTimeline(
         dotClass: dot,
         labelClass: text,
         borderClass: border,
-        title: step.name || label,
+        title,
         time,
         timeTo,
         subs,
@@ -1635,20 +1657,31 @@ export default function AuctionViewPage() {
   >({});
   const [evaluationsEvaluatedAt, setEvaluationsEvaluatedAt] = useState<Date | null>(null);
 
-  const fetchEvaluations = async (items: AuctionPoliciesRQ | null) => {
-    if (!items) return;
-    const policyIds = Array.from(
-      new Set(items.map((p) => p.id).filter((policyId): policyId is string => Boolean(policyId))),
-    );
-    if (policyIds.length === 0) {
-      setEvaluationsByPolicyId({});
+  // Delete-all state
+  const [confirmDeletePolicies, setConfirmDeletePolicies] = useState(false);
+  const [confirmDeleteWorkflow, setConfirmDeleteWorkflow] = useState(false);
+  const [deletingPolicies, setDeletingPolicies] = useState(false);
+  const [deletingWorkflow, setDeletingWorkflow] = useState(false);
+
+  const fetchEvaluations = useCallback(
+    async (items: AuctionPoliciesRQ | null) => {
+      if (!items) return;
+      const policyIds = Array.from(
+        new Set(items.map((p) => p.id).filter((policyId): policyId is string => Boolean(policyId))),
+      );
+      if (policyIds.length === 0) {
+        setEvaluationsByPolicyId({});
+        setEvaluationsEvaluatedAt(new Date());
+        return;
+      }
+      const evaluations = await auctionsApi
+        .evaluateAuctionPolicies(id, policyIds)
+        .catch(() => null);
+      setEvaluationsByPolicyId(buildEvaluationsByPolicy(evaluations, items));
       setEvaluationsEvaluatedAt(new Date());
-      return;
-    }
-    const evaluations = await auctionsApi.evaluateAuctionPolicies(id, policyIds).catch(() => null);
-    setEvaluationsByPolicyId(buildEvaluationsByPolicy(evaluations, items));
-    setEvaluationsEvaluatedAt(new Date());
-  };
+    },
+    [id],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -1676,7 +1709,7 @@ export default function AuctionViewPage() {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, fetchEvaluations]);
 
   const handleRefreshPolicies = async () => {
     setReloadingPolicies(true);
@@ -1706,6 +1739,35 @@ export default function AuctionViewPage() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
       toast?.success?.('Auction ID copied to clipboard');
+    }
+  };
+
+  const handleDeleteAllPolicies = async () => {
+    setDeletingPolicies(true);
+    setConfirmDeletePolicies(false);
+    try {
+      await auctionsApi.deleteAuctionPolicies(id);
+      setPolicies([]);
+      setEvaluationsByPolicyId({});
+      toast?.success?.('All policies deleted');
+    } catch {
+      toast?.error?.('Failed to delete policies');
+    } finally {
+      setDeletingPolicies(false);
+    }
+  };
+
+  const handleDeleteWorkflow = async () => {
+    setDeletingWorkflow(true);
+    setConfirmDeleteWorkflow(false);
+    try {
+      await auctionsApi.deleteWorkflow(id);
+      setWorkflow([]);
+      toast?.success?.('Workflow deleted');
+    } catch {
+      toast?.error?.('Failed to delete workflow');
+    } finally {
+      setDeletingWorkflow(false);
     }
   };
 
@@ -1846,7 +1908,6 @@ export default function AuctionViewPage() {
     });
   }
 
-  const timelineNodes = buildScheduleTimeline(auction, policies, workflow);
   const workflowStartIso = auction.schedule?.startTime ?? auction.startTime;
   const workflowEndIso = auction.schedule?.endTime ?? auction.endTime;
   const preAuctionWorkflowNodes = buildWorkflowTimeline(
@@ -2169,6 +2230,22 @@ export default function AuctionViewPage() {
                   <Pencil className="h-3.5 w-3.5" />
                   Edit
                 </Button>
+                {totalPolicyCount > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setConfirmDeletePolicies(true)}
+                    disabled={deletingPolicies}
+                    className="gap-1.5 text-xs rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+                  >
+                    {deletingPolicies ? (
+                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
+                    Delete all
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -2197,15 +2274,33 @@ export default function AuctionViewPage() {
                   </p>
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => router.push(`/admin/auctions/${id}/edit`)}
-                className="gap-1.5 text-xs rounded-xl shrink-0"
-              >
-                <Pencil className="h-3.5 w-3.5" />
-                Edit
-              </Button>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push(`/admin/auctions/${id}/edit`)}
+                  className="gap-1.5 text-xs rounded-xl"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  Edit
+                </Button>
+                {workflow.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setConfirmDeleteWorkflow(true)}
+                    disabled={deletingWorkflow}
+                    className="gap-1.5 text-xs rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+                  >
+                    {deletingWorkflow ? (
+                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
+                    Delete all
+                  </Button>
+                )}
+              </div>
             </div>
 
             <div className="p-6">
@@ -2223,6 +2318,26 @@ export default function AuctionViewPage() {
           <AuctionParticipantsTab auctionId={id} />
         </TabsContent>
       </Tabs>
+
+      {/* Confirm: delete all policies */}
+      <ConfirmDialog
+        open={confirmDeletePolicies}
+        title="Delete all policies?"
+        description="This will permanently remove all configured policies from this auction. This cannot be undone."
+        confirmLabel="Delete all"
+        onConfirm={handleDeleteAllPolicies}
+        onCancel={() => setConfirmDeletePolicies(false)}
+      />
+
+      {/* Confirm: delete workflow */}
+      <ConfirmDialog
+        open={confirmDeleteWorkflow}
+        title="Delete entire workflow?"
+        description="This will permanently remove all workflow steps from this auction. This cannot be undone."
+        confirmLabel="Delete workflow"
+        onConfirm={handleDeleteWorkflow}
+        onCancel={() => setConfirmDeleteWorkflow(false)}
+      />
     </div>
   );
 }

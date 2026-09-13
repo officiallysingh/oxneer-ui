@@ -27,7 +27,6 @@ export function InvitationActionCard({ auction, action, identifier }: Invitation
   const { user } = useAuthStore();
 
   const [code, setCode] = useState('');
-  const [comments, setComments] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,15 +47,7 @@ export function InvitationActionCard({ auction, action, identifier }: Invitation
           code,
         });
       } else {
-        if (!comments.trim()) {
-          setFieldErrors({ comments: 'Please provide a reason for declining.' });
-          setLoading(false);
-          return;
-        }
-        await participantsApi.declineInvitation(auction.id, {
-          loginName,
-          comments: comments.trim(),
-        });
+        await participantsApi.declineInvitation(auction.id);
       }
       setSuccess(true);
     } catch (err) {
@@ -207,33 +198,9 @@ export function InvitationActionCard({ auction, action, identifier }: Invitation
           )}
 
           {action === 'decline' && (
-            <div className="space-y-1.5">
-              <Label htmlFor="comments" className={fieldErrors.comments ? 'text-destructive' : ''}>
-                Reason for Declining <span className="text-destructive">*</span>
-              </Label>
-              <textarea
-                id="comments"
-                value={comments}
-                onChange={(e) => {
-                  setComments(e.target.value);
-                  setFieldErrors((p) => {
-                    const n = { ...p };
-                    delete n.comments;
-                    return n;
-                  });
-                }}
-                placeholder="Please provide a reason for declining this invitation"
-                rows={4}
-                className={`w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring resize-none ${
-                  fieldErrors.comments
-                    ? 'border-destructive focus-visible:ring-destructive'
-                    : 'border-input'
-                }`}
-              />
-              {fieldErrors.comments && (
-                <p className="text-xs text-destructive">{fieldErrors.comments}</p>
-              )}
-            </div>
+            <p className="text-sm text-muted-foreground py-2">
+              Clicking below will decline this invitation. This action cannot be undone.
+            </p>
           )}
 
           {error && (

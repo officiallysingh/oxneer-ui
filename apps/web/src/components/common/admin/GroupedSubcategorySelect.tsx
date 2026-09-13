@@ -184,12 +184,19 @@ type CommonProps = {
   placeholder?: string;
   disabled?: boolean;
   noOptionsMessage?: string;
+  instanceId?: string;
 };
 
 export type GroupedSubcategorySelectProps = CommonProps & (MultiProps | SingleProps);
 
 export function GroupedSubcategorySelect(props: GroupedSubcategorySelectProps) {
-  const { categories, placeholder, disabled, noOptionsMessage = 'No sub-categories found' } = props;
+  const {
+    categories,
+    placeholder,
+    disabled,
+    noOptionsMessage = 'No sub-categories found',
+    instanceId,
+  } = props;
 
   const groupedOptions: GroupedOption[] = categories
     .filter((c) => (c.subCategories?.length ?? 0) > 0)
@@ -210,6 +217,7 @@ export function GroupedSubcategorySelect(props: GroupedSubcategorySelectProps) {
     return (
       <Select<Option, true, GroupedOption>
         isMulti
+        instanceId={instanceId}
         options={groupedOptions}
         value={selectedOpts}
         onChange={(selected) => {
@@ -237,6 +245,7 @@ export function GroupedSubcategorySelect(props: GroupedSubcategorySelectProps) {
   return (
     <Select<Option, false, GroupedOption>
       isMulti={false}
+      instanceId={instanceId}
       options={groupedOptions}
       value={selectedOpt}
       onChange={(selected) => props.onChange(selected?.value ?? '')}

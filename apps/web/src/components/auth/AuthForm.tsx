@@ -155,6 +155,12 @@ export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
   const { setUser, setUserInfo } = useAuthStore();
 
+  // Support ?callbackUrl= redirect after login
+  const callbackUrl =
+    typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search).get('callbackUrl')
+      : null;
+
   // ── Login state ────────────────────────────────────────────────────────────
   const [loginStep, setLoginStep] = useState<LoginStep>('identity');
   const [loginIdentifier, setLoginIdentifier] = useState('');
@@ -250,8 +256,12 @@ export function AuthForm({ mode }: AuthFormProps) {
         router.push('/verify');
         return;
       }
+      if (callbackUrl) {
+        router.push(callbackUrl);
+        return;
+      }
       const isAdmin = userInfo.permissions?.some(
-        (a) => a === 'superadmin' || a === 'ROLE_SUPERADMIN',
+        (a) => a === 'superadmin' || a === 'ROLE_SUPERADMIN' || a === 'platform.superadmin',
       );
       router.push(isAdmin ? '/admin/users' : '/');
     } catch {
@@ -286,7 +296,7 @@ export function AuthForm({ mode }: AuthFormProps) {
     try {
       await authApi.verifyOtp({ username: loginIdentifier.trim(), code: otp, purpose: 'LOGIN' });
       setUser({ username: loginIdentifier.trim(), roles: [], authenticated: true });
-      router.push('/');
+      router.push(callbackUrl ?? '/');
     } catch {
       setError('Invalid or expired OTP. Please try again.');
     } finally {

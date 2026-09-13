@@ -348,7 +348,7 @@ function BankDetailDialog({ open, editing, banks, onClose, onSaved }: BankDetail
           bank: form.bankId !== editing.bank.id ? form.bankId : undefined,
           ifscCode: form.ifscCode.toUpperCase(),
           accountNo: form.accountNo,
-          cancelCheck: form.cancelCheck || undefined,
+          cancelCheck: form.cancelCheck || 'false',
           primary: form.primary,
         });
       } else {

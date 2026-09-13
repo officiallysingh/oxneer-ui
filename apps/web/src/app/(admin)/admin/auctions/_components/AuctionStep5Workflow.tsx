@@ -30,7 +30,6 @@ import {
   AuctionWorkflowStep,
   PolicyEvaluationMap,
   PolicyItemRQ,
-  PropertyDef,
 } from '@repo/api';
 import { DismissibleError, FieldError } from './AuctionShared';
 import { PropertyFormPreview } from '@/app/(admin)/admin/metadata/_components/PropertyFormPreview';
@@ -148,13 +147,30 @@ function validateSchedule(finalStart: string, finalEnd: string): Record<string, 
   return errs;
 }
 
-/** PAYMENT_STEP has no distinct type label of its own — "Pre Payment"/"Post Payment"
- *  come from its `phase` field instead. */
-function stepDisplayName(step: AuctionWorkflowStep, index: number): string {
-  if (step.name) return step.name;
+/** PAYMENT_STEP has no distinct type label of its own — "Pre Payment N"/"Post Payment N"
+ *  are always used regardless of any stored name, with N being the sequential
+ *  position among payment steps of the same phase in the workflow. */
+function paymentStepLabel(step: AuctionWorkflowStep, allSteps: AuctionWorkflowStep[]): string {
+  const phase = resolveStr(step.phase);
+  const isPre = phase !== 'POST_AUCTION';
+  const samePhase = allSteps.filter(
+    (s) =>
+      resolveStr(s.type) === 'PAYMENT_STEP' &&
+      (isPre ? resolveStr(s.phase) !== 'POST_AUCTION' : resolveStr(s.phase) === 'POST_AUCTION'),
+  );
+  const order = samePhase.findIndex((s) => s.id === step.id) + 1;
+  return isPre ? `Pre Payment ${order}` : `Post Payment ${order}`;
+}
+
+function stepDisplayName(
+  step: AuctionWorkflowStep,
+  index: number,
+  allSteps?: AuctionWorkflowStep[],
+): string {
   if (resolveStr(step.type) === 'PAYMENT_STEP') {
-    return resolveStr(step.phase) === 'PRE_AUCTION' ? 'Pre Payment' : 'Post Payment';
+    return paymentStepLabel(step, allSteps ?? [step]);
   }
+  if (step.name) return step.name;
   return fmtLabel(step.type) || `Step ${index + 1}`;
 }
 
@@ -200,6 +216,7 @@ function WorkflowStepCard({
   auctionId,
   step,
   index,
+  allSteps,
   isDraft,
   dragHandleProps,
   dragDisabled,
@@ -212,6 +229,7 @@ function WorkflowStepCard({
   auctionId: string;
   step: AuctionWorkflowStep;
   index: number;
+  allSteps: AuctionWorkflowStep[];
   isDraft?: boolean;
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
   dragDisabled?: boolean;
@@ -270,9 +288,9 @@ function WorkflowStepCard({
         {/* Name */}
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-foreground truncate">
-            {stepDisplayName(step, index)}
+            {stepDisplayName(step, index, allSteps)}
           </p>
-          {step.type && fmtLabel(step.type) !== stepDisplayName(step, index) && (
+          {step.type && fmtLabel(step.type) !== stepDisplayName(step, index, allSteps) && (
             <p className="text-[10px] text-muted-foreground truncate">{fmtLabel(step.type)}</p>
           )}
         </div>
@@ -336,7 +354,10 @@ function WorkflowStepCard({
       {/* Expanded body */}
       {open && (
         <div className="border-t border-border/50 px-4 py-3 space-y-2 bg-muted/10 rounded-b-xl">
-          {step.description && <p className="text-xs text-muted-foreground">{step.description}</p>}
+          {/* Payment steps never show name/description — title is always generated */}
+          {step.description && resolveStr(step.type) !== 'PAYMENT_STEP' && (
+            <p className="text-xs text-muted-foreground">{step.description}</p>
+          )}
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
             {step.implicit && (
               <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground text-[10px]">
@@ -531,6 +552,9 @@ export function AuctionStep5Workflow({
   const [deletingStep, setDeletingStep] = useState<AuctionWorkflowStep | null>(null);
   const [deletingStepBusy, setDeletingStepBusy] = useState(false);
   const [deleteStepError, setDeleteStepError] = useState<string | null>(null);
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
+  const [deleteAllError, setDeleteAllError] = useState<string | null>(null);
 
   // Preview-before-save review state (mirrors the policies step's review dialog)
   const [reviewOpen, setReviewOpen] = useState(false);
@@ -571,8 +595,9 @@ export function AuctionStep5Workflow({
     Promise.all([
       auctionsApi.getAuctionWorkflow(auctionId).catch(() => [] as AuctionWorkflowStep[]),
       auctionsApi.getAuctionPolicies(auctionId).catch(() => null),
+      auctionsApi.getAuctionById(auctionId).catch(() => null),
     ])
-      .then(([wf, pol]) => {
+      .then(([wf, pol, auction]) => {
         if (!mounted) return;
         setWorkflow(wf);
         const allItems = pol ?? [];
@@ -581,6 +606,14 @@ export function AuctionStep5Workflow({
         setParticipationPolicies(
           allItems.filter((p) => categoryForPolicyType(p.type) === 'PARTICIPATION'),
         );
+
+        // Populate existing schedule when in schedule-only mode
+        if (showScheduleOnly && auction?.schedule) {
+          const existingStart = toLocalInputValue(auction.schedule.startTime);
+          const existingEnd = toLocalInputValue(auction.schedule.endTime);
+          if (existingStart) setStartTime(existingStart);
+          if (existingEnd) setEndTime(existingEnd);
+        }
 
         // Evaluate every saved policy (workflow-embedded + auction-level) by id,
         // in a single bulk request (POST /policies/evaluate) instead of N+1 calls.
@@ -606,7 +639,7 @@ export function AuctionStep5Workflow({
     return () => {
       mounted = false;
     };
-  }, [auctionId]);
+  }, [auctionId, showScheduleOnly]);
 
   const reloadWorkflow = useCallback(() => {
     auctionsApi
@@ -666,6 +699,23 @@ export function AuctionStep5Workflow({
       setDeleteStepError('Failed to delete step. Please try again.');
     } finally {
       setDeletingStepBusy(false);
+    }
+  };
+
+  const handleDeleteAllWorkflow = async () => {
+    if (saveMode !== 'direct') return;
+    setDeletingAll(true);
+    setDeleteAllError(null);
+    try {
+      await auctionsApi.deleteWorkflow(auctionId);
+      setWorkflow([]);
+      setDraftRequests({});
+      setEvaluationsByPolicyId({});
+      setDeleteAllOpen(false);
+    } catch (err) {
+      setDeleteAllError(parseApiError(err).general ?? 'Failed to delete the workflow.');
+    } finally {
+      setDeletingAll(false);
     }
   };
 
@@ -744,7 +794,7 @@ export function AuctionStep5Workflow({
     const results = await Promise.all(
       draftSteps.map(async ({ step, index }) => {
         const rq = draftRequests[step.id];
-        const label = stepDisplayName(step, index);
+        const label = stepDisplayName(step, index, workflow);
         if (!rq) return { id: step.id, label, evaluations: null };
         try {
           const evaluation = await auctionsApi.previewWorkflowStep(auctionId, rq);
@@ -856,6 +906,18 @@ export function AuctionStep5Workflow({
               <span className="text-[10px] text-muted-foreground hidden sm:inline select-none">
                 Drag to reorder
               </span>
+              {saveMode === 'direct' && workflow.length > 0 && !hasDrafts && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setDeleteAllOpen(true)}
+                  className="h-8 gap-1.5 text-xs text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Delete all
+                </Button>
+              )}
             </div>
           </div>
 
@@ -945,6 +1007,7 @@ export function AuctionStep5Workflow({
                           auctionId={auctionId}
                           step={step}
                           index={i}
+                          allSteps={workflow}
                           isDraft={isDraft}
                           isDragTarget={dragOverIdx === i}
                           dragDisabled={hasDrafts}
@@ -1186,6 +1249,23 @@ export function AuctionStep5Workflow({
           if (deletingStepBusy) return;
           setDeletingStep(null);
           setDeleteStepError(null);
+        }}
+      />
+
+      <ConfirmDialog
+        open={deleteAllOpen}
+        title="Delete entire workflow?"
+        description={
+          deleteAllError ??
+          'This permanently removes every workflow step from this auction. This action cannot be undone.'
+        }
+        confirmLabel={deletingAll ? 'Deleting...' : 'Delete all'}
+        onConfirm={handleDeleteAllWorkflow}
+        onCancel={() => {
+          if (!deletingAll) {
+            setDeleteAllOpen(false);
+            setDeleteAllError(null);
+          }
         }}
       />
 

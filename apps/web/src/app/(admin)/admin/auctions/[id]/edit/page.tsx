@@ -519,9 +519,6 @@ export default function EditAuctionPage() {
               onChange={(u) => setStep3((prev) => ({ ...prev, ...u }))}
               auctionType={auctionType}
               direction={step1.direction}
-              openingPrice={parseFloat(step2.openingPrice) || 0}
-              precision={parseInt(step1.precision, 10) || 0}
-              currencyUnit={step1.currencyUnit || 'INR'}
               fieldErrors={step3Errors}
               generalError={step3GeneralError}
               saving={savingStep3}

@@ -10,7 +10,6 @@ import {
   Pencil,
   PowerOff,
   Power,
-  Lock,
   LockOpen,
   CheckCircle2,
   Circle,
@@ -18,6 +17,7 @@ import {
   X,
   KeyRound,
   SlidersHorizontal,
+  Eye,
 } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 import { Badge, Button, Label } from '@repo/ui';
@@ -32,7 +32,6 @@ import Tip from '@/components/common/admin/Tip';
 import { TagList } from '@/components/common/admin/TagList';
 import { PhrasesInput } from '@/components/common/admin/PhrasesInput';
 import { UserAvatar } from '@/components/common/admin/UserAvatar';
-import { ChangePasswordDialog } from './_components/UserFormDialog';
 
 interface SelectOption {
   label: string;
@@ -157,7 +156,7 @@ export default function UsersPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [actionId, setActionId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
-  const [changePwdUser, setChangePwdUser] = useState<UserDetailVM | null>(null);
+  const [resetPwdId, setResetPwdId] = useState<string | null>(null);
   const PAGE_SIZE = 20;
   const [pageIndex, setPageIndex] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -180,17 +179,13 @@ export default function UsersPage() {
     () => searchParams.get('mobileNoVerified') ?? '',
   );
 
-  // Column visibility
-  const [showRoles, setShowRoles] = useState(false);
-  const [showPermissions, setShowPermissions] = useState(false);
-
   const phrasesRef = useRef<string[]>(searchParams.getAll('phrases'));
 
-  // Load roles and permissions independently on mount
+  // Load roles (with permissions) and permissions on mount
   useEffect(() => {
     const roleIds = searchParams.getAll('roles');
     const permIds = searchParams.getAll('permissions');
-    Promise.all([adminApi.getRoles(), adminApi.getPermissions()])
+    Promise.all([adminApi.getRoles(true), adminApi.getPermissions()])
       .then(([groups, perms]) => {
         setAllRoles(groups);
         setAllPermissions(perms);
@@ -219,6 +214,14 @@ export default function UsersPage() {
     value: a.id,
   }));
 
+  // Group permissions by role for the dropdown
+  const groupedPermissionOptions = allRoles
+    .filter((r) => (r.permissions?.length ?? 0) > 0)
+    .map((r) => ({
+      label: r.label,
+      options: (r.permissions ?? []).map((p) => ({ label: p.label, value: p.id })),
+    }));
+
   const fetchUsers = async (opts?: {
     phrases?: string[];
     roles?: string[];
@@ -227,16 +230,13 @@ export default function UsersPage() {
     credentialsExpired?: string;
     emailIdVerified?: string;
     mobileNoVerified?: string;
-    showPermsCol?: boolean;
     page?: number;
   }) => {
     setIsLoading(true);
     setError(null);
     try {
-      // Roles are always expanded (not just when the column is shown) so the
-      // superadmin check below can gate the delete action on every row.
-      const expand: ('permissions' | 'roles')[] = ['roles'];
-      if (opts?.showPermsCol ?? showPermissions) expand.push('permissions');
+      // Roles and permissions are always shown as columns, so both are always expanded.
+      const expand: ('permissions' | 'roles')[] = ['roles', 'permissions'];
       const page = opts?.page ?? 0;
       const result = await usersApi.getUsers({
         page,
@@ -276,25 +276,6 @@ export default function UsersPage() {
       mobileNoVerified: mobileVerifiedFilter,
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Re-fetch when the permissions column is toggled (roles are always fetched)
-  const prevPerms = useRef(showPermissions);
-  useEffect(() => {
-    if (prevPerms.current !== showPermissions) {
-      prevPerms.current = showPermissions;
-      fetchUsers({
-        phrases: phrasesRef.current.length ? phrasesRef.current : undefined,
-        roles: selectedRoles.map((o) => o.value),
-        permissions: selectedPermissions.map((o) => o.value),
-        enabled: enabledFilter,
-        credentialsExpired: credentialsExpiredFilter,
-        emailIdVerified: emailVerifiedFilter,
-        mobileNoVerified: mobileVerifiedFilter,
-        showPermsCol: showPermissions,
-        page: pageIndex,
-      });
-    }
-  }, [showPermissions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const buildFilterUrl = (
     ph: string[],
@@ -374,6 +355,17 @@ export default function UsersPage() {
       setError(errorMsg);
     } finally {
       setActionId(null);
+    }
+  };
+
+  const handleResetPassword = async (user: UserDetailVM) => {
+    setResetPwdId(user.id);
+    try {
+      await usersApi.resetPassword(user.id);
+    } catch {
+      setError('Failed to reset password.');
+    } finally {
+      setResetPwdId(null);
     }
   };
 
@@ -475,8 +467,7 @@ export default function UsersPage() {
       <TagList
         tags={(row.original.permissions ?? []).map((a) => ({
           id: a.id,
-          label: a.name,
-          mono: true,
+          label: a.label,
         }))}
         variant="muted"
       />
@@ -492,6 +483,16 @@ export default function UsersPage() {
       const superAdmin = isSuperAdmin(user);
       return (
         <div className="flex items-center gap-0.5">
+          <Tip label="View user">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted"
+              onClick={() => router.push(`/admin/users/${user.id}/view`)}
+            >
+              <Eye className="h-3.5 w-3.5" />
+            </Button>
+          </Tip>
           <Tip label="Edit user">
             <Button
               variant="ghost"
@@ -502,14 +503,19 @@ export default function UsersPage() {
               <Pencil className="h-3.5 w-3.5" />
             </Button>
           </Tip>
-          <Tip label="Change password">
+          <Tip label="Reset password">
             <Button
               variant="ghost"
               size="sm"
               className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted"
-              onClick={() => setChangePwdUser(user)}
+              onClick={() => handleResetPassword(user)}
+              disabled={resetPwdId === user.id}
             >
-              <KeyRound className="h-3.5 w-3.5" />
+              {resetPwdId === user.id ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <KeyRound className="h-3.5 w-3.5" />
+              )}
             </Button>
           </Tip>
           <Tip label={user.enabled ? 'Disable user' : 'Enable user'}>
@@ -535,29 +541,25 @@ export default function UsersPage() {
               )}
             </Button>
           </Tip>
-          <Tip label={user.accountNonLocked ? 'Lock account' : 'Unlock account'}>
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`h-8 w-8 p-0 ${!user.accountNonLocked ? 'text-emerald-500 hover:text-emerald-600 hover:bg-emerald-500/10' : 'text-orange-500 hover:text-orange-600 hover:bg-orange-500/10'}`}
-              onClick={() =>
-                patchUser(
-                  user,
-                  { accountNonLocked: !user.accountNonLocked },
-                  `Failed to ${user.accountNonLocked ? 'lock' : 'unlock'} user.`,
-                )
-              }
-              disabled={busy}
-            >
-              {busy ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : user.accountNonLocked ? (
-                <Lock className="h-3.5 w-3.5" />
-              ) : (
-                <LockOpen className="h-3.5 w-3.5" />
-              )}
-            </Button>
-          </Tip>
+          {!user.accountNonLocked && (
+            <Tip label="Unlock account">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 text-emerald-500 hover:text-emerald-600 hover:bg-emerald-500/10"
+                onClick={() =>
+                  patchUser(user, { accountNonLocked: true }, 'Failed to unlock user.')
+                }
+                disabled={busy}
+              >
+                {busy ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <LockOpen className="h-3.5 w-3.5" />
+                )}
+              </Button>
+            </Tip>
+          )}
           <Tip label={superAdmin ? 'Superadmin cannot be deleted' : 'Delete user'}>
             <Button
               variant="ghost"
@@ -580,8 +582,8 @@ export default function UsersPage() {
 
   const columns: ColumnDef<UserDetailVM>[] = [
     ...baseColumns,
-    ...(showRoles ? [rolesColumn] : []),
-    ...(showPermissions ? [permissionsColumn] : []),
+    rolesColumn,
+    permissionsColumn,
     actionsColumn,
   ];
 
@@ -681,38 +683,28 @@ export default function UsersPage() {
 
           <div className="min-w-[280px] max-w-[380px] space-y-1">
             <Label className="text-xs font-medium text-muted-foreground">Permissions</Label>
-            <Select<SelectOption, true>
+            <Select
               isMulti
-              options={permissionOptions}
+              options={
+                groupedPermissionOptions.length > 0 ? groupedPermissionOptions : permissionOptions
+              }
               value={selectedPermissions}
               onChange={(vals: MultiValue<SelectOption>) => setSelectedPermissions([...vals])}
               placeholder="All permissions"
+              formatGroupLabel={
+                groupedPermissionOptions.length > 0
+                  ? (group: { label: string; options: SelectOption[] }) => (
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold">{group.label}</span>
+                        <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                          {group.options.length}
+                        </span>
+                      </div>
+                    )
+                  : undefined
+              }
               styles={reactSelectStyles as never}
             />
-          </div>
-
-          <div className="w-full max-w-[420px] space-y-1">
-            <Label className="text-xs font-medium text-muted-foreground">Displayed columns</Label>
-            <div className="flex items-center gap-3 h-9 px-2 rounded-md border border-input bg-background">
-              <label className="flex items-center gap-1.5 cursor-pointer select-none text-sm text-muted-foreground hover:text-foreground transition-colors">
-                <input
-                  type="checkbox"
-                  checked={showRoles}
-                  onChange={(e) => setShowRoles(e.target.checked)}
-                  className="accent-primary h-3.5 w-3.5"
-                />
-                Roles
-              </label>
-              <label className="flex items-center gap-1.5 cursor-pointer select-none text-sm text-muted-foreground hover:text-foreground transition-colors">
-                <input
-                  type="checkbox"
-                  checked={showPermissions}
-                  onChange={(e) => setShowPermissions(e.target.checked)}
-                  className="accent-primary h-3.5 w-3.5"
-                />
-                Permissions
-              </label>
-            </div>
           </div>
         </div>
 
@@ -783,8 +775,6 @@ export default function UsersPage() {
         }}
         onCancel={() => setConfirmId(null)}
       />
-
-      <ChangePasswordDialog user={changePwdUser} onClose={() => setChangePwdUser(null)} />
     </div>
   );
 }

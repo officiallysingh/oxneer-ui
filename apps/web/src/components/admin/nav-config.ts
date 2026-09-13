@@ -197,6 +197,7 @@ export const subRouteTitles: SubRouteTitle[] = [
   },
   { match: /\/admin\/users\/new$/, label: 'Add user', description: 'Create a new user account' },
   { match: /\/admin\/users\/.+\/edit$/, label: 'Edit user', description: 'Update user details' },
+  { match: /\/admin\/users\/.+\/view$/, label: 'View user', description: 'User account details' },
   { match: /\/admin\/listings\/new$/, label: 'New listing', description: 'Create a new listing' },
   {
     match: /\/admin\/listings\/.+\/edit$/,

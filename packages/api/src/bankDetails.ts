@@ -46,6 +46,12 @@ export const bankDetailsApi = {
     return response.data;
   },
 
+  /** GET /api/v1/users/{username}/bank-details — list all bank details for a given user (admin) */
+  getByUsername: async (username: string): Promise<BankDetailVM[]> => {
+    const response = await apiClient.get(`/api/v1/users/${username}/bank-details`);
+    return response.data;
+  },
+
   /** POST /api/v1/users/me/bank-details — create a bank detail */
   create: async (data: BankDetailCreationRQ): Promise<void> => {
     await apiClient.post('/api/v1/users/me/bank-details', data);

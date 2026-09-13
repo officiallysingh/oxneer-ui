@@ -2,20 +2,14 @@
 
 import React, { useEffect, useState } from 'react';
 import { usersApi, type UserDetailVM } from '@repo/api';
-import { Eye, EyeOff, HelpCircle } from 'lucide-react';
 import {
   Button,
-  Input,
-  Label,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
 } from '@repo/ui';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';
 import { FormField } from '@/components/common/admin/FormField';
@@ -25,7 +19,6 @@ import { useFieldErrors } from '@/components/common/admin/useFieldErrors';
 import { AvatarUpload } from '@/components/common/admin/AvatarUpload';
 import { parseApiError } from '@/lib/api-errors';
 import { resolvesExists } from '@/lib/exists-check';
-import { PASSWORD_RULES, PASSWORD_PATTERN, PASSWORD_ERROR } from '@/lib/validation';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -439,183 +432,5 @@ export function EditUserDialog({ user, onClose, onUpdated }: EditUserDialogProps
         </form>
       </DialogContent>
     </Dialog>
-  );
-}
-
-// ── Change Password Dialog ────────────────────────────────────────────────────
-
-interface ChangePasswordDialogProps {
-  user: UserDetailVM | null;
-  onClose: () => void;
-}
-
-export function ChangePasswordDialog({ user, onClose }: ChangePasswordDialogProps) {
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showNew, setShowNew] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  const reset = () => {
-    setNewPassword('');
-    setConfirmPassword('');
-    setShowNew(false);
-    setShowConfirm(false);
-    setError(null);
-  };
-
-  const handleOpenChange = (o: boolean) => {
-    if (!o) {
-      reset();
-      onClose();
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    if (!user) return;
-
-    if (!PASSWORD_PATTERN.test(newPassword)) {
-      setError(PASSWORD_ERROR);
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setError('Passwords do not match.');
-      return;
-    }
-
-    setSaving(true);
-    try {
-      await usersApi.resetPassword(user.id);
-      reset();
-      onClose();
-    } catch (err) {
-      const parsed = parseApiError(err);
-      setError(parsed.general ?? 'Failed to reset password.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Dialog open={!!user} onOpenChange={handleOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Change password</DialogTitle>
-          <DialogDescription>
-            Reset the password for{' '}
-            <span className="font-medium text-foreground">{user?.username ?? user?.emailId}</span>
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <PasswordInput
-            id="cp-new"
-            label="New password"
-            value={newPassword}
-            onChange={(v) => {
-              setNewPassword(v);
-              setError(null);
-            }}
-            show={showNew}
-            onToggleShow={() => setShowNew((s) => !s)}
-            placeholder="6–12 chars, uppercase, lowercase, digit"
-            tip={PASSWORD_RULES}
-          />
-          <PasswordInput
-            id="cp-confirm"
-            label="Confirm new password"
-            value={confirmPassword}
-            onChange={(v) => {
-              setConfirmPassword(v);
-              setError(null);
-            }}
-            show={showConfirm}
-            onToggleShow={() => setShowConfirm((s) => !s)}
-            placeholder="Re-enter new password"
-          />
-          {error && <ErrorAlert message={error} />}
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleOpenChange(false)}
-              disabled={saving}
-            >
-              Cancel
-            </Button>
-            <SaveButton saving={saving} label="Change password" savingLabel="Saving" />
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ── Internal: password input with show/hide toggle ────────────────────────────
-
-interface PasswordInputProps {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  show: boolean;
-  onToggleShow: () => void;
-  placeholder?: string;
-  tip?: string;
-}
-
-function PasswordInput({
-  id,
-  label,
-  value,
-  onChange,
-  show,
-  onToggleShow,
-  placeholder,
-  tip,
-}: PasswordInputProps) {
-  return (
-    <div className="space-y-1">
-      <div className="flex items-center gap-1.5">
-        <Label htmlFor={id}>
-          {label}
-          <span className="text-destructive ml-0.5">*</span>
-        </Label>
-        {tip && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button type="button" className="text-muted-foreground hover:text-foreground">
-                <HelpCircle className="h-3.5 w-3.5" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-xs text-xs">
-              {tip}
-            </TooltipContent>
-          </Tooltip>
-        )}
-      </div>
-      <div className="relative">
-        <Input
-          id={id}
-          type={show ? 'text' : 'password'}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          autoComplete="new-password"
-          className="pr-10"
-          required
-        />
-        <button
-          type="button"
-          onClick={onToggleShow}
-          tabIndex={-1}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-        >
-          {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-        </button>
-      </div>
-    </div>
   );
 }

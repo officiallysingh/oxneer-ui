@@ -195,6 +195,11 @@ export default function AuctionsPage() {
   const [categories, setCategories] = useState<CategoryVM[]>([]);
   const [fromTime, setFromTime] = useState(() => searchParams.get('fromTime') ?? '');
   const [tillTime, setTillTime] = useState(() => searchParams.get('tillTime') ?? '');
+  const [accessibility, setAccessibility] = useState<string>(
+    () => searchParams.get('accessibility') ?? '',
+  );
+  const [direction, setDirection] = useState<string>(() => searchParams.get('direction') ?? '');
+  const [status, setStatus] = useState<string>(() => searchParams.get('status') ?? '');
 
   useEffect(() => {
     const catIds = searchParams.getAll('categories');
@@ -229,6 +234,9 @@ export default function AuctionsPage() {
     phrases?: string[];
     categories?: string[];
     subCategories?: string[];
+    statuses?: string[];
+    accessibility?: string;
+    direction?: string;
     fromTime?: string;
     tillTime?: string;
     page?: number;
@@ -241,6 +249,9 @@ export default function AuctionsPage() {
         phrases: opts?.phrases?.length ? opts.phrases : undefined,
         categories: opts?.categories?.length ? opts.categories : undefined,
         subCategories: opts?.subCategories?.length ? opts.subCategories : undefined,
+        statuses: opts?.statuses?.length ? opts.statuses : undefined,
+        accessibility: opts?.accessibility || undefined,
+        direction: opts?.direction || undefined,
         fromTime: opts?.fromTime,
         tillTime: opts?.tillTime,
         page,
@@ -263,6 +274,9 @@ export default function AuctionsPage() {
       phrases: searchParams.getAll('phrases'),
       categories: searchParams.getAll('categories'),
       subCategories: searchParams.getAll('subCategories'),
+      statuses: searchParams.get('status') ? [searchParams.get('status')!] : undefined,
+      accessibility: searchParams.get('accessibility') ?? '',
+      direction: searchParams.get('direction') ?? '',
       fromTime: toIsoOrUndefined(searchParams.get('fromTime') ?? ''),
       tillTime: toIsoOrUndefined(searchParams.get('tillTime') ?? ''),
     });
@@ -274,6 +288,9 @@ export default function AuctionsPage() {
     subs: SelectOption[],
     from: string,
     till: string,
+    acc: string,
+    dir: string,
+    st: string,
   ) => {
     const params = new URLSearchParams();
     ph.forEach((p) => params.append('phrases', p));
@@ -281,18 +298,33 @@ export default function AuctionsPage() {
     subs.forEach((s) => params.append('subCategories', s.value));
     if (from) params.set('fromTime', from);
     if (till) params.set('tillTime', till);
+    if (acc) params.set('accessibility', acc);
+    if (dir) params.set('direction', dir);
+    if (st) params.set('status', st);
     return params.toString() ? `?${params.toString()}` : '';
   };
 
   const handleSearch = () => {
     router.replace(
-      buildFilterUrl(phrases, selectedCategories, selectedSubCategories, fromTime, tillTime),
+      buildFilterUrl(
+        phrases,
+        selectedCategories,
+        selectedSubCategories,
+        fromTime,
+        tillTime,
+        accessibility,
+        direction,
+        status,
+      ),
       { scroll: false },
     );
     fetchAuctions({
       phrases,
       categories: selectedCategories.map((o) => o.value),
       subCategories: selectedSubCategories.map((o) => o.value),
+      statuses: status ? [status] : undefined,
+      accessibility,
+      direction,
       fromTime: toIsoOrUndefined(fromTime),
       tillTime: toIsoOrUndefined(tillTime),
       page: 0,
@@ -305,6 +337,9 @@ export default function AuctionsPage() {
     setSelectedSubCategories([]);
     setFromTime('');
     setTillTime('');
+    setAccessibility('');
+    setDirection('');
+    setStatus('');
     router.replace('', { scroll: false });
     fetchAuctions({ page: 0 });
   };
@@ -571,6 +606,9 @@ export default function AuctionsPage() {
                   phrases,
                   categories: selectedCategories.map((o) => o.value),
                   subCategories: selectedSubCategories.map((o) => o.value),
+                  statuses: status ? [status] : undefined,
+                  accessibility,
+                  direction,
                   fromTime: toIsoOrUndefined(fromTime),
                   tillTime: toIsoOrUndefined(tillTime),
                   page: pageIndex,
@@ -661,6 +699,53 @@ export default function AuctionsPage() {
             <DateTimePicker value={tillTime} onChange={setTillTime} placeholder="Any" />
           </div>
 
+          {/* Accessibility */}
+          <div className="min-w-[160px] space-y-1.5">
+            <Label className="text-xs font-medium text-muted-foreground">Accessibility</Label>
+            <select
+              value={accessibility}
+              onChange={(e) => setAccessibility(e.target.value)}
+              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="">All</option>
+              <option value="PUBLIC">Public</option>
+              <option value="PRIVATE">Private</option>
+            </select>
+          </div>
+
+          {/* Direction */}
+          <div className="min-w-[160px] space-y-1.5">
+            <Label className="text-xs font-medium text-muted-foreground">Direction</Label>
+            <select
+              value={direction}
+              onChange={(e) => setDirection(e.target.value)}
+              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="">All</option>
+              <option value="FORWARD">Forward</option>
+              <option value="REVERSE">Reverse</option>
+            </select>
+          </div>
+
+          {/* Status */}
+          <div className="min-w-[160px] space-y-1.5">
+            <Label className="text-xs font-medium text-muted-foreground">Status</Label>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="">All</option>
+              <option value="DRAFT">Draft</option>
+              <option value="SCHEDULED">Scheduled</option>
+              <option value="PUBLISHED">Published</option>
+              <option value="LIVE">Live</option>
+              <option value="CANCELLED">Cancelled</option>
+              <option value="COMPLETED">Completed</option>
+              <option value="AWARDED">Awarded</option>
+            </select>
+          </div>
+
           {/* Actions */}
           <div className="flex gap-2 pb-0.5">
             <Button size="sm" onClick={handleSearch} className="gap-1.5">
@@ -691,6 +776,9 @@ export default function AuctionsPage() {
             phrases,
             categories: selectedCategories.map((o) => o.value),
             subCategories: selectedSubCategories.map((o) => o.value),
+            statuses: status ? [status] : undefined,
+            accessibility,
+            direction,
             fromTime: toIsoOrUndefined(fromTime),
             tillTime: toIsoOrUndefined(tillTime),
             page,

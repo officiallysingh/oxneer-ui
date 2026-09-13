@@ -1,10 +1,11 @@
 'use client';
 
 import { use, useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { auctionsApi } from '@repo/api';
 import type { AuctionVM } from '@repo/api';
 import { InvitationActionCard } from '@/components/common/auction/InvitationActionCard';
+import { useAuthStore, useAuthHydrated } from '@/store/authStore';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@repo/ui';
 
@@ -54,13 +55,26 @@ function decodeInvitationPath(slug: string[]): DecodedPath {
 export default function InvitationSlugPage({ params }: { params: Promise<{ slug: string[] }> }) {
   const { slug } = use(params);
   const router = useRouter();
+  const pathname = usePathname();
+  const { user } = useAuthStore();
+  const hydrated = useAuthHydrated();
+  const isLoggedIn = !!user?.authenticated;
+
   const [auction, setAuction] = useState<AuctionVM | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const decoded = decodeInvitationPath(slug);
 
+  // Redirect unauthenticated users to login, preserving return URL
   useEffect(() => {
+    if (hydrated && !isLoggedIn) {
+      router.push(`/login?callbackUrl=${encodeURIComponent(pathname)}`);
+    }
+  }, [hydrated, isLoggedIn, pathname, router]);
+
+  useEffect(() => {
+    if (!hydrated || !isLoggedIn) return; // wait for auth
     if (decoded.type === 'unknown' || !decoded.auctionId) {
       setLoading(false);
       return;
@@ -87,7 +101,19 @@ export default function InvitationSlugPage({ params }: { params: Promise<{ slug:
     };
 
     loadAuction();
-  }, [decoded]);
+  }, [decoded, hydrated, isLoggedIn]);
+
+  // While auth is hydrating, or redirecting to login, show spinner
+  if (!hydrated || !isLoggedIn) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <p className="text-sm">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (decoded.type === 'unknown') {
     return (

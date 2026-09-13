@@ -13,6 +13,13 @@ export interface Invitation {
   respondedAt?: string;
 }
 
+/** Per-step workflow status as returned on the participant record. */
+export interface ParticipantWorkflowStepStatus {
+  type?: string | Record<string, string>;
+  updatedAt?: string | null;
+  details?: Record<string, string>;
+}
+
 export interface ParticipantVM {
   id: string;
   auctionId?: string;
@@ -24,6 +31,25 @@ export interface ParticipantVM {
   profilePicture?: string;
   avatar?: string;
   invitation?: Invitation;
+  /** Map of workflow step id → step completion status. Present when the
+   *  participant has started or completed workflow steps. */
+  workflowStatus?: Record<string, ParticipantWorkflowStepStatus>;
+}
+
+/** Request body for POST/PATCH /participants/me/workflow */
+export interface ParticipantWorkflowStepRQ {
+  /** The workflow step id being completed/updated. */
+  id: string;
+  /** Step type discriminator — required by the backend for deserialization. */
+  type: string;
+  /** For FORM_STEP / PARTICIPATION_FORM_STEP — StructDto with typeId + pathWiseState. */
+  embedded?: { typeId?: string; pathWiseState?: Record<string, unknown> };
+  /** For BANK_DETAIL_FORM_STEP — the id of an existing bank detail record. */
+  bankDetailId?: string;
+  /** For TNC_FORM_STEP — true when user accepts the terms. */
+  accepted?: boolean;
+  /** Fallback for other step types. */
+  data?: Record<string, unknown>;
 }
 
 export interface PaginatedParticipants {
@@ -58,6 +84,12 @@ export const participantsApi = {
   /** Invites one person (existing user or not) to a restricted-access auction. */
   inviteParticipant: async (auctionId: string, data: InvitationRQ): Promise<void> => {
     await apiClient.post(`/api/v1/auctions/${auctionId}/participants/invitations`, data);
+  },
+
+  /** Self-service: the logged-in user joins/registers themselves as a participant.
+   *  No request body. Returns 409 if the user is already a participant. */
+  createSelfParticipant: async (auctionId: string): Promise<void> => {
+    await apiClient.post(`/api/v1/auctions/${auctionId}/participants/me`, {});
   },
 
   getAllParticipants: async (
@@ -100,11 +132,32 @@ export const participantsApi = {
     await apiClient.post(`/api/v1/auctions/${auctionId}/participants/me/invitations/accept`, data);
   },
 
-  /** Self-service: the logged-in user declines their own invitation to an auction. */
-  declineInvitation: async (
+  /** Self-service: the logged-in user declines their own invitation to an auction.
+   *  Uses the /declineSelf endpoint (no body required — identity derived from session). */
+  declineInvitation: async (auctionId: string): Promise<void> => {
+    await apiClient.post(`/api/v1/auctions/${auctionId}/participants/me/invitations/declineSelf`);
+  },
+
+  /** Self-service: complete a participant workflow step.
+   *  POST creates the step submission for the first time. */
+  completeWorkflowStep: async (
     auctionId: string,
-    data: { loginName: string; comments: string },
+    data: ParticipantWorkflowStepRQ,
   ): Promise<void> => {
-    await apiClient.post(`/api/v1/auctions/${auctionId}/participants/me/invitations/decline`, data);
+    await apiClient.post(`/api/v1/auctions/${auctionId}/participants/me/workflow`, data);
+  },
+
+  /** Self-service: update (amend) an already-submitted workflow step. */
+  updateWorkflowStep: async (auctionId: string, data: ParticipantWorkflowStepRQ): Promise<void> => {
+    await apiClient.patch(`/api/v1/auctions/${auctionId}/participants/me/workflow`, data);
+  },
+
+  /** Fetch the current user's own participant record for the given auction.
+   *  Returns the participant with workflowStatus populated. */
+  getSelfParticipant: async (auctionId: string): Promise<ParticipantVM> => {
+    const response = await apiClient.get<ParticipantVM>(
+      `/api/v1/auctions/${auctionId}/participants/me`,
+    );
+    return response.data;
   },
 };

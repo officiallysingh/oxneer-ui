@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Loader2, Plus } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, Plus, Trash2 } from 'lucide-react';
 import { auctionsApi, PolicyEvaluationMap, PolicyItemRQ } from '@repo/api';
 import { Button, Dialog, DialogContent, DialogHeader, DialogTitle } from '@repo/ui';
 import { DismissibleError, SelectOption } from './AuctionShared';
@@ -29,12 +29,13 @@ import { PolicyExtensionSection } from './PolicyExtensionSection';
 import { PolicyWinnerSection } from './PolicyWinnerSection';
 import { EvaluationList, PolicyItemCard } from './PolicyEvaluationDisplay';
 import { parseApiError } from '@/lib/api-errors';
+import ConfirmDialog from '@/components/common/admin/ConfirmDialog';
 
 // Re-export types so pages can import from a single location
 export type { PreconditionItem, PriceChangeItem, Step3State } from './AuctionStep3Types';
 export { initialStep3 } from './AuctionStep3Types';
 
-import type { Step3State } from './AuctionStep3Types';
+import { initialStep3, type Step3State } from './AuctionStep3Types';
 
 /**
  * Edit-mode variant: only seeds form defaults for policy categories that already
@@ -155,7 +156,7 @@ function ReviewSection({
       <h4 className="text-xs font-semibold text-foreground">{title}</h4>
       <EvaluationList
         evaluations={evaluations}
-        policyName={entries.length === 1 ? entries[0][0] : title}
+        policyName={entries.length === 1 ? (entries[0]?.[0] ?? title) : title}
       />
     </div>
   );
@@ -198,9 +199,6 @@ interface AuctionStep3PoliciesProps {
   onChange: (updates: Partial<Step3State>) => void;
   auctionType: string;
   direction: string;
-  openingPrice: number;
-  precision: number;
-  currencyUnit: string;
   fieldErrors: Record<string, string>;
   generalError: string | null;
   saving: boolean;
@@ -216,9 +214,6 @@ export function AuctionStep3Policies({
   onChange,
   auctionType,
   direction,
-  openingPrice,
-  precision,
-  currencyUnit,
   fieldErrors,
   generalError,
   saving,
@@ -240,6 +235,35 @@ export function AuctionStep3Policies({
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [savingItem, setSavingItem] = useState(false);
   const [itemError, setItemError] = useState<string | null>(null);
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
+  const [deleteAllError, setDeleteAllError] = useState<string | null>(null);
+
+  const savedPolicyCount = [
+    form.participationPolicyId,
+    form.priceProgressionPolicyId,
+    form.extensionPolicyId,
+    form.winnerDeterminationPolicyId,
+    form.winnerPriceDeterminationPolicyId,
+    ...form.preconditions.map((item) => item.id),
+  ].filter(Boolean).length;
+
+  const handleDeleteAllPolicies = async () => {
+    if (!auctionId) return;
+    setDeletingAll(true);
+    setDeleteAllError(null);
+    try {
+      await auctionsApi.deleteAuctionPolicies(auctionId);
+      onChange({ ...initialStep3 });
+      setEvaluationsByPolicyId({});
+      setEditingKey(null);
+      setDeleteAllOpen(false);
+    } catch (err) {
+      setDeleteAllError(parseApiError(err).general ?? 'Failed to delete all policies.');
+    } finally {
+      setDeletingAll(false);
+    }
+  };
 
   /** Saves a single already-saved policy, refreshes its evaluation, and exits edit mode. */
   const runSave = async (policyId: string | undefined, item: PolicyItemRQ | null) => {
@@ -499,6 +523,20 @@ export function AuctionStep3Policies({
     <>
       <form onSubmit={handleFormSubmit} className="space-y-6">
         <DismissibleError message={generalError} />
+        {isEditMode && auctionId && savedPolicyCount > 0 && (
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setDeleteAllOpen(true)}
+              className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete all policies
+            </Button>
+          </div>
+        )}
 
         {/* Sections rendered in the order the API returns policy types */}
         {renderCategories.map((category) => {
@@ -1110,6 +1148,22 @@ export function AuctionStep3Policies({
           </Button>
         </div>
       </form>
+      <ConfirmDialog
+        open={deleteAllOpen}
+        title="Delete all policies?"
+        description={
+          deleteAllError ??
+          'This permanently removes every policy from this auction. This action cannot be undone.'
+        }
+        confirmLabel={deletingAll ? 'Deleting...' : 'Delete all'}
+        onConfirm={handleDeleteAllPolicies}
+        onCancel={() => {
+          if (!deletingAll) {
+            setDeleteAllOpen(false);
+            setDeleteAllError(null);
+          }
+        }}
+      />
 
       <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">

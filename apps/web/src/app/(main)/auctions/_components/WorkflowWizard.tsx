@@ -718,7 +718,10 @@ export function WorkflowWizard({ auctionId, onClose }: WorkflowWizardProps) {
         };
       } else {
         // PAYMENT_STEP / other
-        rq.data = (formData.data as Record<string, unknown>) ?? formData;
+        rq.data = {
+          ...((formData.data as Record<string, unknown>) ?? formData),
+          paymentOrderId: '000000000000000000000000',
+        };
       }
 
       const isAlreadySubmitted = stepIsCompleted(currentStep, participant);

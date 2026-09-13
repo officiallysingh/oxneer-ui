@@ -244,8 +244,12 @@ export function EditStepDialog({
 
       await auctionsApi.updateWorkflowStep(auctionId, step.id, {
         type: stepType as Parameters<typeof auctionsApi.updateWorkflowStep>[2]['type'],
-        name: name.trim() || undefined,
-        description: description.trim() || undefined,
+        name: isPaymentStep
+          ? paymentPhase === 'POST_AUCTION'
+            ? 'Post Payment'
+            : 'Pre Payment'
+          : name.trim() || undefined,
+        description: isPaymentStep ? '' : description.trim() || undefined,
         order: step.order,
         ...(isExplicit && isTnCStep
           ? { tncText: isRichTextEmpty(tncText) ? undefined : tncText, tncBlobId }
@@ -295,18 +299,22 @@ export function EditStepDialog({
               </p>
             )}
 
-            <div className="space-y-1.5">
-              <Label htmlFor="editStepName">Name</Label>
-              <Input id="editStepName" value={name} onChange={(e) => setName(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="editStepDescription">Description</Label>
-              <Input
-                id="editStepDescription"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
+            {!isPaymentStep && (
+              <>
+                <div className="space-y-1.5">
+                  <Label htmlFor="editStepName">Name</Label>
+                  <Input id="editStepName" value={name} onChange={(e) => setName(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="editStepDescription">Description</Label>
+                  <Input
+                    id="editStepDescription"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                  />
+                </div>
+              </>
+            )}
 
             {isExplicit && isTnCStep && (
               <>

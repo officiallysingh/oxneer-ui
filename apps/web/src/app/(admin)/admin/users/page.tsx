@@ -181,11 +181,11 @@ export default function UsersPage() {
 
   const phrasesRef = useRef<string[]>(searchParams.getAll('phrases'));
 
-  // Load roles and permissions independently on mount
+  // Load roles (with permissions) and permissions on mount
   useEffect(() => {
     const roleIds = searchParams.getAll('roles');
     const permIds = searchParams.getAll('permissions');
-    Promise.all([adminApi.getRoles(), adminApi.getPermissions()])
+    Promise.all([adminApi.getRoles(true), adminApi.getPermissions()])
       .then(([groups, perms]) => {
         setAllRoles(groups);
         setAllPermissions(perms);
@@ -213,6 +213,14 @@ export default function UsersPage() {
     label: a.label,
     value: a.id,
   }));
+
+  // Group permissions by role for the dropdown
+  const groupedPermissionOptions = allRoles
+    .filter((r) => (r.permissions?.length ?? 0) > 0)
+    .map((r) => ({
+      label: r.label,
+      options: (r.permissions ?? []).map((p) => ({ label: p.label, value: p.id })),
+    }));
 
   const fetchUsers = async (opts?: {
     phrases?: string[];
@@ -675,12 +683,26 @@ export default function UsersPage() {
 
           <div className="min-w-[280px] max-w-[380px] space-y-1">
             <Label className="text-xs font-medium text-muted-foreground">Permissions</Label>
-            <Select<SelectOption, true>
+            <Select
               isMulti
-              options={permissionOptions}
+              options={
+                groupedPermissionOptions.length > 0 ? groupedPermissionOptions : permissionOptions
+              }
               value={selectedPermissions}
               onChange={(vals: MultiValue<SelectOption>) => setSelectedPermissions([...vals])}
               placeholder="All permissions"
+              formatGroupLabel={
+                groupedPermissionOptions.length > 0
+                  ? (group: { label: string; options: SelectOption[] }) => (
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold">{group.label}</span>
+                        <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                          {group.options.length}
+                        </span>
+                      </div>
+                    )
+                  : undefined
+              }
               styles={reactSelectStyles as never}
             />
           </div>

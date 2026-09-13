@@ -595,8 +595,9 @@ export function AuctionStep5Workflow({
     Promise.all([
       auctionsApi.getAuctionWorkflow(auctionId).catch(() => [] as AuctionWorkflowStep[]),
       auctionsApi.getAuctionPolicies(auctionId).catch(() => null),
+      auctionsApi.getAuctionById(auctionId).catch(() => null),
     ])
-      .then(([wf, pol]) => {
+      .then(([wf, pol, auction]) => {
         if (!mounted) return;
         setWorkflow(wf);
         const allItems = pol ?? [];
@@ -605,6 +606,14 @@ export function AuctionStep5Workflow({
         setParticipationPolicies(
           allItems.filter((p) => categoryForPolicyType(p.type) === 'PARTICIPATION'),
         );
+
+        // Populate existing schedule when in schedule-only mode
+        if (showScheduleOnly && auction?.schedule) {
+          const existingStart = toLocalInputValue(auction.schedule.startTime);
+          const existingEnd = toLocalInputValue(auction.schedule.endTime);
+          if (existingStart) setStartTime(existingStart);
+          if (existingEnd) setEndTime(existingEnd);
+        }
 
         // Evaluate every saved policy (workflow-embedded + auction-level) by id,
         // in a single bulk request (POST /policies/evaluate) instead of N+1 calls.
@@ -630,7 +639,7 @@ export function AuctionStep5Workflow({
     return () => {
       mounted = false;
     };
-  }, [auctionId]);
+  }, [auctionId, showScheduleOnly]);
 
   const reloadWorkflow = useCallback(() => {
     auctionsApi

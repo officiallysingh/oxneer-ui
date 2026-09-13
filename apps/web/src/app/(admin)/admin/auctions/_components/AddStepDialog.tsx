@@ -157,8 +157,6 @@ export function AddStepDialog({
   const [uploadingTnc, setUploadingTnc] = useState(false);
 
   // PRE_PAYMENT_STEP / POST_PAYMENT_STEP state
-  const [paymentName, setPaymentName] = useState('');
-  const [paymentDescription, setPaymentDescription] = useState('');
   const [paymentModeValue, setPaymentModeValue] = useState('');
   const [paymentModes, setPaymentModes] = useState<{ value: string; label: string }[]>([]);
   const [offsetDays, setOffsetDays] = useState('0');
@@ -212,8 +210,6 @@ export function AddStepDialog({
     setTncDescription('');
     setTncText('');
     setTncFile(null);
-    setPaymentName('');
-    setPaymentDescription('');
     setPaymentModeValue('');
     setOffsetDays('0');
     setOffsetHours('0');
@@ -457,8 +453,8 @@ export function AddStepDialog({
     }
     void runSubmit(() => ({
       type: 'PAYMENT_STEP',
-      name: paymentName.trim() || undefined,
-      description: paymentDescription.trim() || undefined,
+      name: mode === 'PRE_PAYMENT_STEP' ? 'Pre Payment' : 'Post Payment',
+      description: '',
       order: selectedOrder,
       mode: paymentModeValue,
       phase,
@@ -892,25 +888,6 @@ export function AddStepDialog({
                 ? 'Participant pays this amount before the auction outcome is finalized (e.g. earnest money).'
                 : 'Participant pays this amount after winning the auction (e.g. final settlement).'}
             </p>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="paymentName">Name</Label>
-              <Input
-                id="paymentName"
-                value={paymentName}
-                onChange={(e) => setPaymentName(e.target.value)}
-                placeholder={mode === 'PRE_PAYMENT_STEP' ? 'Pre Payment' : 'Post Payment'}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="paymentDescription">Description</Label>
-              <Input
-                id="paymentDescription"
-                value={paymentDescription}
-                onChange={(e) => setPaymentDescription(e.target.value)}
-                placeholder="Optional description"
-              />
-            </div>
 
             <div className="space-y-1.5">
               <Label>Payment mode</Label>

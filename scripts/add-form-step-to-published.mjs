@@ -13,7 +13,11 @@
 
 const BASE_URL = process.env.OXNEER_BASE_URL || 'http://localhost:8090';
 const API = `${BASE_URL}/api/v1`;
-const FORM_TYPE_ID = process.env.FORM_TYPE_ID || '6aa1fc2273c02a0f0317aa51';
+const FORM_TYPE_ID = process.env.FORM_TYPE_ID;
+if (!FORM_TYPE_ID) {
+  console.error('\x1b[1;31m[FAIL]\x1b[0m  FORM_TYPE_ID is required. Create a custom form first:\n  FORM_NAME="Product Details" bash scripts/create-custom-form.sh');
+  process.exit(1);
+}
 const LISTING_ID = process.env.LISTING_ID || '6a9ffcc3fd9147889996fc52';
 const SUBCATEGORY_ID = '6a9e7e9ebd15b29506b3567d';
 const FORM_STEP_NAME = 'Product Details';

@@ -40,11 +40,13 @@ create_component() {
     -H "Content-Type: application/json" \
     -b "$COOKIE_JAR" \
     -d "$json")
-  if echo "$result" | jq -e '.successes' > /dev/null 2>&1; then
+  if echo "$result" | grep -q '"successes"'; then
+    echo "✓ Created"
+  elif echo "$result" | grep -q '"id"'; then
     echo "✓ Created"
   else
     echo "✗ Failed:"
-    echo "$result" | jq '.'
+    echo "$result"
   fi
 }
 
@@ -120,7 +122,7 @@ create_component \
 
 create_component \
   "Contact Info" \
-  "Email, phone, social handles — email/tel input types, tag input for social" \
+  "Email, phone, social handles - email/tel input types, tag input for social" \
   '{
     "name": "Contact Info",
     "description": "Reusable contact details block with email, phone, and social links",
@@ -159,7 +161,7 @@ create_component \
         "dataType": "STRING",
         "attributes": {
           "ui:component": "tag-input",
-          "html:placeholder": "Add profile URLs…"
+          "html:placeholder": "Add profile URLs..."
         }
       }
     ]
@@ -173,7 +175,7 @@ create_component \
 
 create_component \
   "Product Dimensions" \
-  "Length × width × height composite — uses FLOAT with min/max/step" \
+  "Length x width x height composite - uses FLOAT with min/max/step" \
   '{
     "name": "Product Dimensions",
     "description": "Physical dimensions: length, width, height in cm",
@@ -399,7 +401,7 @@ create_component \
 
 create_component \
   "Text Content" \
-  "Title, body (textarea), tags (tag input), and link — rich text content block" \
+  "Title, body (textarea), tags (tag input), and link - rich text content block" \
   '{
     "name": "Text Content",
     "description": "Rich text content with title, multiline body, tags, and reference URL",
@@ -423,7 +425,7 @@ create_component \
         "attributes": {
           "ui:multiline": "true",
           "ui:rows": "6",
-          "html:placeholder": "Write your content here…"
+          "html:placeholder": "Write your content here..."
         },
         "validators": [{ "type": "NOT_NULL", "message": "Body is required" }]
       },
@@ -434,7 +436,7 @@ create_component \
         "dataType": "STRING",
         "attributes": {
           "ui:component": "tag-input",
-          "html:placeholder": "Add keywords…"
+          "html:placeholder": "Add keywords..."
         }
       },
       {
@@ -559,7 +561,7 @@ create_component \
         "attributes": {
           "ui:multiline": "true",
           "ui:rows": "3",
-          "html:placeholder": "Additional details about the location…"
+          "html:placeholder": "Additional details about the location..."
         }
       }
     ]
@@ -574,7 +576,7 @@ create_component \
 
 create_component \
   "Warranty & Policy" \
-  "Warranty period, return policy, returnable flag — uses pills, toggle, textarea" \
+  "Warranty period, return policy, returnable flag - uses pills, toggle, textarea" \
   '{
     "name": "Warranty & Policy",
     "description": "Warranty period, return policy, and return eligibility settings",
@@ -618,7 +620,7 @@ create_component \
         "attributes": {
           "ui:multiline": "true",
           "ui:rows": "4",
-          "html:placeholder": "Describe warranty terms, coverage, and exclusions…"
+          "html:placeholder": "Describe warranty terms, coverage, and exclusions..."
         }
       }
     ]
@@ -767,7 +769,7 @@ create_component \
         "dataType": "STRING",
         "attributes": {
           "ui:component": "tag-input",
-          "html:placeholder": "e.g. React, TypeScript, Go…"
+          "html:placeholder": "e.g. React, TypeScript, Go..."
         },
         "validators": [{ "type": "NOT_NULL", "message": "At least one skill is required" }]
       },
@@ -798,7 +800,7 @@ create_component \
         "attributes": {
           "ui:multiline": "true",
           "ui:rows": "6",
-          "html:placeholder": "Describe responsibilities, requirements, and benefits…"
+          "html:placeholder": "Describe responsibilities, requirements, and benefits..."
         },
         "validators": [{ "type": "NOT_NULL", "message": "Description is required" }]
       }

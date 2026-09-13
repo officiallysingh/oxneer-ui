@@ -232,8 +232,8 @@ get_workflow_standard() {
   },
   {
     "type": "PAYMENT_STEP",
-    "name": "Security Deposit",
-    "description": "Pay security deposit to participate in auction",
+    "name": "Pre Payment",
+    "description": "",
     "order": 4,
     "phase": "PRE_AUCTION",
     "mode": "ONLINE",
@@ -307,8 +307,8 @@ get_workflow_premium() {
   },
   {
     "type": "PAYMENT_STEP",
-    "name": "Security Deposit",
-    "description": "Pay security deposit to participate in auction",
+    "name": "Pre Payment",
+    "description": "",
     "order": 4,
     "phase": "PRE_AUCTION",
     "mode": "ONLINE",

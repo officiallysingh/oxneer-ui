@@ -5,23 +5,22 @@ set -euo pipefail
 # Server running at http://localhost:8090
 #
 # Usage:
-#   chmod +x scripts/create-demo-listings.sh
-#   ./scripts/create-demo-listings.sh
+#   chmod +x scripts/create-custom-form.sh
+#   ./scripts/create-custom-form.sh
 #
-# Override:
-#   QUANTITY=5 SUBCATEGORY_ID=xxx ./scripts/create-demo-listings.sh
+# Override form name/description:
+#   FORM_NAME="My Form" FORM_DESCRIPTION="Desc" ./scripts/create-custom-form.sh
 
 BASE_URL="${BASE_URL:-http://localhost:8090}"
 API="$BASE_URL/api/v1"
-QUANTITY="${QUANTITY:-20}"
-SUBCATEGORY_ID="${SUBCATEGORY_ID:-}"
+FORM_NAME="${FORM_NAME:-Product Details}"
+FORM_DESCRIPTION="${FORM_DESCRIPTION:-Custom form for additional product information collected from participants}"
 COOKIE_JAR="/tmp/oxneer-cookies.txt"
 rm -f "$COOKIE_JAR"
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 info()  { printf "\033[1;34m[INFO]\033[0m  %s\n" "$*"; }
 ok()    { printf "\033[1;32m[OK]\033[0m    %s\n" "$*"; }
-warn()  { printf "\033[1;33m[WARN]\033[0m  %s\n" "$*"; }
 fail()  { printf "\033[1;31m[FAIL]\033[0m  %s\n" "$*"; exit 1; }
 
 extract_id() {
@@ -31,7 +30,7 @@ extract_id() {
 # ── Login ────────────────────────────────────────────────────────────────────
 echo ""
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║           Oxneer Demo Listing Generator                    ║"
+echo "║            Oxneer Custom Form Generator                    ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo ""
 
@@ -49,63 +48,55 @@ if [[ "$HTTP_CODE" != "200" ]]; then
 fi
 ok "Logged in (JSESSIONID saved)"
 
-# ── Ensure subcategory ──────────────────────────────────────────────────────
-if [ -z "$SUBCATEGORY_ID" ]; then
-  info "Finding existing categories…"
-  CATS_RESP=$(curl -s -b "$COOKIE_JAR" "$API/master/categories")
-  CAT_ID=$(extract_id "$CATS_RESP")
+# ── Create Custom Form ──────────────────────────────────────────────────────
+info "Creating managed type (custom form): $FORM_NAME"
 
-  if [ -z "$CAT_ID" ]; then
-    info "No categories found. Creating 'Electronics'…"
-    CAT_RESP=$(curl -s -X POST "$API/master/categories" \
-      -H 'Content-Type: application/json' \
-      -b "$COOKIE_JAR" \
-      -d '{"name":"Electronics","icon":"fa-solid fa-microchip"}')
-    CAT_ID=$(extract_id "$CAT_RESP")
-    ok "Created category $CAT_ID"
-  else
-    ok "Using existing category $CAT_ID"
-  fi
+PAYLOAD=$(cat <<EOF
+{
+  "name": "$FORM_NAME",
+  "description": "$FORM_DESCRIPTION",
+  "type": "CUSTOM_FORM",
+  "properties": [
+    {
+      "type": "SIMPLE_PROPERTY",
+      "name": "name",
+      "label": "Name",
+      "dataType": "STRING",
+      "validators": [{"type": "NOT_BLANK"}]
+    },
+    {
+      "type": "SIMPLE_PROPERTY",
+      "name": "description",
+      "label": "Description",
+      "dataType": "STRING"
+    },
+    {
+      "type": "SIMPLE_PROPERTY",
+      "name": "category",
+      "label": "Category",
+      "dataType": "STRING"
+    }
+  ]
+}
+EOF
+)
 
-  info "Finding sub-categories for category $CAT_ID…"
-  SUBS_RESP=$(curl -s -b "$COOKIE_JAR" "$API/master/categories/$CAT_ID/sub-categories")
-  SUBCATEGORY_ID=$(extract_id "$SUBS_RESP")
-
-  if [ -z "$SUBCATEGORY_ID" ]; then
-    info "No sub-categories found. Creating 'Smartphones'…"
-    SUB_RESP=$(curl -s -X POST "$API/master/categories/$CAT_ID/sub-categories" \
-      -H 'Content-Type: application/json' \
-      -b "$COOKIE_JAR" \
-      -d '{"name":"Smartphones","icon":"fa-solid fa-mobile-screen"}')
-    SUBCATEGORY_ID=$(extract_id "$SUB_RESP")
-    ok "Created sub-category $SUBCATEGORY_ID"
-  else
-    ok "Using existing sub-category $SUBCATEGORY_ID"
-  fi
-else
-  ok "Using provided sub-category $SUBCATEGORY_ID"
-fi
-echo ""
-
-# ── Create listing ──────────────────────────────────────────────────────────
-info "Creating listing with quantity $QUANTITY…"
-
-RESULT=$(curl -s -X POST "$API/listings" \
+RESULT=$(curl -s -X POST "$API/meta-data/managed-types" \
   -H 'Content-Type: application/json' \
   -b "$COOKIE_JAR" \
-  -d '{"name":"Demo Product","description":"Generic product for demo auctions","tags":["demo"],"subCategory":"'"$SUBCATEGORY_ID"'","quantity":'"$QUANTITY"'}')
+  -d "$PAYLOAD")
 
-LID=$(extract_id "$RESULT")
-if [ -n "$LID" ]; then
-  ok "Created listing $LID"
+FORM_ID=$(extract_id "$RESULT")
+if [ -n "$FORM_ID" ]; then
+  ok "Created custom form: $FORM_ID"
   echo ""
   echo "══════════════════════════════════════════════════════════════"
-  echo "  LISTING_ID=$LID"
+  echo "  MANAGED_TYPE_ID=$FORM_ID"
   echo ""
-  echo "  Use with create-demo-auctions.sh:"
-  echo "    LISTING_ID=$LID MANAGED_TYPE_ID=<form-id> bash scripts/create-demo-auctions.sh"
+  echo "  Use it with create-demo-auctions.sh:"
+  echo "    MANAGED_TYPE_ID=$FORM_id LISTING_ID=<id> bash scripts/create-demo-auctions.sh"
   echo "══════════════════════════════════════════════════════════════"
   echo ""
 else
-  fail "Listing creation failed. Response: $RESULT"
+  fail "Could not create custom form. Response: $RESULT"
 fi

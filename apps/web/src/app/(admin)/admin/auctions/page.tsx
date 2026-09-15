@@ -40,6 +40,7 @@ import {
   makeReactSelectStyles,
 } from '@/components/common/admin/GroupedSubcategorySelect';
 import { formatLabel, resolveStr } from '@/components/common/admin/format';
+import { AuctionsStatsSummary } from './_components/AuctionsStatsSummary';
 
 interface SelectOption {
   label: string;
@@ -624,6 +625,25 @@ export default function AuctionsPage() {
       />
 
       {error && <ErrorAlert message={error} />}
+
+      <AuctionsStatsSummary
+        counts={{
+          all: totalRecords || auctions.length,
+          draft: auctions.filter((a) => resolveStr(a.status).toUpperCase() === 'DRAFT').length,
+          published: auctions.filter((a) => resolveStr(a.status).toUpperCase() === 'PUBLISHED')
+            .length,
+          live: auctions.filter((a) => {
+            const st = resolveStr(a.status).toUpperCase();
+            return st === 'LIVE' || st === 'RUNNING';
+          }).length,
+          completed: auctions.filter((a) => resolveStr(a.status).toUpperCase() === 'COMPLETED')
+            .length,
+          cancelled: auctions.filter((a) => resolveStr(a.status).toUpperCase() === 'CANCELLED')
+            .length,
+        }}
+        activeFilter={status || 'ALL'}
+        onSelectFilter={(s) => setStatus(s === 'ALL' ? '' : s)}
+      />
 
       {/* Filter panel */}
       <div className="rounded-xl border border-border bg-card p-4">

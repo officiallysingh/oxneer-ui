@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useCallback, useEffect, useState, type ReactNode } from 'react';
+import { use, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   auctionsApi,
@@ -27,25 +27,17 @@ import {
   Tag,
   CheckCircle2,
   ClipboardList,
-  Settings2,
-  DollarSign,
-  GitFork,
 } from 'lucide-react';
 import { Button, Badge, Dialog, DialogContent, DialogHeader, DialogTitle, toast } from '@repo/ui';
 import { WorkflowWizard } from '../_components/WorkflowWizard';
 import { PublicAuctionHeader } from './_components/PublicAuctionHeader';
 import { PublicAuctionBiddingCard } from './_components/PublicAuctionBiddingCard';
-import { WorkflowStagesTimeline } from '../../../(admin)/admin/auctions/_components/timeline/WorkflowStagesTimeline';
-
-import type { TimelineNode } from '../../../(admin)/admin/auctions/_components/timeline/types';
 import {
-  stepTypeMeta,
-  PaymentStepDetails,
-  BankDetailStepDetails,
-  ParticipationFormStepDetails,
-  TnCStepDetails,
-  FormStepDetails,
-} from '../../../(admin)/admin/auctions/_components/WorkflowStepDetails';
+  PublicAuctionOverview,
+  PublicWorkflow,
+  PublicDetailRow,
+} from './_components/PublicAuctionSections';
+import { WorkflowStatusCard } from './_components/WorkflowStatusCard';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -69,6 +61,15 @@ function auctionIsJoinable(status?: unknown): boolean {
   return s === 'PUBLISHED' || s === 'LIVE' || s === 'SCHEDULED';
 }
 
+const STATUS_COLORS: Record<string, string> = {
+  LIVE: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30',
+  PUBLISHED: 'bg-blue-500/10 text-blue-600 border-blue-500/30',
+  SCHEDULED: 'bg-amber-500/10 text-amber-600 border-amber-500/30',
+  DRAFT: 'bg-muted text-muted-foreground border-border',
+  CANCELLED: 'bg-red-500/10 text-red-600 border-red-500/30',
+  COMPLETED: 'bg-violet-500/10 text-violet-600 border-violet-500/30',
+};
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function PublicAuctionViewPage({ params }: { params: Promise<{ id: string }> }) {
@@ -85,13 +86,10 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
   // Participant / join state
   const [participant, setParticipant] = useState<ParticipantVM | null>(null);
   const [joining, setJoining] = useState(false);
-  // Did the user join in this session (vs. already a participant on load)?
   const [justJoined, setJustJoined] = useState(false);
-
-  // Workflow wizard
   const [wizardOpen, setWizardOpen] = useState(false);
 
-  // ── Load auction + participant status ───────────────────────────────────────
+  // ── Load auction + participant ───────────────────────────────────────────────
   const loadData = useCallback(async () => {
     try {
       const [auctionData, selfParticipant, workflowData] = await Promise.all([
@@ -120,7 +118,7 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
     loadData();
   }, [loadData]);
 
-  // ── Join auction ────────────────────────────────────────────────────────────
+  // ── Join auction ─────────────────────────────────────────────────────────────
   const handleJoin = async () => {
     if (!isLoggedIn) {
       router.push(`/login?callbackUrl=/auctions/${id}`);
@@ -129,7 +127,6 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
     setJoining(true);
     try {
       await participantsApi.createSelfParticipant(id);
-      // Reload participant to get their record with workflowStatus
       const selfP = await participantsApi.getSelfParticipant(id).catch(() => null);
       setParticipant(selfP);
       setJustJoined(true);
@@ -148,7 +145,7 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
     }
   };
 
-  // ── Workflow helpers ────────────────────────────────────────────────────────
+  // ── Workflow helpers ─────────────────────────────────────────────────────────
   const isParticipant = !!participant;
 
   const workflowHasSteps =
@@ -156,7 +153,6 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
       ? Object.keys(participant.workflowStatus).length > 0
       : false;
 
-  // All steps completed check (all values are COMPLETED/DONE/APPROVED)
   const workflowAllDone =
     isParticipant &&
     workflowHasSteps &&
@@ -165,19 +161,18 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
       return t === 'COMPLETED' || t === 'DONE' || t === 'APPROVED';
     });
 
-  // Refresh participant after wizard completes
   const handleWizardClose = async () => {
     setWizardOpen(false);
     const selfP = await participantsApi.getSelfParticipant(id).catch(() => null);
     setParticipant(selfP);
   };
 
-  // ── Guards ──────────────────────────────────────────────────────────────────
+  // ── Guards ───────────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3 text-muted-foreground">
-          <Loader2 className="h-8 w-8 animate-spin" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-sm">Loading auction details…</p>
         </div>
       </div>
@@ -187,21 +182,23 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
   if (error || !auction) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center px-4">
-        <div className="rounded-xl border border-border bg-card p-8 text-center max-w-md">
-          <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
+        <div className="rounded-2xl border border-border bg-card p-8 text-center max-w-md shadow-sm">
+          <div className="w-14 h-14 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="h-7 w-7 text-red-600 dark:text-red-400" />
           </div>
           <h1 className="text-xl font-semibold text-foreground mb-2">Auction Unavailable</h1>
-          <p className="text-muted-foreground mb-6">
+          <p className="text-muted-foreground mb-6 text-sm">
             {error ?? 'This auction could not be loaded.'}
           </p>
-          <Button onClick={() => router.push('/')}>Go to Homepage</Button>
+          <Button onClick={() => router.push('/')} className="rounded-xl">
+            Go to Homepage
+          </Button>
         </div>
       </div>
     );
   }
 
-  // ── Derived values ──────────────────────────────────────────────────────────
+  // ── Derived values ───────────────────────────────────────────────────────────
   const status = resolveStr(auction.status);
   const accessibility = resolveStr(auction.protocol?.accessibility);
   const direction = resolveStr(auction.protocol?.direction);
@@ -209,22 +206,13 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
   const DirectionIcon = resolveDirectionIcon(auction.protocol?.direction);
   const joinable = auctionIsJoinable(auction.status);
   const currency = resolveStr(auction.monetaryOptions?.currencyUnit);
+  const statusColor = STATUS_COLORS[status] ?? 'bg-muted text-muted-foreground border-border';
 
-  const statusColorMap: Record<string, string> = {
-    LIVE: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30',
-    PUBLISHED: 'bg-blue-500/10 text-blue-600 border-blue-500/30',
-    SCHEDULED: 'bg-amber-500/10 text-amber-600 border-amber-500/30',
-    DRAFT: 'bg-muted text-muted-foreground border-border',
-    CANCELLED: 'bg-red-500/10 text-red-600 border-red-500/30',
-    COMPLETED: 'bg-violet-500/10 text-violet-600 border-violet-500/30',
-  };
-  const statusColor = statusColorMap[status] ?? 'bg-muted text-muted-foreground border-border';
-
-  // ── Render ──────────────────────────────────────────────────────────────────
+  // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <>
-      <div className="container  mx-auto px-4 py-10 space-y-8">
-        {/* Back */}
+      <div className="container mx-auto px-4 py-10 space-y-8">
+        {/* Back navigation */}
         <button
           type="button"
           onClick={() => router.push('/')}
@@ -234,7 +222,7 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
           Back to auctions
         </button>
 
-        {/* ── Header card ───────────────────────────────────────────────────── */}
+        {/* ── Header card ─────────────────────────────────────────────────────── */}
         <div className="rounded-2xl border border-border bg-card p-6 md:p-8 shadow-sm space-y-6">
           {/* Status + badges */}
           <div className="flex flex-wrap items-center gap-2">
@@ -381,9 +369,8 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
             )}
           </div>
 
-          {/* ── CTA area ────────────────────────────────────────────────────── */}
+          {/* ── CTA area ──────────────────────────────────────────────────────── */}
           <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-border/60">
-            {/* Already a participant */}
             {isParticipant ? (
               <div className="flex flex-wrap items-center gap-3 w-full">
                 <div className="flex items-center gap-2 text-emerald-600 font-medium text-sm">
@@ -393,7 +380,6 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
                     : 'You are registered for this auction'}
                 </div>
 
-                {/* Complete workflow button — only shown when auction has workflow steps */}
                 {joinable && (
                   <>
                     {workflowAllDone ? (
@@ -406,7 +392,7 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
                         variant="outline"
                         size="sm"
                         onClick={() => setWizardOpen(true)}
-                        className="gap-2 border-primary/40 text-primary hover:bg-primary/5"
+                        className="gap-2 border-primary/40 text-primary hover:bg-primary/5 rounded-xl"
                       >
                         <ClipboardList className="h-4 w-4" />
                         Complete Registration Steps
@@ -416,12 +402,11 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
                 )}
               </div>
             ) : joinable ? (
-              /* Not a participant yet — show Join button */
               <Button
                 size="lg"
                 onClick={handleJoin}
                 disabled={joining}
-                className="gap-2 min-w-[160px]"
+                className="gap-2 min-w-[160px] rounded-xl"
               >
                 {joining ? (
                   <>
@@ -447,7 +432,7 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
           </div>
         </div>
 
-        {/* ── Workflow status summary (when participant has steps) ─────────── */}
+        {/* ── Workflow status summary (registered participants with steps) ──── */}
         {isParticipant &&
           participant?.workflowStatus &&
           Object.keys(participant.workflowStatus).length > 0 && (
@@ -459,8 +444,8 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
             />
           )}
 
+        {/* ── Auction item + detail cards ─────────────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-          {/* ── Unit / item details ────────────────────────────────────────── */}
           {auction.unit && (
             <div className="h-full rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-3">
@@ -491,10 +476,12 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
 
           <PublicAuctionOverview auction={auction} />
         </div>
+
+        {/* ── Workflow stages timeline ─────────────────────────────────────────── */}
         {workflow.length > 0 && <PublicWorkflow workflow={workflow} auction={auction} />}
       </div>
 
-      {/* ── Workflow Wizard Dialog ─────────────────────────────────────────── */}
+      {/* ── Workflow Wizard Dialog ──────────────────────────────────────────── */}
       <Dialog open={wizardOpen} onOpenChange={(o) => !o && handleWizardClose()}>
         <DialogContent className="max-w-3xl p-0 overflow-hidden max-h-[90vh] flex flex-col">
           <DialogHeader className="px-6 py-4 border-b border-border shrink-0">
@@ -509,264 +496,5 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
         </DialogContent>
       </Dialog>
     </>
-  );
-}
-
-function PublicAuctionOverview({ auction }: { auction: AuctionVM }) {
-  return (
-    <>
-      <div className="h-full rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-            <DollarSign className="h-5 w-5 text-primary" />
-          </div>
-          <h2 className="text-base font-semibold text-foreground">Monetary options</h2>
-        </div>
-        <div className="space-y-3 text-sm">
-          <PublicDetailRow label="Currency unit">
-            {resolveStr(auction.monetaryOptions?.currencyUnit) || '—'}
-          </PublicDetailRow>
-          <PublicDetailRow label="Precision">
-            {auction.monetaryOptions?.precision != null
-              ? `${auction.monetaryOptions.precision} decimal places`
-              : '—'}
-          </PublicDetailRow>
-          <PublicDetailRow label="Rounding mode">
-            {formatLabel(auction.monetaryOptions?.roundingMode) || '—'}
-          </PublicDetailRow>
-        </div>
-      </div>
-
-      <div className="h-full rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-            <Settings2 className="h-5 w-5 text-primary" />
-          </div>
-          <h2 className="text-base font-semibold text-foreground">Auction settings</h2>
-        </div>
-        <div className="space-y-3 text-sm">
-          <PublicDetailRow label="Accessibility">
-            {formatLabel(auction.protocol?.accessibility) || '—'}
-          </PublicDetailRow>
-          <PublicDetailRow label="Dimension">
-            {formatLabel(auction.protocol?.dimension) || '—'}
-          </PublicDetailRow>
-          <PublicDetailRow label="Participant visibility">
-            {formatLabel(auction.protocol?.participantVisibility) || '—'}
-          </PublicDetailRow>
-          <PublicDetailRow label="Offer visibility">
-            {formatLabel(auction.protocol?.offerVisibility) || '—'}
-          </PublicDetailRow>
-        </div>
-      </div>
-    </>
-  );
-}
-
-function PublicDetailRow({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="flex items-center justify-between gap-4 border-b border-border/50 pb-2 last:border-0 last:pb-0">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium text-foreground text-right">{children}</span>
-    </div>
-  );
-}
-
-function PublicWorkflow({
-  workflow,
-  auction,
-}: {
-  workflow: AuctionWorkflowStep[];
-  auction: AuctionVM;
-}) {
-  const preAuctionNodes = buildPublicWorkflowNodes(
-    workflow.filter((step) => publicWorkflowPhase(step) === 'PRE_AUCTION'),
-  );
-  const postAuctionNodes = buildPublicWorkflowNodes(
-    workflow.filter((step) => publicWorkflowPhase(step) === 'POST_AUCTION'),
-  );
-
-  return (
-    <section className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-5">
-      <div className="flex items-start gap-3">
-        <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-          <GitFork className="h-5 w-5 text-primary" />
-        </div>
-        <div>
-          <h2 className="text-base font-semibold text-foreground">Participation workflow</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Follow these steps to complete your registration for the auction.
-          </p>
-        </div>
-      </div>
-
-      <WorkflowStagesTimeline
-        preAuctionNodes={preAuctionNodes}
-        postAuctionNodes={postAuctionNodes}
-        auction={auction}
-      />
-    </section>
-  );
-}
-
-function publicWorkflowPhase(step: AuctionWorkflowStep): 'PRE_AUCTION' | 'POST_AUCTION' {
-  return resolveStr(step.phase) === 'POST_AUCTION' || step.postPayment === true
-    ? 'POST_AUCTION'
-    : 'PRE_AUCTION';
-}
-
-function publicStepDetails(step: AuctionWorkflowStep): ReactNode {
-  switch (resolveStr(step.type)) {
-    case 'PAYMENT_STEP':
-      return <PaymentStepDetails step={step} />;
-    case 'BANK_DETAIL_FORM_STEP':
-      return <BankDetailStepDetails />;
-    case 'PARTICIPATION_FORM_STEP':
-      return <ParticipationFormStepDetails step={step} />;
-    case 'TNC_FORM_STEP':
-      return <TnCStepDetails step={step} />;
-    case 'FORM_STEP':
-      return <FormStepDetails step={step} />;
-    default:
-      return null;
-  }
-}
-
-function buildPublicWorkflowNodes(workflow: AuctionWorkflowStep[]): TimelineNode[] {
-  return [...workflow]
-    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-    .map((step, index) => {
-      const type = resolveStr(step.type);
-      const meta = stepTypeMeta(type);
-      const details = publicStepDetails(step);
-
-      return {
-        id: step.id ?? `public-workflow-step-${index}`,
-        label: formatLabel(type) || 'Workflow step',
-        Icon: meta.Icon,
-        dotClass: meta.dot,
-        labelClass: meta.text,
-        borderClass: meta.border,
-        title: step.name || formatLabel(type) || `Step ${index + 1}`,
-        subs: step.description ? [step.description] : [],
-        details,
-      };
-    });
-}
-
-// ── Workflow status summary card ──────────────────────────────────────────────
-
-import type { ParticipantWorkflowStepStatus } from '@repo/api';
-
-function WorkflowStatusCard({
-  workflow,
-  workflowStatus,
-  onOpenWizard,
-  allDone,
-}: {
-  workflow: AuctionWorkflowStep[];
-  workflowStatus: Record<string, ParticipantWorkflowStepStatus>;
-  onOpenWizard: () => void;
-  allDone: boolean;
-}) {
-  const stepNameById = new Map<string, string>();
-  const stepOrderById = new Map<string, number>();
-  for (const step of workflow) {
-    if (step.id) {
-      const type = resolveStr(step.type);
-      stepNameById.set(step.id, step.name || formatLabel(type) || 'Step');
-      stepOrderById.set(step.id, step.order ?? Infinity);
-    }
-  }
-
-  // Sort entries by workflow step order
-  const entries = Object.entries(workflowStatus).sort(
-    ([a], [b]) => (stepOrderById.get(a) ?? Infinity) - (stepOrderById.get(b) ?? Infinity),
-  );
-  const completedCount = entries.filter(([, s]) => {
-    const t = resolveStr(s.type);
-    return t === 'COMPLETED' || t === 'DONE' || t === 'APPROVED';
-  }).length;
-
-  return (
-    <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
-          <ClipboardList className="h-5 w-5 text-primary" />
-          Registration Steps
-        </h2>
-        {!allDone && (
-          <Button size="sm" variant="outline" onClick={onOpenWizard} className="gap-1.5">
-            <ClipboardList className="h-3.5 w-3.5" />
-            Continue
-          </Button>
-        )}
-      </div>
-
-      {/* Progress bar */}
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>
-            {completedCount} of {entries.length} completed
-          </span>
-          <span>{Math.round((completedCount / entries.length) * 100)}%</span>
-        </div>
-        <div className="h-2 rounded-full bg-muted overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all ${allDone ? 'bg-emerald-500' : 'bg-primary'}`}
-            style={{ width: `${(completedCount / entries.length) * 100}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Step list */}
-      <div className="space-y-1.5">
-        {entries.map(([stepId, s]) => {
-          const t = resolveStr(s.type);
-          const done = t === 'COMPLETED' || t === 'DONE' || t === 'APPROVED';
-          const pending = t === 'PENDING' || t === 'IN_PROGRESS';
-          return (
-            <div
-              key={stepId}
-              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm ${
-                done
-                  ? 'bg-emerald-500/5 text-emerald-700'
-                  : pending
-                    ? 'bg-amber-500/5 text-amber-700'
-                    : 'bg-muted/30 text-muted-foreground'
-              }`}
-            >
-              {done ? (
-                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
-              ) : pending ? (
-                <Loader2 className="h-4 w-4 shrink-0 text-amber-500" />
-              ) : (
-                <div className="h-4 w-4 shrink-0 rounded-full border-2 border-current opacity-40" />
-              )}
-              <span className="flex-1 truncate font-medium">
-                {stepNameById.get(stepId) || formatLabel(t) || 'Step'}
-              </span>
-              <span
-                className={`text-[11px] font-medium shrink-0 ${done ? 'text-emerald-600' : pending ? 'text-amber-600' : 'text-muted-foreground'}`}
-              >
-                {formatLabel(t)}
-              </span>
-              {s.updatedAt && (
-                <span className="text-[10px] text-muted-foreground shrink-0">
-                  {formatDateTime(s.updatedAt)}
-                </span>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {allDone && (
-        <div className="flex items-center gap-2 text-sm text-emerald-600 bg-emerald-500/10 px-4 py-2.5 rounded-lg">
-          <CheckCircle2 className="h-4 w-4 shrink-0" />
-          All registration steps completed. You are fully registered to participate.
-        </div>
-      )}
-    </div>
   );
 }

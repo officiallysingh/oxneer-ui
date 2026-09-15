@@ -41,6 +41,7 @@ import Tip from '@/components/common/admin/Tip';
 import { PhrasesInput } from '@/components/common/admin/PhrasesInput';
 import { ListingThumbnail } from '@/components/common/admin/ListingThumbnail';
 import { ICON_REGISTRY } from '@/components/common/iconRegistry';
+import { ListingsStatsSummary } from './_components/ListingsStatsSummary';
 
 type MediaType = 'image' | 'video' | 'doc';
 
@@ -800,6 +801,23 @@ export default function ListingsPage() {
       />
 
       {error && <ErrorAlert message={error} />}
+
+      <ListingsStatsSummary
+        counts={{
+          all: totalRecords || listings.length,
+          active: listings.filter((l) => l.available !== false).length,
+          pending: listings.filter((l) => l.available === false).length,
+          draft: listings.filter((l) => !l.category).length,
+        }}
+        activeFilter={
+          availableFilter === 'true' ? 'ACTIVE' : availableFilter === 'false' ? 'PENDING' : 'ALL'
+        }
+        onSelectFilter={(filter) => {
+          if (filter === 'ACTIVE') setAvailableFilter('true');
+          else if (filter === 'PENDING') setAvailableFilter('false');
+          else setAvailableFilter('all');
+        }}
+      />
 
       {/* Filter panel */}
       <div className="rounded-xl border border-border bg-card p-4">

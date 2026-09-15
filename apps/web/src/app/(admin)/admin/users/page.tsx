@@ -32,6 +32,7 @@ import Tip from '@/components/common/admin/Tip';
 import { TagList } from '@/components/common/admin/TagList';
 import { PhrasesInput } from '@/components/common/admin/PhrasesInput';
 import { UserAvatar } from '@/components/common/admin/UserAvatar';
+import { UsersStatsSummary } from './_components/UsersStatsSummary';
 
 interface SelectOption {
   label: string;
@@ -632,6 +633,24 @@ export default function UsersPage() {
       />
 
       {error && <ErrorAlert message={error} />}
+
+      <UsersStatsSummary
+        counts={{
+          all: totalRecords || users.length,
+          active: users.filter((u) => u.enabled !== false).length,
+          pending: users.filter((u) => u.emailIdVerified === false || u.mobileNoVerified === false)
+            .length,
+          disabled: users.filter((u) => u.enabled === false).length,
+        }}
+        activeFilter={
+          enabledFilter === 'true' ? 'ACTIVE' : enabledFilter === 'false' ? 'DISABLED' : 'ALL'
+        }
+        onSelectFilter={(f) => {
+          if (f === 'ACTIVE') setEnabledFilter('true');
+          else if (f === 'DISABLED') setEnabledFilter('false');
+          else setEnabledFilter('');
+        }}
+      />
 
       {/* Filter panel */}
       <div className="rounded-xl border border-border bg-card p-4">

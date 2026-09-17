@@ -265,9 +265,7 @@ export function ListingCardGrid({
                   )}
                   {sub && (
                     <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary">
-                      {/* @ts-expect-error sub is object */}
                       {sub.icon && <span>{sub.icon}</span>}
-                      {/* @ts-expect-error sub is object */}
                       {sub.name}
                     </span>
                   )}

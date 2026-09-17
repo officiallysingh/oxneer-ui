@@ -4,8 +4,8 @@ import { type ReactNode } from 'react';
 import { type AuctionVM, type AuctionWorkflowStep } from '@repo/api';
 import { GitFork, DollarSign, Settings2 } from 'lucide-react';
 import { resolveStr, formatLabel } from '@/components/common/admin/format';
-import { WorkflowStagesTimeline } from '../../(admin)/admin/auctions/_components/timeline/WorkflowStagesTimeline';
-import type { TimelineNode } from '../../(admin)/admin/auctions/_components/timeline/types';
+import { WorkflowStagesTimeline } from '@/app/(admin)/admin/auctions/_components/timeline/WorkflowStagesTimeline';
+import type { TimelineNode } from '@/app/(admin)/admin/auctions/_components/timeline/types';
 import {
   stepTypeMeta,
   PaymentStepDetails,
@@ -13,7 +13,7 @@ import {
   ParticipationFormStepDetails,
   TnCStepDetails,
   FormStepDetails,
-} from '../../(admin)/admin/auctions/_components/WorkflowStepDetails';
+} from '@/app/(admin)/admin/auctions/_components/WorkflowStepDetails';
 
 // ── Detail row primitive ──────────────────────────────────────────────────────
 

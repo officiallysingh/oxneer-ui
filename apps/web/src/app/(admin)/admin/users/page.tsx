@@ -748,13 +748,13 @@ export default function UsersPage() {
         </div>
 
         <div className="flex items-center justify-end gap-2 pt-4 border-t border-border mt-4">
-          <Button variant="outline" size="sm" onClick={handleReset} className="gap-1.5">
-            <RefreshCw className="h-3.5 w-3.5" />
-            Reset
-          </Button>
           <Button size="sm" onClick={handleSearch} disabled={isLoading} className="gap-1.5">
             <Search className="h-3.5 w-3.5" />
             Search
+          </Button>
+          <Button size="sm" variant="outline" onClick={handleReset} className="gap-1.5">
+            <X className="h-3.5 w-3.5" />
+            Reset
           </Button>
         </div>
       </div>

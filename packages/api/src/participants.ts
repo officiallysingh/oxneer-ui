@@ -48,6 +48,8 @@ export interface ParticipantWorkflowStepRQ {
   bankDetailId?: string;
   /** For TNC_FORM_STEP — true when user accepts the terms. */
   accepted?: boolean;
+
+  paymentOrderId?: string;
   /** Fallback for other step types. */
   data?: Record<string, unknown>;
 }

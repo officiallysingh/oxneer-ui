@@ -58,6 +58,10 @@ function StepIcon({ type, className }: { type: string; className?: string }) {
   return <Icon className={className} />;
 }
 
+const generateMongoId = (): string => {
+  return crypto.randomUUID().replace(/-/g, '').slice(0, 24);
+};
+
 // ── Main Wizard Component ─────────────────────────────────────────────────────
 
 export interface WorkflowWizardProps {
@@ -145,10 +149,11 @@ export function WorkflowWizard({ auctionId, onClose }: WorkflowWizardProps) {
           pathWiseState: (formData.data as Record<string, unknown>) ?? formData,
         };
       } else {
-        rq.data = {
-          ...((formData.data as Record<string, unknown>) ?? formData),
-          paymentOrderId: '000000000000000000000000',
-        };
+        // rq.data = {
+        //   ...((formData.data as Record<string, unknown>) ?? formData),
+        //   paymentOrderId: generateMongoId(),
+        // };
+        rq.paymentOrderId = generateMongoId();
       }
 
       const isAlreadySubmitted = stepIsCompleted(currentStep, participant);

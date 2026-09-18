@@ -30,8 +30,6 @@ import {
 } from 'lucide-react';
 import { Button, Badge, Dialog, DialogContent, DialogHeader, DialogTitle, toast } from '@repo/ui';
 import { WorkflowWizard } from '../_components/WorkflowWizard';
-import { PublicAuctionHeader } from './_components/PublicAuctionHeader';
-import { PublicAuctionBiddingCard } from './_components/PublicAuctionBiddingCard';
 import {
   PublicAuctionOverview,
   PublicWorkflow,

@@ -55,10 +55,15 @@ export function ParticipantCustomForm({
     onSubmit({ data: buildPathWiseState(values, managedType) });
   };
 
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSubmit();
+  };
+
   const displayError = validationError ?? error;
 
   return (
-    <div className="space-y-5">
+    <form onSubmit={handleFormSubmit} className="space-y-5">
       <div className="space-y-1">
         <h3 className="font-semibold text-foreground text-sm">
           {step.name || formatLabel(resolveStepType(step))}
@@ -92,7 +97,10 @@ export function ParticipantCustomForm({
       )}
 
       {displayError && (
-        <div className="flex items-start gap-2.5 rounded-xl bg-destructive/10 border border-destructive/20 p-3.5 text-xs text-destructive">
+        <div
+          role="alert"
+          className="flex items-start gap-2.5 rounded-xl bg-destructive/10 border border-destructive/20 p-3.5 text-xs text-destructive"
+        >
           <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
           <span>{displayError}</span>
         </div>
@@ -100,7 +108,7 @@ export function ParticipantCustomForm({
 
       <div className="flex justify-end pt-2">
         <Button
-          onClick={handleSubmit}
+          type="submit"
           disabled={submitting}
           className="gap-2 min-w-[150px] rounded-xl text-xs font-semibold py-5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs"
         >
@@ -114,7 +122,7 @@ export function ParticipantCustomForm({
           )}
         </Button>
       </div>
-    </div>
+    </form>
   );
 }
 
@@ -134,6 +142,7 @@ export function SingleField({ prop, value, onChange }: SingleFieldProps) {
       const t = resolveStr(v.type as unknown);
       return t === 'NOT_NULL';
     });
+  const fieldId = `field-${prop.name}`;
   const strVal = value !== undefined && value !== null ? String(value) : '';
   const attrs = prop.attributes ?? {};
   const options = attrs['style:options']
@@ -150,7 +159,13 @@ export function SingleField({ prop, value, onChange }: SingleFieldProps) {
 
   if (options) {
     input = (
-      <select value={strVal} onChange={(e) => onChange(e.target.value)} className={inputBase}>
+      <select
+        id={fieldId}
+        value={strVal}
+        onChange={(e) => onChange(e.target.value)}
+        className={inputBase}
+        aria-required={isReq}
+      >
         <option value="">Select…</option>
         {options.map((o) => (
           <option key={o.value} value={o.value}>
@@ -183,19 +198,23 @@ export function SingleField({ prop, value, onChange }: SingleFieldProps) {
   } else if (dt === 'LOCAL_DATE') {
     input = (
       <input
+        id={fieldId}
         type="date"
         value={strVal}
         onChange={(e) => onChange(e.target.value)}
         className={inputBase}
+        aria-required={isReq}
       />
     );
   } else if (dt === 'LOCAL_DATE_TIME') {
     input = (
       <input
+        id={fieldId}
         type="datetime-local"
         value={strVal}
         onChange={(e) => onChange(e.target.value)}
         className={inputBase}
+        aria-required={isReq}
       />
     );
   } else if (
@@ -205,6 +224,7 @@ export function SingleField({ prop, value, onChange }: SingleFieldProps) {
   ) {
     input = (
       <input
+        id={fieldId}
         type="number"
         value={strVal}
         onChange={(e) => onChange(e.target.value)}
@@ -216,11 +236,13 @@ export function SingleField({ prop, value, onChange }: SingleFieldProps) {
           (dt.includes('DECIMAL') || dt === 'FLOAT' || dt === 'DOUBLE' ? 'any' : '1')
         }
         className={`${inputBase} [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none`}
+        aria-required={isReq}
       />
     );
   } else if (dt === 'FILE') {
     input = (
       <input
+        id={fieldId}
         type="file"
         accept={attrs['html:accept']}
         onChange={(e) => {
@@ -231,6 +253,7 @@ export function SingleField({ prop, value, onChange }: SingleFieldProps) {
           reader.readAsDataURL(file);
         }}
         className="w-full text-sm text-foreground file:mr-4 file:rounded-lg file:border-0 file:bg-primary/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary hover:file:bg-primary/20 transition-colors"
+        aria-required={isReq}
       />
     );
   } else if (
@@ -239,16 +262,19 @@ export function SingleField({ prop, value, onChange }: SingleFieldProps) {
   ) {
     input = (
       <textarea
+        id={fieldId}
         value={strVal}
         onChange={(e) => onChange(e.target.value)}
         placeholder={attrs['html:placeholder'] ?? `Enter ${prop.label.toLowerCase()}…`}
         rows={Number(attrs['ui:rows'] ?? 3)}
         className={`${inputBase} resize-none`}
+        aria-required={isReq}
       />
     );
   } else {
     input = (
       <input
+        id={fieldId}
         type="text"
         value={strVal}
         onChange={(e) => onChange(e.target.value)}
@@ -256,13 +282,14 @@ export function SingleField({ prop, value, onChange }: SingleFieldProps) {
         maxLength={attrs['html:maxlength'] ? Number(attrs['html:maxlength']) : undefined}
         pattern={attrs['html:pattern']}
         className={inputBase}
+        aria-required={isReq}
       />
     );
   }
 
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs font-semibold">
+      <Label htmlFor={dt === 'BOOLEAN' ? undefined : fieldId} className="text-xs font-semibold">
         {prop.label}
         {isReq && <span className="text-destructive ml-0.5">*</span>}
       </Label>

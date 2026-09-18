@@ -16,8 +16,15 @@ export function TnCFormStep({ step, onSubmit, submitting, error }: TnCFormStepPr
   const [accepted, setAccepted] = useState(false);
   const html = step.tncText ?? '';
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (accepted && !submitting) {
+      onSubmit({ accepted: true });
+    }
+  };
+
   return (
-    <div className="space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div className="flex items-center gap-3 p-4 bg-muted/30 border border-border/60 rounded-2xl">
         <div className="p-2.5 rounded-xl bg-primary/10 text-primary shrink-0">
           <ShieldCheck className="h-5 w-5" />
@@ -25,7 +32,9 @@ export function TnCFormStep({ step, onSubmit, submitting, error }: TnCFormStepPr
         <div>
           <h3 className="font-bold text-foreground text-sm">{step.name || 'Terms & Conditions'}</h3>
           {step.description && (
-            <p className="text-xs text-muted-foreground mt-0.5">{step.description}</p>
+            <p id="tnc-description" className="text-xs text-muted-foreground mt-0.5">
+              {step.description}
+            </p>
           )}
         </div>
       </div>
@@ -44,12 +53,17 @@ export function TnCFormStep({ step, onSubmit, submitting, error }: TnCFormStepPr
         </p>
       )}
 
-      <label className="flex items-start gap-3 cursor-pointer select-none group p-3 bg-muted/20 hover:bg-muted/40 rounded-xl border border-border/50 transition-colors">
+      <label
+        htmlFor="tnc-checkbox"
+        className="flex items-start gap-3 cursor-pointer select-none group p-3 bg-muted/20 hover:bg-muted/40 rounded-xl border border-border/50 transition-colors"
+      >
         <input
+          id="tnc-checkbox"
           type="checkbox"
           checked={accepted}
           onChange={(e) => setAccepted(e.target.checked)}
           className="mt-0.5 h-4 w-4 rounded accent-primary cursor-pointer"
+          aria-describedby={step.description ? 'tnc-description' : undefined}
         />
         <span className="text-xs sm:text-sm font-medium text-foreground group-hover:text-foreground/90">
           I have read, understood, and agree to the terms and conditions above.
@@ -57,7 +71,10 @@ export function TnCFormStep({ step, onSubmit, submitting, error }: TnCFormStepPr
       </label>
 
       {error && (
-        <div className="flex items-start gap-2.5 rounded-xl bg-destructive/10 border border-destructive/20 p-3.5 text-xs text-destructive">
+        <div
+          role="alert"
+          className="flex items-start gap-2.5 rounded-xl bg-destructive/10 border border-destructive/20 p-3.5 text-xs text-destructive"
+        >
           <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
@@ -65,7 +82,7 @@ export function TnCFormStep({ step, onSubmit, submitting, error }: TnCFormStepPr
 
       <div className="flex justify-end pt-2">
         <Button
-          onClick={() => onSubmit({ accepted: true })}
+          type="submit"
           disabled={!accepted || submitting}
           className="gap-2 min-w-[150px] rounded-xl text-xs font-semibold py-5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs"
         >
@@ -79,6 +96,6 @@ export function TnCFormStep({ step, onSubmit, submitting, error }: TnCFormStepPr
           )}
         </Button>
       </div>
-    </div>
+    </form>
   );
 }

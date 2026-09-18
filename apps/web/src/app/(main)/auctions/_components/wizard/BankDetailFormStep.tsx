@@ -79,37 +79,42 @@ export function BankDetailFormStep({ step, onSubmit, submitting, error }: BankDe
           </Button>
         </div>
       ) : (
-        <div className="space-y-2.5">
-          {bankDetails.map((d) => (
-            <label
-              key={d.id}
-              className={`flex items-center gap-3 rounded-2xl border p-4 cursor-pointer transition-all ${
-                selectedId === d.id
-                  ? 'border-primary bg-primary/5 shadow-xs ring-1 ring-primary/20'
-                  : 'border-border/70 bg-card hover:border-border'
-              }`}
-            >
-              <input
-                type="radio"
-                name="bankDetail"
-                value={d.id}
-                checked={selectedId === d.id}
-                onChange={() => setSelectedId(d.id)}
-                className="accent-primary cursor-pointer"
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-foreground">{d.bank?.name ?? '—'}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  IFSC: {d.ifscCode} · A/C: ···{d.accountNo.slice(-4)}
-                </p>
-              </div>
-              {d.primary && (
-                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 shrink-0 border border-emerald-500/30">
-                  Primary
-                </span>
-              )}
-            </label>
-          ))}
+        <div className="space-y-2.5" role="radiogroup" aria-label="Select saved bank account">
+          {bankDetails.map((d) => {
+            const radioId = `bank-radio-${d.id}`;
+            return (
+              <label
+                key={d.id}
+                htmlFor={radioId}
+                className={`flex items-center gap-3 rounded-2xl border p-4 cursor-pointer transition-all ${
+                  selectedId === d.id
+                    ? 'border-primary bg-primary/5 shadow-xs ring-1 ring-primary/20'
+                    : 'border-border/70 bg-card hover:border-border'
+                }`}
+              >
+                <input
+                  id={radioId}
+                  type="radio"
+                  name="bankDetail"
+                  value={d.id}
+                  checked={selectedId === d.id}
+                  onChange={() => setSelectedId(d.id)}
+                  className="accent-primary cursor-pointer"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-foreground">{d.bank?.name ?? '—'}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    IFSC: {d.ifscCode} · A/C: ···{d.accountNo.slice(-4)}
+                  </p>
+                </div>
+                {d.primary && (
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 shrink-0 border border-emerald-500/30">
+                    Primary
+                  </span>
+                )}
+              </label>
+            );
+          })}
           <Button
             variant="ghost"
             size="sm"
@@ -123,7 +128,10 @@ export function BankDetailFormStep({ step, onSubmit, submitting, error }: BankDe
       )}
 
       {error && (
-        <div className="flex items-start gap-2.5 rounded-xl bg-destructive/10 border border-destructive/20 p-3.5 text-xs text-destructive">
+        <div
+          role="alert"
+          className="flex items-start gap-2.5 rounded-xl bg-destructive/10 border border-destructive/20 p-3.5 text-xs text-destructive"
+        >
           <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
@@ -227,8 +235,11 @@ function AddBankDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">Bank Name *</Label>
+            <Label htmlFor="add-bank-id" className="text-xs font-semibold">
+              Bank Name *
+            </Label>
             <select
+              id="add-bank-id"
               value={form.bankId}
               onChange={(e) => set('bankId', e.target.value)}
               className="w-full px-3 py-2 text-sm bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -244,8 +255,11 @@ function AddBankDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">IFSC Code *</Label>
+            <Label htmlFor="add-bank-ifsc" className="text-xs font-semibold">
+              IFSC Code *
+            </Label>
             <Input
+              id="add-bank-ifsc"
               value={form.ifscCode}
               onChange={(e) => set('ifscCode', e.target.value.toUpperCase())}
               placeholder="e.g. SBIN0001234"
@@ -255,8 +269,11 @@ function AddBankDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">Account Number *</Label>
+            <Label htmlFor="add-bank-account" className="text-xs font-semibold">
+              Account Number *
+            </Label>
             <Input
+              id="add-bank-account"
               value={form.accountNo}
               onChange={(e) => set('accountNo', e.target.value)}
               placeholder="Account number"
@@ -265,7 +282,11 @@ function AddBankDialog({
             />
           </div>
 
-          {error && <p className="text-xs text-destructive font-medium">{error}</p>}
+          {error && (
+            <p role="alert" className="text-xs text-destructive font-medium">
+              {error}
+            </p>
+          )}
 
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="ghost" onClick={onClose} className="rounded-xl text-xs">

@@ -1,8 +1,8 @@
 'use client';
 
 import { AuctionVM, ParticipantVM } from '@repo/api';
-import { Button, Badge } from '@repo/ui';
-import { IndianRupee, Gavel, CheckCircle2, Clock, GitFork, Loader2 } from 'lucide-react';
+import { Button } from '@repo/ui';
+import { Gavel, CheckCircle2, Clock, GitFork, Loader2 } from 'lucide-react';
 import { formatDateTime } from '@/components/common/admin/format';
 
 interface PublicAuctionBiddingCardProps {

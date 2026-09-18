@@ -654,25 +654,14 @@ export default function UsersPage() {
 
       {/* Filter panel */}
       <div className="rounded-xl border border-border bg-card p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
-          <div className="flex items-center gap-2">
-            <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
-            <h3 className="text-sm font-semibold">Filters</h3>
-            {activeFilterCount > 0 && (
-              <Badge variant="secondary" className="rounded-full px-2 py-0.5 text-xs">
-                {activeFilterCount} {activeFilterCount === 1 ? 'filter' : 'filters'} active
-              </Badge>
-            )}
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 text-muted-foreground hover:text-foreground"
-            onClick={handleReset}
-          >
-            <X className="h-3.5 w-3.5 mr-1" />
-            Clear all
-          </Button>
+        <div className="flex flex-wrap items-center gap-2 border-b border-border pb-3">
+          <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
+          <h3 className="text-sm font-semibold">Filters</h3>
+          {activeFilterCount > 0 && (
+            <Badge variant="secondary" className="rounded-full px-2 py-0.5 text-xs">
+              {activeFilterCount} {activeFilterCount === 1 ? 'filter' : 'filters'} active
+            </Badge>
+          )}
         </div>
 
         <div className="flex flex-wrap items-end gap-3 pt-4">
@@ -756,6 +745,17 @@ export default function UsersPage() {
             trueLabel="Verified"
             falseLabel="Unverified"
           />
+        </div>
+
+        <div className="flex items-center justify-end gap-2 pt-4 border-t border-border mt-4">
+          <Button variant="outline" size="sm" onClick={handleReset} className="gap-1.5">
+            <RefreshCw className="h-3.5 w-3.5" />
+            Reset
+          </Button>
+          <Button size="sm" onClick={handleSearch} disabled={isLoading} className="gap-1.5">
+            <Search className="h-3.5 w-3.5" />
+            Search
+          </Button>
         </div>
       </div>
 

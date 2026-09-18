@@ -230,7 +230,7 @@ export function ListingCardGrid({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={blobsApi.getDownloadUrl(thumb.id)}
-                  alt=""
+                  alt={listing.name || 'Listing image'}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -300,6 +300,7 @@ export function ListingCardGrid({
                     <Button
                       variant="ghost"
                       size="sm"
+                      aria-label={`View ${listing.name}`}
                       className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
                       onClick={() => onView(listing.id)}
                     >
@@ -310,6 +311,7 @@ export function ListingCardGrid({
                     <Button
                       variant="ghost"
                       size="sm"
+                      aria-label={`Edit ${listing.name}`}
                       className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
                       onClick={() => onEdit(listing.id)}
                     >
@@ -320,6 +322,7 @@ export function ListingCardGrid({
                     <Button
                       variant="ghost"
                       size="sm"
+                      aria-label={`Delete ${listing.name}`}
                       className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
                       onClick={() => onDelete(listing.id)}
                       disabled={deletingId === listing.id}

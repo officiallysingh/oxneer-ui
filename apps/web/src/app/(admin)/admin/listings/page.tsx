@@ -2,15 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import {
-  listingsApi,
-  masterApi,
-  blobsApi,
-  ListingVM,
-  ListingBlobRef,
-  ListingCategoryRef,
-  CategoryVM,
-} from '@repo/api';
+import { listingsApi, masterApi, ListingVM, ListingCategoryRef, CategoryVM } from '@repo/api';
 import {
   Loader2,
   Trash2,
@@ -42,7 +34,6 @@ import {
   MediaModal,
   ListingCardGrid,
   type MediaModalState,
-  classifyBlob,
 } from './_components/ListingMediaComponents';
 
 interface SelectOption {

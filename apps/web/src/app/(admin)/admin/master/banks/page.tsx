@@ -10,7 +10,7 @@ import { SearchInput } from '@/components/common/admin/SearchInput';
 import { ListToolbarActions } from '@/components/common/admin/ListToolbarActions';
 import { LoadingBlock, EmptyState } from '@/components/common/admin/ListState';
 import { RowActions } from '@/components/common/admin/RowActions';
-import { useFetchList } from '@/components/common/admin/useFetchList';
+import { useFetchList } from '@/hooks/admin/useFetchList';
 import { AddBankDialog, EditBankDialog } from './_components/BankFormDialog';
 
 export default function BanksPage() {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { masterApi, type StateVM, type CityVM, type AreaVM } from '@repo/api';
 import { Loader2, Trash2, Pencil, Building2, ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import { Button } from '@repo/ui';
@@ -9,25 +9,48 @@ import PageHeader from '@/components/common/admin/PageHeader';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';
 import ConfirmDialog from '@/components/common/admin/ConfirmDialog';
 import Tip from '@/components/common/admin/Tip';
+import { PaginationBar } from '@/components/common/admin/PaginationBar';
 import { ListToolbarActions } from '@/components/common/admin/ListToolbarActions';
 import { LoadingBlock, EmptyState } from '@/components/common/admin/ListState';
-import { useConfirmDialog } from '@/components/common/admin/useConfirmDialog';
-import { AddCityDialog } from './_components/AddCityDialog';
-import { EditCityDialog } from '../states/_components/EditCityDialog';
-import { AddAreaDialog } from '../states/_components/AddAreaDialog';
-import { EditAreaDialog } from '../states/_components/EditAreaDialog';
+import { useConfirmDialog } from '@/hooks/admin/useConfirmDialog';
+import { useFetchPaginatedList } from '@/hooks/admin/useFetchPaginatedList';
+import {
+  AddCityPickerDialog,
+  EditCityDialog,
+  AddAreaDialog,
+  EditAreaDialog,
+} from '@/components/common/master';
 
 const PAGE_SIZE = 16;
 
 export default function CitiesPage() {
   const [states, setStates] = useState<StateVM[]>([]);
-  const [cities, setCities] = useState<CityVM[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [pageIndex, setPageIndex] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalRecords, setTotalRecords] = useState(0);
+
+  const {
+    data: cities,
+    setData: setCities,
+    isLoading,
+    error,
+    setError,
+    pageIndex,
+    totalPages,
+    totalRecords,
+    fetchPage,
+    refresh,
+  } = useFetchPaginatedList<CityVM>(
+    useCallback(
+      (page) =>
+        masterApi.searchCities({
+          searchText: search.trim() || undefined,
+          page,
+          size: PAGE_SIZE,
+        }),
+      [search],
+    ),
+    search,
+    { errorMessage: 'Failed to load cities.' },
+  );
 
   const [addOpen, setAddOpen] = useState(false);
   const { confirm, openConfirm, closeConfirm } = useConfirmDialog();
@@ -45,30 +68,6 @@ export default function CitiesPage() {
       .then(setStates)
       .catch(() => setStates([]));
   }, []);
-
-  const fetchCities = async (page = 0) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await masterApi.searchCities({
-        searchText: search.trim() || undefined,
-        page,
-        size: PAGE_SIZE,
-      });
-      setCities(result.content ?? []);
-      setPageIndex(page);
-      setTotalPages(result.page?.totalPages ?? 0);
-      setTotalRecords(result.page?.totalRecords ?? 0);
-    } catch {
-      setError('Failed to load cities.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCities(0);
-  }, [search]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleCity = async (cityId: string) => {
     setExpandedCities((prev) => {
@@ -109,7 +108,7 @@ export default function CitiesPage() {
             onAdd={() => setAddOpen(true)}
             addLabel="Add city"
             addDisabled={!states.length}
-            onRefresh={() => fetchCities(pageIndex)}
+            onRefresh={refresh}
             refreshing={isLoading}
           />
         }
@@ -266,43 +265,23 @@ export default function CitiesPage() {
         </div>
       )}
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">
-            Showing {pageIndex * PAGE_SIZE + 1}–{pageIndex * PAGE_SIZE + cities.length} of{' '}
-            {totalRecords} results
-          </span>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => fetchCities(pageIndex - 1)}
-              disabled={pageIndex === 0 || isLoading}
-            >
-              Previous
-            </Button>
-            <span className="text-sm text-muted-foreground">
-              Page {pageIndex + 1} of {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => fetchCities(pageIndex + 1)}
-              disabled={pageIndex + 1 >= totalPages || isLoading}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      )}
+      <PaginationBar
+        pageIndex={pageIndex}
+        pageCount={totalPages}
+        pageSize={PAGE_SIZE}
+        itemCount={cities.length}
+        totalRecords={totalRecords}
+        onPageChange={fetchPage}
+        isLoading={isLoading}
+      />
 
-      <AddCityDialog
+      <AddCityPickerDialog
         open={addOpen}
         states={states}
         onClose={() => setAddOpen(false)}
         onCreated={() => {
           setAddOpen(false);
-          fetchCities(pageIndex);
+          fetchPage(pageIndex);
         }}
       />
 
@@ -310,7 +289,7 @@ export default function CitiesPage() {
         city={editCityTarget}
         states={states}
         onClose={() => setEditCityTarget(null)}
-        onUpdated={() => fetchCities(pageIndex)}
+        onUpdated={() => fetchPage(pageIndex)}
       />
 
       <AddAreaDialog

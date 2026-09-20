@@ -102,7 +102,11 @@ export default function RolesPage() {
       header: 'Permissions',
       cell: ({ row }) => (
         <TagList
-          tags={(row.original._perms ?? []).map((p) => ({ id: p.id, label: p.name, mono: true }))}
+          tags={(row.original._perms ?? []).map((p) => ({
+            id: p.id,
+            label: p.label || p.name,
+            mono: true,
+          }))}
           variant="muted"
           max={2}
         />

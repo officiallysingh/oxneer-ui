@@ -10,6 +10,8 @@ export interface TimelineNode {
   borderClass: string;
   title: string;
   time?: string;
+  /** Rendered on its own line under `time` — e.g. the clock reading paired with a date. */
+  timeSecondary?: string;
   timeTo?: string;
   subs: string[];
   durationToNext?: string | null;

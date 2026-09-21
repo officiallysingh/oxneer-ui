@@ -44,6 +44,7 @@ export function formatDateTime(iso?: string | null, opts?: Intl.DateTimeFormatOp
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
+        hour12: true,
       },
     );
   } catch {
@@ -62,6 +63,20 @@ export function formatDate(iso?: string | null): string {
     });
   } catch {
     return iso;
+  }
+}
+
+/** Clock-only variant without seconds — used to pair with `formatDate` on a second line. */
+export function formatClock(iso?: string | null): string {
+  if (!iso) return '';
+  try {
+    return new Date(iso).toLocaleTimeString(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+  } catch {
+    return '';
   }
 }
 

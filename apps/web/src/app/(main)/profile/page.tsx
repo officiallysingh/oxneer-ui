@@ -762,7 +762,12 @@ export default function ProfilePage() {
   }, [hydrated, user, router]);
 
   if (!hydrated || !user?.authenticated) {
-    return null;
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 text-muted-foreground">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
+        <p className="text-sm font-medium">Loading profile...</p>
+      </div>
+    );
   }
 
   const displayName = userInfo?.firstName

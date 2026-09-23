@@ -459,9 +459,14 @@ const AuctionGrid = () => {
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
               <Gavel className="h-8 w-8 text-muted-foreground" />
             </div>
-            <p className="font-body text-muted-foreground text-sm">
-              No public auctions available right now. Check back soon.
+            <p className="font-body text-foreground text-sm font-medium">No auctions found</p>
+            <p className="font-body text-muted-foreground text-sm mt-1 max-w-sm mx-auto">
+              No public auctions match your filters right now. Reset filters or check back later.
             </p>
+            <Button variant="outline" size="sm" onClick={handleReset} className="mt-4 gap-1.5">
+              <X className="h-3.5 w-3.5" />
+              Reset filters
+            </Button>
           </div>
         ) : (
           <>

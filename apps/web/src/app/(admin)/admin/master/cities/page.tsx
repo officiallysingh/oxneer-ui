@@ -126,7 +126,16 @@ export default function CitiesPage() {
       {isLoading ? (
         <LoadingBlock message="Loading cities..." />
       ) : cities.length === 0 ? (
-        <EmptyState icon={Building2} message="No cities found." />
+        <EmptyState
+          icon={Building2}
+          message="No cities found."
+          hint="Add a city to get started."
+          action={
+            <Button variant="gold" size="sm" onClick={() => setAddOpen(true)}>
+              Add city
+            </Button>
+          }
+        />
       ) : (
         <div className="rounded-lg border border-border bg-card overflow-hidden divide-y divide-border">
           {cities.map((city) => {

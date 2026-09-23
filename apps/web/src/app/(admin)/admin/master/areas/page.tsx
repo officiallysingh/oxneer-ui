@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { masterApi, type StateVM, type AreaVM } from '@repo/api';
 import { MapPinned } from 'lucide-react';
+import { Button } from '@repo/ui';
 import { SearchInput } from '@/components/common/admin/SearchInput';
 import PageHeader from '@/components/common/admin/PageHeader';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';
@@ -84,7 +85,16 @@ export default function AreasPage() {
       {isLoading ? (
         <LoadingBlock message="Loading areas..." />
       ) : areas.length === 0 ? (
-        <EmptyState icon={MapPinned} message="No areas found." />
+        <EmptyState
+          icon={MapPinned}
+          message="No areas found."
+          hint="Add an area to get started."
+          action={
+            <Button variant="gold" size="sm" onClick={() => setAddOpen(true)}>
+              Add area
+            </Button>
+          }
+        />
       ) : (
         <div className="rounded-lg border border-border bg-card overflow-hidden divide-y divide-border">
           {areas.map((area) => (

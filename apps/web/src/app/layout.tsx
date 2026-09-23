@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter, Space_Grotesk } from 'next/font/google';
-import { ThemeProvider, TooltipProvider } from '@repo/ui';
+import { ThemeProvider, TooltipProvider, Toaster } from '@repo/ui';
 import './globals.css';
 
 const inter = Inter({
@@ -40,7 +40,10 @@ export default function RootLayout({
           disableTransitionOnChange
           storageKey="theme"
         >
-          <TooltipProvider delayDuration={300}>{children}</TooltipProvider>
+          <TooltipProvider delayDuration={300}>
+            {children}
+            <Toaster richColors position="bottom-right" />
+          </TooltipProvider>
         </ThemeProvider>
       </body>
     </html>

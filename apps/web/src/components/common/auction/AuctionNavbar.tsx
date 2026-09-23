@@ -4,8 +4,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  Search,
-  Bell,
   User,
   LogOut,
   LayoutDashboard,
@@ -22,10 +20,8 @@ import { UserAvatar } from '@/components/common/admin/UserAvatar';
 import { UserMenu } from '@/components/admin/UserMenu';
 
 const navLinks = [
-  { label: 'Live Auctions', href: '#auctions' },
-  { label: 'Upcoming', href: '#upcoming' },
-  { label: 'Categories', href: '#categories' },
-  { label: 'How It Works', href: '#how-it-works' },
+  { label: 'Auctions', href: '/#auctions' },
+  { label: 'How It Works', href: '/#how-it-works' },
 ];
 
 const AuctionNavbar = () => {
@@ -73,18 +69,8 @@ const AuctionNavbar = () => {
         {/* Desktop actions */}
         <div className="hidden md:flex items-center gap-2">
           <ThemeToggle />
-          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
-            <Search className="h-5 w-5" />
-          </Button>
           {isLoggedIn ? (
             <>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-muted-foreground hover:text-primary"
-              >
-                <Bell className="h-5 w-5" />
-              </Button>
               <UserMenu
                 username={displayName}
                 userInfo={userInfo}

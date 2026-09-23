@@ -13,10 +13,11 @@ export default function SignupPage() {
           <AuthIllustration />
           <div className="text-center mt-8 max-w-md">
             <h2 className="text-3xl font-bold text-primary-foreground mb-4 text-balance">
-              Start your journey today
+              Join Oxneer auctions
             </h2>
             <p className="text-primary-foreground/80 text-lg leading-relaxed">
-              Join thousands of teams who are already building the future with us.
+              Create an account to browse auctions, accept invitations, and complete participation
+              workflows.
             </p>
           </div>
         </div>
@@ -48,7 +49,7 @@ export default function SignupPage() {
                 </Link>
               </div>
               <CardTitle className="text-2xl font-bold">Create your account</CardTitle>
-              <CardDescription>Get started with your free account today</CardDescription>
+              <CardDescription>Create an account to join auctions and workflows</CardDescription>
             </CardHeader>
             <CardContent>
               <AuthForm mode="signup" />
@@ -65,14 +66,8 @@ export default function SignupPage() {
           </Card>
 
           <p className="mt-8 text-center text-xs text-muted-foreground">
-            By continuing, you agree to our{' '}
-            <Link href="#" className="underline hover:text-foreground transition-colors">
-              Terms of Service
-            </Link>{' '}
-            and{' '}
-            <Link href="#" className="underline hover:text-foreground transition-colors">
-              Privacy Policy
-            </Link>
+            By continuing, you agree to use Oxneer in accordance with your organization&apos;s
+            policies.
           </p>
         </div>
       </div>

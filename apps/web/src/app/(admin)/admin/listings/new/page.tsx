@@ -8,7 +8,7 @@ import { Button } from '@repo/ui';
 import PageHeader from '@/components/common/admin/PageHeader';
 import { parseApiError } from '@/lib/api-errors';
 import { useAuthStore } from '@/store/authStore';
-import { StepIndicator } from '../_components/StepIndicator';
+import { ListingStepIndicator } from '@/components/common/wizard/ListingStepIndicator';
 import { Step1Details, ListingDetails } from '../_components/Step1Details';
 import { Step2Media } from '../_components/Step2Media';
 import { Step3Catalog } from '../_components/Step3Catalog';
@@ -165,7 +165,7 @@ export default function NewListingPage() {
         }
       />
 
-      <StepIndicator current={step} onStepClick={(s) => s < step && setStep(s)} />
+      <ListingStepIndicator current={step} onStepClick={(s) => s < step && setStep(s)} />
 
       {step === 1 && (
         <>

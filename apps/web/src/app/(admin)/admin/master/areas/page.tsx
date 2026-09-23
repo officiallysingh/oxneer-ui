@@ -1,31 +1,49 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { masterApi, type StateVM, type AreaVM } from '@repo/api';
 import { MapPinned } from 'lucide-react';
-import { Button } from '@repo/ui';
 import { SearchInput } from '@/components/common/admin/SearchInput';
 import PageHeader from '@/components/common/admin/PageHeader';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';
 import ConfirmDialog from '@/components/common/admin/ConfirmDialog';
+import { PaginationBar } from '@/components/common/admin/PaginationBar';
 import { ListToolbarActions } from '@/components/common/admin/ListToolbarActions';
 import { LoadingBlock, EmptyState } from '@/components/common/admin/ListState';
 import { RowActions } from '@/components/common/admin/RowActions';
-import { useConfirmDialog } from '@/components/common/admin/useConfirmDialog';
-import { AddAreaDialog } from './_components/AddAreaDialog';
-import { EditAreaDialog } from '../states/_components/EditAreaDialog';
+import { useConfirmDialog } from '@/hooks/admin/useConfirmDialog';
+import { useFetchPaginatedList } from '@/hooks/admin/useFetchPaginatedList';
+import { AddAreaPickerDialog, EditAreaDialog } from '@/components/common/master';
 
 const PAGE_SIZE = 16;
 
 export default function AreasPage() {
   const [states, setStates] = useState<StateVM[]>([]);
-  const [areas, setAreas] = useState<AreaVM[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [pageIndex, setPageIndex] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalRecords, setTotalRecords] = useState(0);
+
+  const {
+    data: areas,
+    setData: setAreas,
+    isLoading,
+    error,
+    pageIndex,
+    totalPages,
+    totalRecords,
+    fetchPage,
+    refresh,
+  } = useFetchPaginatedList<AreaVM>(
+    useCallback(
+      (page) =>
+        masterApi.searchAreas({
+          searchText: search.trim() || undefined,
+          page,
+          size: PAGE_SIZE,
+        }),
+      [search],
+    ),
+    search,
+    { errorMessage: 'Failed to load areas.' },
+  );
 
   const [addOpen, setAddOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<AreaVM | null>(null);
@@ -38,30 +56,6 @@ export default function AreasPage() {
       .catch(() => setStates([]));
   }, []);
 
-  const fetchAreas = async (page = 0) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await masterApi.searchAreas({
-        searchText: search.trim() || undefined,
-        page,
-        size: PAGE_SIZE,
-      });
-      setAreas(result.content ?? []);
-      setPageIndex(page);
-      setTotalPages(result.page?.totalPages ?? 0);
-      setTotalRecords(result.page?.totalRecords ?? 0);
-    } catch {
-      setError('Failed to load areas.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAreas(0);
-  }, [search]); // eslint-disable-line react-hooks/exhaustive-deps
-
   return (
     <div className="space-y-6">
       <PageHeader
@@ -72,7 +66,7 @@ export default function AreasPage() {
             onAdd={() => setAddOpen(true)}
             addLabel="Add area"
             addDisabled={!states.length}
-            onRefresh={() => fetchAreas(pageIndex)}
+            onRefresh={refresh}
             refreshing={isLoading}
           />
         }
@@ -128,43 +122,23 @@ export default function AreasPage() {
         </div>
       )}
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">
-            Showing {pageIndex * PAGE_SIZE + 1}–{pageIndex * PAGE_SIZE + areas.length} of{' '}
-            {totalRecords} results
-          </span>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => fetchAreas(pageIndex - 1)}
-              disabled={pageIndex === 0 || isLoading}
-            >
-              Previous
-            </Button>
-            <span className="text-sm text-muted-foreground">
-              Page {pageIndex + 1} of {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => fetchAreas(pageIndex + 1)}
-              disabled={pageIndex + 1 >= totalPages || isLoading}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      )}
+      <PaginationBar
+        pageIndex={pageIndex}
+        pageCount={totalPages}
+        pageSize={PAGE_SIZE}
+        itemCount={areas.length}
+        totalRecords={totalRecords}
+        onPageChange={fetchPage}
+        isLoading={isLoading}
+      />
 
-      <AddAreaDialog
+      <AddAreaPickerDialog
         open={addOpen}
         states={states}
         onClose={() => setAddOpen(false)}
         onCreated={() => {
           setAddOpen(false);
-          fetchAreas(pageIndex);
+          fetchPage(pageIndex);
         }}
       />
 
@@ -172,7 +146,7 @@ export default function AreasPage() {
         area={editTarget}
         states={states}
         onClose={() => setEditTarget(null)}
-        onUpdated={() => fetchAreas(pageIndex)}
+        onUpdated={() => fetchPage(pageIndex)}
       />
 
       <ConfirmDialog

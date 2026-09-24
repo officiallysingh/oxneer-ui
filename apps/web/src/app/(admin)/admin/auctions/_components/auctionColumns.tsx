@@ -1,23 +1,13 @@
 'use client';
 
-import {
-  Ban,
-  CalendarClock,
-  DollarSign,
-  Eye,
-  Info,
-  Loader2,
-  Pencil,
-  Send,
-  Trash2,
-} from 'lucide-react';
+import { Ban, CalendarClock, Eye, Info, Loader2, Pencil, Send, Trash2 } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import type { AuctionVM } from '@repo/api';
 import { Button, Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui';
 import Tip from '@/components/common/admin/Tip';
 import { StatusBadge } from '@/components/common/admin/AuctionStatusBadge';
-import { formatLabel, resolveStr } from '@/components/common/admin/format';
+import { currencySymbol, formatLabel, resolveStr } from '@/components/common/admin/format';
 import { AccessibilityCell, DirectionCell, ProtocolDetailsCell } from './AuctionTableCells';
 
 export interface AuctionColumnActions {
@@ -106,9 +96,10 @@ export function buildAuctionColumns({
       cell: ({ row }) => {
         const curr = resolveStr(row.original.monetaryOptions?.currencyUnit);
         if (!curr) return <span className="text-xs text-muted-foreground">—</span>;
+        const symbol = currencySymbol(curr);
         return (
           <span className="inline-flex items-center gap-1 font-mono text-xs font-medium text-foreground">
-            <DollarSign className="h-3 w-3 text-muted-foreground" />
+            {symbol && <span className="text-muted-foreground">{symbol}</span>}
             {curr}
           </span>
         );

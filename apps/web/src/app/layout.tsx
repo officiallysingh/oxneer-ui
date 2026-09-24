@@ -24,14 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){document.documentElement.classList.add(t)}else if(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('dark')}else{document.documentElement.classList.add('dark')}}catch(e){document.documentElement.classList.add('dark')}})()`,
-          }}
-        />
-      </head>
+    <html lang="en" className="dark" suppressHydrationWarning>
       <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased`}>
         <ThemeProvider
           attribute="class"

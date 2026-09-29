@@ -7,7 +7,7 @@ import { metadataApi } from '@repo/api';
 import type { PropertyDef, ValidatorDef, DataType, PropertyType } from '@repo/api';
 import { ValidatorRow } from './ValidatorRow';
 import { AttributeEditor } from './AttributeEditor';
-import { ATTR_PROTOCOL_MAP } from './attribute-protocol';
+import { ATTR_PROTOCOL_MAP, showWhenMatches } from './attribute-protocol';
 import { PROPERTY_TYPES, HAS_CHILDREN, emptyProperty, extractDataTypeKey } from './types';
 import type { KV } from './types';
 
@@ -294,8 +294,7 @@ export function PropertyRow({
                   if (!k) return true;
                   const def = ATTR_PROTOCOL_MAP[k];
                   if (!def) return true;
-                  if (def.showWhen && prop.attributes?.[def.showWhen.key] !== def.showWhen.equals)
-                    return false;
+                  if (!showWhenMatches(def.showWhen, prop.attributes)) return false;
                   if (def.appliesTo && !def.appliesTo.includes(prop.type)) return false;
                   return true;
                 })

@@ -71,7 +71,8 @@ function PropValue({ prop, def }: { prop: EmbeddedProp; def?: PropertyDef }) {
   const dataType = def?.dataType;
 
   if (val === undefined || val === null || val === '') {
-    return <span className="text-muted-foreground text-sm">—</span>;
+    const emptyText = attrs['list:empty'];
+    return <span className="text-muted-foreground text-sm">{emptyText || '—'}</span>;
   }
 
   const strVal = String(val);
@@ -111,6 +112,12 @@ function PropValue({ prop, def }: { prop: EmbeddedProp; def?: PropertyDef }) {
       const num = Number(raw);
       return isNaN(num) ? raw : `${num}%`;
     }
+    if (format === 'number') {
+      const num = Number(raw);
+      return isNaN(num) ? raw : num.toLocaleString();
+    }
+    if (format === 'uppercase') return raw.toUpperCase();
+    if (format === 'lowercase') return raw.toLowerCase();
     return raw;
   }
 
@@ -281,7 +288,7 @@ function PropValue({ prop, def }: { prop: EmbeddedProp; def?: PropertyDef }) {
   }
 
   // ui:display = badge (or list:display = badge)
-  if (listDisplay === 'badge' || uiDisplay === 'badge') {
+  if (listDisplay === 'badge' || listDisplay === 'pill' || uiDisplay === 'badge') {
     const badgeColor = listAttrs['list:badge.color'];
     const badgeSize = listAttrs['list:badge.size'];
     const badgeVariant = listAttrs['list:badge.variant'] ?? 'soft';
@@ -298,7 +305,11 @@ function PropValue({ prop, def }: { prop: EmbeddedProp; def?: PropertyDef }) {
           ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
           : badgeColor === 'danger'
             ? 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30'
-            : 'bg-primary/10 text-primary border-primary/30';
+            : badgeColor === 'info'
+              ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/30'
+              : badgeColor === 'muted'
+                ? 'bg-muted text-muted-foreground border-border'
+                : 'bg-primary/10 text-primary border-primary/30';
     const variantCls =
       badgeVariant === 'solid'
         ? badgeColor === 'success'
@@ -317,6 +328,50 @@ function PropValue({ prop, def }: { prop: EmbeddedProp; def?: PropertyDef }) {
       >
         {resolveLabel(displayValue, optionsRaw)}
       </span>,
+    );
+  }
+
+  if (listDisplay === 'link') {
+    const label = listAttrs['list:link.label'] || displayValue;
+    const newTab = listAttrs['list:link.new-tab'] !== 'false';
+    return withModifiers(
+      <a
+        href={displayValue}
+        target={newTab ? '_blank' : undefined}
+        rel={newTab ? 'noreferrer' : undefined}
+        className="text-sm font-medium text-primary underline-offset-2 hover:underline"
+      >
+        {label}
+      </a>,
+    );
+  }
+
+  if (listDisplay === 'boolean') {
+    const on = strVal === 'true' || strVal === '1' || strVal === 'yes';
+    return (
+      <span className={on ? 'text-sm font-medium text-emerald-600' : 'text-sm text-muted-foreground'}>
+        {on ? listAttrs['list:boolean.true'] || 'Yes' : listAttrs['list:boolean.false'] || 'No'}
+      </span>
+    );
+  }
+
+  if (listDisplay === 'progress') {
+    const max = Number(listAttrs['list:progress.max'] || 100) || 100;
+    const num = Number(strVal);
+    const pct = Number.isNaN(num) ? 0 : Math.max(0, Math.min(100, (num / max) * 100));
+    return (
+      <div className="flex items-center gap-2 min-w-[8rem]">
+        <div className="h-2 flex-1 rounded-full bg-muted overflow-hidden">
+          <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
+        </div>
+        <span className="text-xs tabular-nums text-muted-foreground">{Math.round(pct)}%</span>
+      </div>
+    );
+  }
+
+  if (listDisplay === 'monospace') {
+    return withModifiers(
+      <span className="font-mono text-sm text-foreground">{applyFormat(displayValue, listFormat)}</span>,
     );
   }
 

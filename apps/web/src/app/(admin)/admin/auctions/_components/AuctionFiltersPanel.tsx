@@ -124,12 +124,25 @@ export function AuctionFiltersPanel({
 
         <div className="min-w-[200px] space-y-1.5">
           <Label className="text-xs font-medium text-muted-foreground">From schedule time</Label>
-          <DateTimePicker value={fromTime} onChange={onFromTimeChange} placeholder="Any" />
+          <DateTimePicker
+            value={fromTime}
+            onChange={(value) => {
+              onFromTimeChange(value);
+              if (value && tillTime && value > tillTime) onTillTimeChange('');
+            }}
+            max={tillTime || undefined}
+            placeholder="Any"
+          />
         </div>
 
         <div className="min-w-[200px] space-y-1.5">
           <Label className="text-xs font-medium text-muted-foreground">Till schedule time</Label>
-          <DateTimePicker value={tillTime} onChange={onTillTimeChange} placeholder="Any" />
+          <DateTimePicker
+            value={tillTime}
+            onChange={onTillTimeChange}
+            min={fromTime || undefined}
+            placeholder="Any"
+          />
         </div>
 
         <div className="min-w-[160px] space-y-1.5">

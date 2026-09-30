@@ -403,6 +403,19 @@ export interface DateTimePickerProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  /** Earliest selectable date-time ("yyyy-MM-ddTHH:mm"). Earlier calendar days are disabled. */
+  min?: string;
+  /** Latest selectable date-time ("yyyy-MM-ddTHH:mm"). Later calendar days are disabled. */
+  max?: string;
+}
+
+function parseDateTimeBound(value?: string): { date: string; hour: string; minute: string } | null {
+  if (!value) return null;
+  const normalized = value.replace(' ', 'T');
+  const [datePart, timePart] = normalized.split('T');
+  if (!datePart) return null;
+  const [hour = '00', minute = '00'] = (timePart ?? '00:00').split(':');
+  return { date: datePart.slice(0, 10), hour: hour.slice(0, 2), minute: minute.slice(0, 2) };
 }
 
 export function DateTimePicker({
@@ -412,6 +425,8 @@ export function DateTimePicker({
   placeholder = 'Pick date & time',
   disabled,
   className,
+  min,
+  max,
 }: DateTimePickerProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -420,10 +435,58 @@ export function DateTimePicker({
   const [hour, minute] = timePart ? timePart.split(':') : ['', ''];
 
   const selected = datePart ? new Date(datePart + 'T00:00:00') : undefined;
+  const minBound = parseDateTimeBound(min);
+  const maxBound = parseDateTimeBound(max);
+
+  const hours = HOURS.filter((h) => {
+    if (minBound && datePart === minBound.date && h < minBound.hour) return false;
+    if (maxBound && datePart === maxBound.date && h > maxBound.hour) return false;
+    return true;
+  });
+  const minutes = MINUTES.filter((m) => {
+    if (
+      minBound &&
+      datePart === minBound.date &&
+      (hour ?? '') === minBound.hour &&
+      m < minBound.minute
+    )
+      return false;
+    if (
+      maxBound &&
+      datePart === maxBound.date &&
+      (hour ?? '') === maxBound.hour &&
+      m > maxBound.minute
+    )
+      return false;
+    return true;
+  });
+
+  const clampTime = (d: string, h: string, m: string) => {
+    let nextH = h || '00';
+    let nextM = m || '00';
+    if (
+      minBound &&
+      d === minBound.date &&
+      `${nextH}:${nextM}` < `${minBound.hour}:${minBound.minute}`
+    ) {
+      nextH = minBound.hour;
+      nextM = minBound.minute;
+    }
+    if (
+      maxBound &&
+      d === maxBound.date &&
+      `${nextH}:${nextM}` > `${maxBound.hour}:${maxBound.minute}`
+    ) {
+      nextH = maxBound.hour;
+      nextM = maxBound.minute;
+    }
+    return { h: nextH, m: nextM };
+  };
 
   const update = (d: string, h: string, m: string) => {
     if (!d) return;
-    onChange(`${d}T${h || '00'}:${m || '00'}`);
+    const clamped = clampTime(d, h, m);
+    onChange(`${d}T${clamped.h}:${clamped.m}`);
   };
 
   return (
@@ -449,6 +512,10 @@ export function DateTimePicker({
           <Calendar
             mode="single"
             selected={selected}
+            disabled={[
+              ...(minBound ? [{ before: new Date(`${minBound.date}T00:00:00`) }] : []),
+              ...(maxBound ? [{ after: new Date(`${maxBound.date}T00:00:00`) }] : []),
+            ]}
             onSelect={(date) => {
               if (date) update(toIsoDate(date), hour ?? '', minute ?? '');
             }}
@@ -460,7 +527,7 @@ export function DateTimePicker({
               <div className="flex flex-col">
                 <p className="text-[10px] text-center text-muted-foreground pb-1">HH</p>
                 <ScrollList
-                  items={HOURS}
+                  items={hours}
                   selected={hour ?? ''}
                   onSelect={(h) => update(datePart ?? '', h, minute ?? '')}
                 />
@@ -469,7 +536,7 @@ export function DateTimePicker({
               <div className="flex flex-col">
                 <p className="text-[10px] text-center text-muted-foreground pb-1">MM</p>
                 <ScrollList
-                  items={MINUTES}
+                  items={minutes}
                   selected={minute ?? ''}
                   onSelect={(m) => update(datePart ?? '', hour ?? '', m)}
                 />

@@ -21,9 +21,10 @@ import {
 } from '@repo/ui';
 import { authApi, usersApi } from '@repo/api';
 import { useAuthStore } from '@/store/authStore';
+import { authUserFromLoginResponse, establishAuthSession } from '@/lib/auth-session';
 import { parseApiError } from '@/lib/api-errors';
 import { USERNAME_RULES, PASSWORD_PATTERN, PASSWORD_RULES, PASSWORD_ERROR } from '@/lib/validation';
-import { StepIndicator } from './StepIndicator';
+import { OidcStepIndicator } from '@/components/common/wizard/OidcStepIndicator';
 import { AuthIllustration } from '@/components/auth/AuthIllustration';
 import { AvatarUpload } from '@/components/common/admin/AvatarUpload';
 
@@ -216,10 +217,12 @@ export function OidcNewUserForm({
         profilePicture: profilePicture ?? null,
       });
       const loginData = await authApi.login({ username: username.trim(), password });
-      setUser({ username: loginData.username, authenticated: true });
-      const userInfo = await usersApi.getSelfInfo();
-      setUserInfo(userInfo);
-      router.replace('/');
+      const { redirectPath } = await establishAuthSession(
+        setUser,
+        setUserInfo,
+        authUserFromLoginResponse(loginData),
+      );
+      router.replace(redirectPath);
     } catch (err) {
       const parsed = parseApiError(err);
       setError(parsed.general ?? 'Registration failed. Please try again.');
@@ -278,7 +281,7 @@ export function OidcNewUserForm({
               <CardDescription>{stepDesc[step]}</CardDescription>
             </CardHeader>
             <CardContent className="pt-4">
-              <StepIndicator current={step} />
+              <OidcStepIndicator current={step} />
 
               {error && (
                 <div className="mb-4 py-2 px-3 bg-destructive/10 text-destructive text-sm rounded-md">

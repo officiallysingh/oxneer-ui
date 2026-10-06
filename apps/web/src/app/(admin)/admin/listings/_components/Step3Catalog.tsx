@@ -932,6 +932,9 @@ function ScalarField({
   const attrMin = attrs['html:min'];
   const attrMax = attrs['html:max'];
   const pattern = attrs['html:pattern'];
+  const maxLength = attrs['html:maxlength'] ? Number(attrs['html:maxlength']) : undefined;
+  const autoComplete = attrs['html:autocomplete'];
+  const readOnly = formAttrs?.['form:readonly'] === 'true';
   // style:options — comma-separated "Label:value" or "value"
   const optionsRaw = attrs['style:options'];
   const options: { label: string; value: string }[] | null = optionsRaw
@@ -1387,6 +1390,38 @@ function ScalarField({
       // tag-input → chip input, value stored as comma-separated
       if (uiComponent === 'tag-input')
         return <TagInputField value={strVal} onChange={onChange} placeholder={placeholder} />;
+      if (uiComponent === 'radio' && options) {
+        return (
+          <div className="flex flex-wrap gap-4 pt-0.5">
+            {options.map((o) => (
+              <label key={o.value} className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="radio"
+                  name={`prop-${prop.name}`}
+                  value={o.value}
+                  checked={strVal === o.value}
+                  disabled={readOnly}
+                  onChange={() => onChange(o.value)}
+                  className="accent-primary"
+                />
+                {o.label}
+              </label>
+            ))}
+          </div>
+        );
+      }
+      if (uiComponent === 'color') {
+        return (
+          <input
+            id={`prop-${prop.name}`}
+            type="color"
+            value={strVal || '#000000'}
+            disabled={readOnly}
+            onChange={(e) => onChange(e.target.value)}
+            className="h-9 w-14 rounded-md border border-input bg-background p-1"
+          />
+        );
+      }
       // option-pills → pill button group
       if (uiComponent === 'option-pills' && options) {
         return (
@@ -1444,11 +1479,13 @@ function ScalarField({
           id={`prop-${prop.name}`}
           type={attrs['html:type'] ?? 'text'}
           value={strVal}
+          readOnly={readOnly}
+          autoComplete={autoComplete}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           pattern={pattern}
           minLength={attrMin ? Number(attrMin) : undefined}
-          maxLength={attrMax ? Number(attrMax) : undefined}
+          maxLength={maxLength ?? (attrMax ? Number(attrMax) : undefined)}
           className={base}
         />
       );

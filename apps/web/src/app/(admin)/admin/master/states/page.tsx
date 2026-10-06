@@ -11,13 +11,15 @@ import ConfirmDialog from '@/components/common/admin/ConfirmDialog';
 import Tip from '@/components/common/admin/Tip';
 import { ListToolbarActions } from '@/components/common/admin/ListToolbarActions';
 import { LoadingBlock, EmptyState } from '@/components/common/admin/ListState';
-import { useConfirmDialog } from '@/components/common/admin/useConfirmDialog';
-import { AddStateDialog } from './_components/AddStateDialog';
-import { EditStateDialog } from './_components/EditStateDialog';
-import { AddCityDialog } from './_components/AddCityDialog';
-import { EditCityDialog } from './_components/EditCityDialog';
-import { AddAreaDialog } from './_components/AddAreaDialog';
-import { EditAreaDialog } from './_components/EditAreaDialog';
+import { useConfirmDialog } from '@/hooks/admin/useConfirmDialog';
+import {
+  AddStateDialog,
+  EditStateDialog,
+  AddCityDialog,
+  EditCityDialog,
+  AddAreaDialog,
+  EditAreaDialog,
+} from '@/components/common/master';
 
 export default function StatesPage() {
   const [states, setStates] = useState<StateVM[]>([]);
@@ -173,7 +175,16 @@ export default function StatesPage() {
       {isLoading ? (
         <LoadingBlock message="Loading states..." />
       ) : states.length === 0 ? (
-        <EmptyState icon={MapPin} message="No states yet." hint="Add one to get started." />
+        <EmptyState
+          icon={MapPin}
+          message="No states yet."
+          hint="Add one to get started."
+          action={
+            <Button variant="gold" size="sm" onClick={() => setAddStateOpen(true)}>
+              Add state
+            </Button>
+          }
+        />
       ) : (
         <div className="rounded-lg border border-border bg-card overflow-hidden divide-y divide-border">
           {states.map((state) => {

@@ -13,10 +13,10 @@ export default function LoginPage() {
           <AuthIllustration />
           <div className="text-center mt-8 max-w-md">
             <h2 className="text-3xl font-bold text-primary-foreground mb-4 text-balance">
-              Welcome back to your workspace
+              Welcome back to Oxneer
             </h2>
             <p className="text-primary-foreground/80 text-lg leading-relaxed">
-              Sign in to continue building amazing things and collaborate with your team.
+              Sign in to manage auctions, complete workflows, and participate in live bidding.
             </p>
           </div>
         </div>
@@ -65,14 +65,8 @@ export default function LoginPage() {
           </Card>
 
           <p className="mt-8 text-center text-xs text-muted-foreground">
-            By continuing, you agree to our{' '}
-            <Link href="#" className="underline hover:text-foreground transition-colors">
-              Terms of Service
-            </Link>{' '}
-            and{' '}
-            <Link href="#" className="underline hover:text-foreground transition-colors">
-              Privacy Policy
-            </Link>
+            By continuing, you agree to use Oxneer in accordance with your organization&apos;s
+            policies.
           </p>
         </div>
       </div>

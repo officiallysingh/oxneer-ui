@@ -13,7 +13,7 @@ import {
   humanizeIsoDuration,
 } from '../../../_components/PolicyShared';
 import { stepTypeMeta } from '../../../_components/WorkflowStepDetails';
-import { formatDateTime } from '@/components/common/admin/format';
+import { formatDate, formatClock } from '@/components/common/admin/format';
 
 interface AuctionWorkflowTabProps {
   auctionId: string;
@@ -68,19 +68,24 @@ function buildWorkflowTimeline(
       const offsetMs = parseIsoDurationMs(step.offset);
 
       let time: string | undefined;
+      let timeSecondary: string | undefined;
       let timeTo: string | undefined;
       let durationSub: string | undefined;
 
       if (phase === 'PRE_AUCTION') {
         if (startMs != null && offsetMs > 0) {
-          time = formatDateTime(new Date(startMs - offsetMs).toISOString());
+          const iso = new Date(startMs - offsetMs).toISOString();
+          time = formatDate(iso);
+          timeSecondary = formatClock(iso);
         }
         if (offsetMs > 0) {
           durationSub = `Due ${humanizeIsoDuration(offsetMs)} before start time.`;
         }
       } else {
         if (endMs != null && offsetMs > 0) {
-          time = formatDateTime(new Date(endMs + offsetMs).toISOString());
+          const iso = new Date(endMs + offsetMs).toISOString();
+          time = formatDate(iso);
+          timeSecondary = formatClock(iso);
         }
         if (offsetMs > 0) {
           durationSub = `Due ${humanizeIsoDuration(offsetMs)} after end time.`;
@@ -105,6 +110,7 @@ function buildWorkflowTimeline(
         borderClass: border,
         title,
         time,
+        timeSecondary,
         timeTo,
         subs,
       };

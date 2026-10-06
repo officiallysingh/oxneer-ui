@@ -7,6 +7,8 @@ import { useUIStore } from '@/store/uiStore';
 import { authApi } from '@repo/api';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { AdminTopbar } from '@/components/admin/AdminTopbar';
+import { PageLoadingScreen } from '@/components/common/PageLoadingScreen';
+import { PageErrorProvider } from '@/components/common/admin/PageErrorBanner';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -19,7 +21,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (hydrated && (!user || !isAdmin())) router.replace('/login');
   }, [hydrated, user, isAdmin, router]);
 
-  if (!hydrated || !user || !isAdmin()) return null;
+  if (!hydrated || !user || !isAdmin()) {
+    return <PageLoadingScreen message="Checking access..." />;
+  }
 
   const handleSignOut = async () => {
     try {
@@ -73,7 +77,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           onToggleCollapse={toggleSidebarCollapsed}
           onSignOut={handleSignOut}
         />
-        <div className="flex-1 p-6 overflow-y-auto">{children}</div>
+        <PageErrorProvider>
+          <div className="flex-1 p-6 overflow-y-auto">{children}</div>
+        </PageErrorProvider>
       </main>
     </div>
   );

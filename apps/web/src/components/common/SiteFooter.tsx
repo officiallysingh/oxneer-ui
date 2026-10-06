@@ -1,15 +1,34 @@
-const footerLinks = {
-  Auctions: ['Live Now', 'Upcoming', 'Past Results', 'Categories'],
-  Company: ['About Us', 'How It Works', 'Press', 'Careers'],
-  Support: ['Help Center', 'Contact Us', 'Terms of Service', 'Privacy Policy'],
-};
+import Link from 'next/link';
+
+const footerColumns: { title: string; links: { label: string; href: string }[] }[] = [
+  {
+    title: 'Auctions',
+    links: [
+      { label: 'Browse auctions', href: '/#auctions' },
+      { label: 'How it works', href: '/#how-it-works' },
+    ],
+  },
+  {
+    title: 'Account',
+    links: [
+      { label: 'Sign in', href: '/login' },
+      { label: 'Create account', href: '/signup' },
+      { label: 'Profile', href: '/profile' },
+    ],
+  },
+  {
+    title: 'Support',
+    links: [
+      { label: 'Help & contact', href: 'mailto:support@oxneer.com' },
+    ],
+  },
+];
 
 const SiteFooter = () => {
   return (
     <footer className="border-t border-border bg-card">
       <div className="container mx-auto px-6 py-12">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Brand */}
           <div>
             <div className="flex items-center mb-4">
               <img src="/oxneer_logo_light.svg" alt="Oxneer" className="h-7 w-auto dark:hidden" />
@@ -20,26 +39,24 @@ const SiteFooter = () => {
               />
             </div>
             <p className="font-body text-sm text-muted-foreground leading-relaxed">
-              The premier destination for live auctions on rare art, antiques, watches, and luxury
-              collectibles.
+              Auction management and participation — from listing and workflows to live bidding.
             </p>
           </div>
 
-          {/* Link columns */}
-          {Object.entries(footerLinks).map(([title, links]) => (
-            <div key={title}>
+          {footerColumns.map((column) => (
+            <div key={column.title}>
               <h4 className="font-body text-xs font-semibold text-foreground uppercase tracking-wider mb-4">
-                {title}
+                {column.title}
               </h4>
               <ul className="space-y-2.5">
-                {links.map((link) => (
-                  <li key={link}>
-                    <a
-                      href="#"
+                {column.links.map((link) => (
+                  <li key={link.label}>
+                    <Link
+                      href={link.href}
                       className="font-body text-sm text-muted-foreground hover:text-primary transition-colors"
                     >
-                      {link}
-                    </a>
+                      {link.label}
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -49,19 +66,8 @@ const SiteFooter = () => {
 
         <div className="mt-10 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="font-body text-xs text-muted-foreground">
-            © 2026 Oxneer Technologies. All rights reserved.
+            © {new Date().getFullYear()} Oxneer Technologies. All rights reserved.
           </p>
-          <div className="flex items-center gap-4">
-            {['Terms', 'Privacy', 'Cookies'].map((item) => (
-              <a
-                key={item}
-                href="#"
-                className="font-body text-xs text-muted-foreground hover:text-primary transition-colors"
-              >
-                {item}
-              </a>
-            ))}
-          </div>
         </div>
       </div>
     </footer>

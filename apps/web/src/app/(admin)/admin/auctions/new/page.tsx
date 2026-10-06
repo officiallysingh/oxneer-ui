@@ -8,7 +8,7 @@ import { Button } from '@repo/ui';
 import PageHeader from '@/components/common/admin/PageHeader';
 import { parseApiError } from '@/lib/api-errors';
 import { SelectOption } from '../_components/AuctionShared';
-import { AuctionStepIndicator } from '../_components/AuctionStepIndicator';
+import { AuctionStepIndicator } from '@/components/common/wizard/AuctionStepIndicator';
 import { AuctionStep1Details, Step1State, initialStep1 } from '../_components/AuctionStep1Details';
 import { AuctionStep2Units, Step2State, initialStep2 } from '../_components/AuctionStep2Units';
 import {

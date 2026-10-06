@@ -10,6 +10,7 @@ import { parseApiError } from '@/lib/api-errors';
 import { PropertyBuilder } from './PropertyBuilder';
 import { PropertyFormPreview, ListingViewPreview } from './PropertyFormPreview';
 import { TagInput } from '@/components/common/admin/TagInput';
+import { MetadataStepIndicator } from '@/components/common/wizard/MetadataStepIndicator';
 import type { KV } from './types';
 
 export interface MetadataFormValues {
@@ -39,66 +40,6 @@ interface MetadataFormProps {
   backHref: string;
   /** When set, the Type field is locked to this value and rendered read-only. */
   fixedType?: string;
-}
-
-// ── Step indicator ────────────────────────────────────────────────────────────
-function StepIndicator({
-  step,
-  onStepClick,
-  editMode,
-}: {
-  step: 1 | 2;
-  onStepClick?: (s: 1 | 2) => void;
-  editMode?: boolean;
-}) {
-  const STEPS = ['Details', 'Properties'];
-  return (
-    <div className="flex items-center mb-8 px-8 max-w-lg">
-      {STEPS.map((label, i) => {
-        const s = (i + 1) as 1 | 2;
-        const done = s < step;
-        const active = s === step;
-        const clickable = !!onStepClick && (editMode ? !active : done);
-        return (
-          <div key={s} className="flex items-center flex-1 last:flex-none">
-            <div className="flex flex-col items-center gap-1.5">
-              <div
-                role={clickable ? 'button' : undefined}
-                tabIndex={clickable ? 0 : undefined}
-                onClick={clickable ? () => onStepClick(s) : undefined}
-                onKeyDown={
-                  clickable
-                    ? (e) => {
-                        if (e.key === 'Enter' || e.key === ' ') onStepClick(s);
-                      }
-                    : undefined
-                }
-                className={`flex items-center justify-center h-9 w-9 rounded-full text-sm font-semibold transition-colors ${
-                  done
-                    ? 'bg-emerald-500 text-white'
-                    : active
-                      ? 'bg-primary text-primary-foreground ring-4 ring-primary/20'
-                      : 'bg-muted text-muted-foreground'
-                } ${clickable ? 'cursor-pointer hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-emerald-400/40' : ''}`}
-              >
-                {s}
-              </div>
-              <span
-                className={`text-xs font-medium whitespace-nowrap ${active ? 'text-foreground' : 'text-muted-foreground'}`}
-              >
-                {label}
-              </span>
-            </div>
-            {i < STEPS.length - 1 && (
-              <div
-                className={`flex-1 h-0.5 mx-4 mb-5 transition-colors ${done ? 'bg-emerald-500' : 'bg-muted'}`}
-              />
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
 }
 
 // ── Validation ────────────────────────────────────────────────────────────────
@@ -275,7 +216,7 @@ export function MetadataForm({
         }
       />
 
-      <StepIndicator step={step} onStepClick={setStep} editMode={!!original} />
+      <MetadataStepIndicator current={step} onStepClick={setStep} editMode={!!original} />
 
       {/* ── Step 1: Details ── */}
       {step === 1 && (

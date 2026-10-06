@@ -642,7 +642,7 @@ export const auctionsApi = {
 
   /** Updates a single saved policy in place (and its related workflow steps). */
   updateAuctionPolicy: async (id: string, policyId: string, data: PolicyItemRQ): Promise<void> => {
-    await apiClient.put(`/api/v1/auctions/${id}/policies/${policyId}`, data);
+    await apiClient.put(`/api/v1/auctions/${id}/policies`, { ...data, id: policyId });
   },
 
   /** Deletes a single saved policy (and its related workflow steps). */

@@ -15,7 +15,7 @@ import ErrorAlert from '@/components/common/admin/ErrorAlert';
 import { FormField } from '@/components/common/admin/FormField';
 import { ToggleField } from '@/components/common/admin/ToggleField';
 import { SaveButton } from '@/components/common/admin/SaveButton';
-import { useFieldErrors } from '@/components/common/admin/useFieldErrors';
+import { useFieldErrors } from '@/hooks/admin/useFieldErrors';
 import { AvatarUpload } from '@/components/common/admin/AvatarUpload';
 import { parseApiError } from '@/lib/api-errors';
 import { resolvesExists } from '@/lib/exists-check';

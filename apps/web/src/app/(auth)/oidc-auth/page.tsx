@@ -4,8 +4,8 @@ import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { Button, Card, CardContent } from '@repo/ui';
-import { usersApi } from '@repo/api';
 import { useAuthStore } from '@/store/authStore';
+import { establishAuthSession } from '@/lib/auth-session';
 import { OidcNewUserForm } from './_components/OidcNewUserForm';
 
 function OidcAuthInner() {
@@ -36,16 +36,14 @@ function OidcAuthInner() {
 
     (async () => {
       try {
-        const userInfo = await usersApi.getSelfInfo();
-        setUser({ username, authenticated: true });
-        setUserInfo(userInfo);
+        const { userInfo, redirectPath } = await establishAuthSession(setUser, setUserInfo, {
+          username,
+          authenticated: true,
+        });
         if (userInfo.promptChangePassword || promptChangePassword) {
           router.replace('/change-password');
         } else {
-          const isAdmin = userInfo.permissions?.some(
-            (a) => a === 'superadmin' || a === 'ROLE_SUPERADMIN' || a === 'platform.superadmin',
-          );
-          router.replace(isAdmin ? '/admin/users' : '/');
+          router.replace(redirectPath);
         }
       } catch {
         setErrorMsg('Failed to load user info. Please try again.');

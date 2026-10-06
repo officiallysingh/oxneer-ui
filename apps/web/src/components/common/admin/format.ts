@@ -44,6 +44,7 @@ export function formatDateTime(iso?: string | null, opts?: Intl.DateTimeFormatOp
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
+        hour12: true,
       },
     );
   } catch {
@@ -62,6 +63,38 @@ export function formatDate(iso?: string | null): string {
     });
   } catch {
     return iso;
+  }
+}
+
+/** Clock-only variant without seconds — used to pair with `formatDate` on a second line. */
+export function formatClock(iso?: string | null): string {
+  if (!iso) return '';
+  try {
+    return new Date(iso).toLocaleTimeString(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+  } catch {
+    return '';
+  }
+}
+
+/** Narrow currency symbol for an ISO code. INR → ₹, USD → $. Empty when unknown. */
+export function currencySymbol(code: string): string {
+  const normalized = code.trim().toUpperCase();
+  if (!normalized) return '';
+  try {
+    const part = new Intl.NumberFormat('en', {
+      style: 'currency',
+      currency: normalized,
+      currencyDisplay: 'narrowSymbol',
+    })
+      .formatToParts(0)
+      .find((entry) => entry.type === 'currency')?.value;
+    return part && part !== normalized ? part : '';
+  } catch {
+    return '';
   }
 }
 

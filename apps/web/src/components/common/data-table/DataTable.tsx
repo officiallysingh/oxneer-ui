@@ -17,6 +17,7 @@ import { ChevronDown, ChevronUp, ChevronsUpDown, Loader2, Search } from 'lucide-
 import { Button } from '@repo/ui';
 import { Input } from '@repo/ui';
 import { SearchInput } from '@/components/common/admin/SearchInput';
+import { PaginationBar } from '@/components/common/admin/PaginationBar';
 
 interface DataTableProps<TData> {
   data: TData[];
@@ -182,10 +183,6 @@ export function DataTable<TData>({
   const totalRows = manualPagination
     ? (rowCount ?? data.length)
     : table.getFilteredRowModel().rows.length;
-  const startRow = pagination.pageIndex * pagination.pageSize + 1;
-  const endRow = manualPagination
-    ? pagination.pageIndex * pagination.pageSize + data.length
-    : Math.min((pagination.pageIndex + 1) * pagination.pageSize, totalRows);
 
   return (
     <div className="space-y-4">
@@ -292,37 +289,21 @@ export function DataTable<TData>({
         </div>
       </div>
 
-      {/* Pagination */}
-      {table.getPageCount() > 1 && (
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-            <span>
-              Showing {startRow} to {endRow} of {totalRows} results
-            </span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              Previous
-            </Button>
-            <span className="text-sm text-muted-foreground">
-              Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      )}
+      <PaginationBar
+        pageIndex={pagination.pageIndex}
+        pageCount={manualPagination ? (pageCount ?? 0) : table.getPageCount()}
+        pageSize={pagination.pageSize}
+        itemCount={data.length}
+        totalRecords={totalRows}
+        onPageChange={(nextPage) => {
+          if (manualPagination) {
+            onPageChange?.(nextPage);
+          } else {
+            table.setPageIndex(nextPage);
+          }
+        }}
+        isLoading={isLoading}
+      />
     </div>
   );
 }

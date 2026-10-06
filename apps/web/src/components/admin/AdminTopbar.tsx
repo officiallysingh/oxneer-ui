@@ -28,7 +28,7 @@ export function AdminTopbar({
   onSignOut,
 }: AdminTopbarProps) {
   const pathname = usePathname();
-  const { label, description } = resolveTitle(pathname);
+  const { label } = resolveTitle(pathname);
 
   return (
     <header className="h-16 border-b border-border bg-card/80 backdrop-blur-md px-6 flex items-center justify-between shrink-0 z-30">
@@ -47,11 +47,11 @@ export function AdminTopbar({
           className="hidden md:flex text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-lg hover:bg-accent"
         />
 
-        <div className="flex flex-col">
-          <h2 className="font-body text-sm font-semibold text-foreground">{label}</h2>
-          <p className="font-body text-[11px] text-muted-foreground hidden sm:block">
-            {description}
+        <div className="flex flex-col min-w-0">
+          <p className="font-body text-[11px] uppercase tracking-wider text-muted-foreground">
+            Admin
           </p>
+          <h2 className="font-body text-sm font-semibold text-foreground truncate">{label}</h2>
         </div>
       </div>
 

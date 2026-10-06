@@ -1105,8 +1105,40 @@ function ListViewField({ prop, value }: { prop: PropertyDef; value: unknown }) {
     );
   }
 
+  if (listDisplay === 'link') {
+    const label = listAttrs['list:link.label'] || strVal;
+    return (
+      <a href={strVal} className="text-sm font-medium text-primary underline-offset-2 hover:underline">
+        {label}
+      </a>
+    );
+  }
+
+  if (listDisplay === 'boolean') {
+    const on = strVal === 'true' || strVal === '1' || strVal === 'yes';
+    return (
+      <span className="text-sm text-foreground">
+        {on ? listAttrs['list:boolean.true'] || 'Yes' : listAttrs['list:boolean.false'] || 'No'}
+      </span>
+    );
+  }
+
+  if (listDisplay === 'progress') {
+    const max = Number(listAttrs['list:progress.max'] || 100) || 100;
+    const num = Number(strVal);
+    const pct = Number.isNaN(num) ? 0 : Math.max(0, Math.min(100, (num / max) * 100));
+    return (
+      <div className="flex items-center gap-2 min-w-[8rem]">
+        <div className="h-2 flex-1 rounded-full bg-muted overflow-hidden">
+          <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
+        </div>
+        <span className="text-xs tabular-nums text-muted-foreground">{Math.round(pct)}%</span>
+      </div>
+    );
+  }
+
   // Badge
-  if (listDisplay === 'badge') {
+  if (listDisplay === 'badge' || listDisplay === 'pill') {
     const badgeColor = listAttrs['list:badge.color'];
     const colorCls =
       badgeColor === 'success'

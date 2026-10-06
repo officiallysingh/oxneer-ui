@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { masterApi, BankVM } from '@repo/api';
 import { Landmark } from 'lucide-react';
+import { Button } from '@repo/ui';
 import PageHeader from '@/components/common/admin/PageHeader';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';
 import ConfirmDialog from '@/components/common/admin/ConfirmDialog';
@@ -77,7 +78,18 @@ export default function BanksPage() {
       {isLoading ? (
         <LoadingBlock message="Loading banks..." />
       ) : filtered.length === 0 ? (
-        <EmptyState icon={Landmark} message="No banks found." />
+        <EmptyState
+          icon={Landmark}
+          message={search.trim() ? 'No banks match your search.' : 'No banks yet.'}
+          hint={search.trim() ? 'Try a different search term.' : 'Add a bank to get started.'}
+          action={
+            !search.trim() ? (
+              <Button variant="gold" size="sm" onClick={() => setAddOpen(true)}>
+                Add bank
+              </Button>
+            ) : undefined
+          }
+        />
       ) : (
         <div className="rounded-lg border border-border bg-card overflow-hidden divide-y divide-border">
           {filtered.map((bank) => (

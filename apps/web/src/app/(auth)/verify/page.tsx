@@ -63,7 +63,14 @@ export default function VerifyPage() {
     return () => clearInterval(t);
   }, [resendCooldown]);
 
-  if (!hydrated || !user?.authenticated) return null;
+  if (!hydrated || !user?.authenticated) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-background text-muted-foreground">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
+        <p className="text-sm font-medium">Loading...</p>
+      </div>
+    );
+  }
 
   const emailAddress = userInfo?.emailId ?? '';
   const mobileNumber = userInfo?.mobileNo ?? user.username ?? '';

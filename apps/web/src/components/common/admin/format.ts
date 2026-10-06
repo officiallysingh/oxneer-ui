@@ -80,6 +80,24 @@ export function formatClock(iso?: string | null): string {
   }
 }
 
+/** Narrow currency symbol for an ISO code. INR → ₹, USD → $. Empty when unknown. */
+export function currencySymbol(code: string): string {
+  const normalized = code.trim().toUpperCase();
+  if (!normalized) return '';
+  try {
+    const part = new Intl.NumberFormat('en', {
+      style: 'currency',
+      currency: normalized,
+      currencyDisplay: 'narrowSymbol',
+    })
+      .formatToParts(0)
+      .find((entry) => entry.type === 'currency')?.value;
+    return part && part !== normalized ? part : '';
+  } catch {
+    return '';
+  }
+}
+
 /** Compact time-only variant — used for "last evaluated 12:34:56" style timestamps. */
 export function formatTime(iso?: string | null): string {
   if (!iso) return '';

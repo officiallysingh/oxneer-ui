@@ -14,6 +14,7 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import { PageLoading } from '@/components/common/admin/SectionCard';
+import ConfirmDialog from '@/components/common/admin/ConfirmDialog';
 import { useAuctionDetails } from '@/hooks/useAuctionDetails';
 import { AuctionViewHeader } from './_components/AuctionViewHeader';
 import { AuctionOverviewTab } from './_components/AuctionOverviewTab';
@@ -22,10 +23,13 @@ import { AuctionWorkflowTab } from './_components/AuctionWorkflowTab';
 import { AuctionUnitSection } from '../../_components/AuctionUnitSection';
 import { AuctionParticipantsTab } from '../../_components/AuctionParticipantsTab';
 
+type ConfirmAction = 'auction' | 'policies' | 'workflow' | null;
+
 export default function AuctionViewPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
 
   const {
     loading,
@@ -47,37 +51,57 @@ export default function AuctionViewPage() {
     }
   };
 
-  const handleDeleteAuction = async () => {
-    if (!window.confirm('Are you sure you want to delete this auction?')) return;
-    try {
-      await auctionsApi.deleteAuction(id);
-      toast?.success?.('Auction deleted successfully');
-      router.push('/admin/auctions');
-    } catch {
-      toast?.error?.('Failed to delete auction');
-    }
-  };
+  const runConfirmedAction = async () => {
+    const action = confirmAction;
+    setConfirmAction(null);
+    if (!action) return;
 
-  const handleDeleteAllPolicies = async () => {
-    if (!window.confirm('Are you sure you want to delete all policies?')) return;
     try {
-      await auctionsApi.deleteAuctionPolicies(id);
-      toast?.success?.('All policies deleted');
-      refreshData();
-    } catch {
-      toast?.error?.('Failed to delete policies');
-    }
-  };
-
-  const handleDeleteWorkflow = async () => {
-    if (!window.confirm('Are you sure you want to delete the entire workflow?')) return;
-    try {
+      if (action === 'auction') {
+        await auctionsApi.deleteAuction(id);
+        toast.success('Auction deleted successfully');
+        router.push('/admin/auctions');
+        return;
+      }
+      if (action === 'policies') {
+        await auctionsApi.deleteAuctionPolicies(id);
+        toast.success('All policies deleted');
+        refreshData();
+        return;
+      }
       await auctionsApi.deleteWorkflow(id);
-      toast?.success?.('Workflow deleted');
+      toast.success('Workflow deleted');
       refreshData();
     } catch {
-      toast?.error?.('Failed to delete workflow');
+      toast.error(
+        action === 'auction'
+          ? 'Failed to delete auction'
+          : action === 'policies'
+            ? 'Failed to delete policies'
+            : 'Failed to delete workflow',
+      );
     }
+  };
+
+  const confirmCopy: Record<
+    Exclude<ConfirmAction, null>,
+    { title: string; description: string; confirmLabel: string }
+  > = {
+    auction: {
+      title: 'Delete auction?',
+      description: 'This will permanently remove the auction and related configuration.',
+      confirmLabel: 'Delete auction',
+    },
+    policies: {
+      title: 'Delete all policies?',
+      description: 'This will remove every policy mapped to this auction.',
+      confirmLabel: 'Delete policies',
+    },
+    workflow: {
+      title: 'Delete workflow?',
+      description: 'This will remove the entire workflow for this auction.',
+      confirmLabel: 'Delete workflow',
+    },
   };
 
   if (loading) {
@@ -104,15 +128,13 @@ export default function AuctionViewPage() {
 
   return (
     <div className="space-y-6 pb-12 max-w-7xl mx-auto">
-      {/* View Header Banner */}
       <AuctionViewHeader
         auction={auction}
         onRefreshPolicies={handleRefreshPolicies}
         reloadingPolicies={reloadingPolicies}
-        onDelete={handleDeleteAuction}
+        onDelete={() => setConfirmAction('auction')}
       />
 
-      {/* Main Tabs Container */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList className="bg-card border border-border p-1 rounded-2xl flex flex-wrap gap-1">
           <TabsTrigger value="overview" className="gap-2 rounded-xl text-xs sm:text-sm font-medium">
@@ -171,7 +193,7 @@ export default function AuctionViewPage() {
             evaluationsEvaluatedAt={evaluationsEvaluatedAt}
             reloadingPolicies={reloadingPolicies}
             onRefreshPolicies={handleRefreshPolicies}
-            onDeletePolicies={handleDeleteAllPolicies}
+            onDeletePolicies={() => setConfirmAction('policies')}
           />
         </TabsContent>
 
@@ -180,7 +202,7 @@ export default function AuctionViewPage() {
             auctionId={id}
             auction={auction}
             workflow={workflow}
-            onDeleteWorkflow={handleDeleteWorkflow}
+            onDeleteWorkflow={() => setConfirmAction('workflow')}
           />
         </TabsContent>
 
@@ -188,6 +210,15 @@ export default function AuctionViewPage() {
           <AuctionParticipantsTab auctionId={id} />
         </TabsContent>
       </Tabs>
+
+      <ConfirmDialog
+        open={confirmAction !== null}
+        title={confirmAction ? confirmCopy[confirmAction].title : undefined}
+        description={confirmAction ? confirmCopy[confirmAction].description : undefined}
+        confirmLabel={confirmAction ? confirmCopy[confirmAction].confirmLabel : 'Delete'}
+        onConfirm={runConfirmedAction}
+        onCancel={() => setConfirmAction(null)}
+      />
     </div>
   );
 }

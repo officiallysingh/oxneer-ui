@@ -175,7 +175,16 @@ export default function StatesPage() {
       {isLoading ? (
         <LoadingBlock message="Loading states..." />
       ) : states.length === 0 ? (
-        <EmptyState icon={MapPin} message="No states yet." hint="Add one to get started." />
+        <EmptyState
+          icon={MapPin}
+          message="No states yet."
+          hint="Add one to get started."
+          action={
+            <Button variant="gold" size="sm" onClick={() => setAddStateOpen(true)}>
+              Add state
+            </Button>
+          }
+        />
       ) : (
         <div className="rounded-lg border border-border bg-card overflow-hidden divide-y divide-border">
           {states.map((state) => {

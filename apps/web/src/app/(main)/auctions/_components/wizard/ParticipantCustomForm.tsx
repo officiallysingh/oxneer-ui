@@ -256,6 +256,34 @@ export function SingleField({ prop, value, onChange }: SingleFieldProps) {
         aria-required={isReq}
       />
     );
+  } else if (attrs['ui:component'] === 'radio' && options) {
+    input = (
+      <div className="flex flex-wrap gap-4">
+        {options.map((o) => (
+          <label key={o.value} className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="radio"
+              name={`wf-${prop.name}`}
+              value={o.value}
+              checked={strVal === o.value}
+              onChange={() => onChange(o.value)}
+              className="accent-primary"
+            />
+            {o.label}
+          </label>
+        ))}
+      </div>
+    );
+  } else if (attrs['ui:component'] === 'color') {
+    input = (
+      <input
+        id={fieldId}
+        type="color"
+        value={strVal || '#000000'}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-9 w-14 rounded-xl border border-input bg-background p-1"
+      />
+    );
   } else if (
     attrs['ui:component'] === 'textarea' ||
     (dt === 'STRING' && attrs['ui:multiline'] === 'true')
@@ -275,8 +303,10 @@ export function SingleField({ prop, value, onChange }: SingleFieldProps) {
     input = (
       <input
         id={fieldId}
-        type="text"
+        type={attrs['html:type'] ?? 'text'}
         value={strVal}
+        readOnly={attrs['form:readonly'] === 'true'}
+        autoComplete={attrs['html:autocomplete']}
         onChange={(e) => onChange(e.target.value)}
         placeholder={attrs['html:placeholder'] ?? `Enter ${prop.label.toLowerCase()}…`}
         maxLength={attrs['html:maxlength'] ? Number(attrs['html:maxlength']) : undefined}

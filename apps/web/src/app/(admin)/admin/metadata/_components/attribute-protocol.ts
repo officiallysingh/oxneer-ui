@@ -13,7 +13,7 @@ export interface AttrKeyDef {
   surface: AttrSurface;
   group: 'html' | 'ui' | 'style' | 'form' | 'list';
   block?: string;
-  showWhen?: { key: string; equals: string };
+  showWhen?: { key: string; equals: string | string[] };
   appliesTo?: PropertyType[];
 }
 
@@ -73,6 +73,27 @@ export const ATTR_BLOCKS: AttrBlockDef[] = [
     surface: 'list',
     triggerPropType: 'LIST_PROPERTY',
     keys: ['list:list.layout', 'list:list.item-style'],
+  },
+  {
+    name: 'link',
+    label: 'Link display',
+    surface: 'list',
+    trigger: { key: 'list:display', equals: 'link' },
+    keys: ['list:link.label', 'list:link.new-tab'],
+  },
+  {
+    name: 'boolean',
+    label: 'Boolean labels',
+    surface: 'list',
+    trigger: { key: 'list:display', equals: 'boolean' },
+    keys: ['list:boolean.true', 'list:boolean.false'],
+  },
+  {
+    name: 'progress',
+    label: 'Progress bar',
+    surface: 'list',
+    trigger: { key: 'list:display', equals: 'progress' },
+    keys: ['list:progress.max'],
   },
 ];
 
@@ -141,7 +162,24 @@ export const ATTRIBUTE_PROTOCOL: AttrKeyDef[] = [
     label: 'Input type',
     description: 'Override the HTML input type',
     valueType: 'select',
-    options: ['text', 'email', 'tel', 'url', 'password'],
+    options: ['text', 'email', 'tel', 'url', 'password', 'search', 'number'],
+  },
+  {
+    key: 'html:maxlength',
+    surface: 'both',
+    group: 'html',
+    label: 'Max length',
+    description: 'Maximum number of characters for text inputs',
+    valueType: 'number',
+  },
+  {
+    key: 'html:autocomplete',
+    surface: 'both',
+    group: 'html',
+    label: 'Autocomplete',
+    description: 'Browser autocomplete hint for the input',
+    valueType: 'select',
+    options: ['off', 'on', 'name', 'email', 'tel', 'url', 'street-address', 'postal-code'],
   },
 
   // ── ui ────────────────────────────────────────────────────────────────────
@@ -161,6 +199,8 @@ export const ATTRIBUTE_PROTOCOL: AttrKeyDef[] = [
       'textarea',
       'tag-input',
       'option-pills',
+      'radio',
+      'color',
     ],
   },
   {
@@ -262,6 +302,15 @@ export const ATTRIBUTE_PROTOCOL: AttrKeyDef[] = [
     description: 'Small hint line rendered below the field',
     valueType: 'text',
   },
+  {
+    key: 'form:readonly',
+    surface: 'form',
+    group: 'form',
+    label: 'Read only',
+    description: 'Show the field but prevent edits',
+    valueType: 'select',
+    options: ['true', 'false'],
+  },
 
   // ── list (common) ─────────────────────────────────────────────────────────
   {
@@ -281,6 +330,10 @@ export const ATTRIBUTE_PROTOCOL: AttrKeyDef[] = [
       'price',
       'rating',
       'truncated',
+      'link',
+      'boolean',
+      'progress',
+      'monospace',
     ],
   },
   {
@@ -314,7 +367,15 @@ export const ATTRIBUTE_PROTOCOL: AttrKeyDef[] = [
     label: 'Format',
     description: 'Value formatting before display',
     valueType: 'select',
-    options: ['raw', 'date', 'datetime', 'currency', 'percentage'],
+    options: ['raw', 'date', 'datetime', 'currency', 'percentage', 'number', 'uppercase', 'lowercase'],
+  },
+  {
+    key: 'list:empty',
+    surface: 'list',
+    group: 'list',
+    label: 'Empty text',
+    description: 'Text shown when the stored value is blank',
+    valueType: 'text',
   },
 
   // ── list:badge block ──────────────────────────────────────────────────────
@@ -325,9 +386,9 @@ export const ATTRIBUTE_PROTOCOL: AttrKeyDef[] = [
     label: 'Badge color',
     description: 'Background / border color of badge',
     valueType: 'select',
-    options: ['primary', 'success', 'warning', 'danger'],
+    options: ['primary', 'success', 'warning', 'danger', 'info', 'muted'],
     block: 'badge',
-    showWhen: { key: 'list:display', equals: 'badge' },
+    showWhen: { key: 'list:display', equals: ['badge', 'pill'] },
   },
   {
     key: 'list:badge.size',
@@ -338,7 +399,7 @@ export const ATTRIBUTE_PROTOCOL: AttrKeyDef[] = [
     valueType: 'select',
     options: ['sm', 'md', 'lg'],
     block: 'badge',
-    showWhen: { key: 'list:display', equals: 'badge' },
+    showWhen: { key: 'list:display', equals: ['badge', 'pill'] },
   },
   {
     key: 'list:badge.variant',
@@ -349,7 +410,7 @@ export const ATTRIBUTE_PROTOCOL: AttrKeyDef[] = [
     valueType: 'select',
     options: ['solid', 'outline', 'soft'],
     block: 'badge',
-    showWhen: { key: 'list:display', equals: 'badge' },
+    showWhen: { key: 'list:display', equals: ['badge', 'pill'] },
   },
 
   // ── list:image block ──────────────────────────────────────────────────────
@@ -489,6 +550,58 @@ export const ATTRIBUTE_PROTOCOL: AttrKeyDef[] = [
     block: 'list-layout',
     appliesTo: ['LIST_PROPERTY'],
   },
+
+  {
+    key: 'list:link.label',
+    surface: 'list',
+    group: 'list',
+    label: 'Link label',
+    description: 'Visible text. The stored value is the URL. Leave blank to show the URL.',
+    valueType: 'text',
+    block: 'link',
+    showWhen: { key: 'list:display', equals: 'link' },
+  },
+  {
+    key: 'list:link.new-tab',
+    surface: 'list',
+    group: 'list',
+    label: 'Open in new tab',
+    description: 'Open the link in a new browser tab',
+    valueType: 'select',
+    options: ['true', 'false'],
+    block: 'link',
+    showWhen: { key: 'list:display', equals: 'link' },
+  },
+  {
+    key: 'list:boolean.true',
+    surface: 'list',
+    group: 'list',
+    label: 'True label',
+    description: 'Text shown when the value is true',
+    valueType: 'text',
+    block: 'boolean',
+    showWhen: { key: 'list:display', equals: 'boolean' },
+  },
+  {
+    key: 'list:boolean.false',
+    surface: 'list',
+    group: 'list',
+    label: 'False label',
+    description: 'Text shown when the value is false',
+    valueType: 'text',
+    block: 'boolean',
+    showWhen: { key: 'list:display', equals: 'boolean' },
+  },
+  {
+    key: 'list:progress.max',
+    surface: 'list',
+    group: 'list',
+    label: 'Progress max',
+    description: 'Value that represents 100% on the bar',
+    valueType: 'number',
+    block: 'progress',
+    showWhen: { key: 'list:display', equals: 'progress' },
+  },
 ];
 
 export const ATTR_PROTOCOL_MAP: Record<string, AttrKeyDef> = Object.fromEntries(
@@ -497,6 +610,17 @@ export const ATTR_PROTOCOL_MAP: Record<string, AttrKeyDef> = Object.fromEntries(
 
 export const ATTR_GROUPS = ['html', 'ui', 'style', 'form', 'list'] as const;
 export type AttrGroup = (typeof ATTR_GROUPS)[number];
+
+export function showWhenMatches(
+  showWhen: { key: string; equals: string | string[] } | undefined,
+  attrs: Record<string, string> | undefined,
+): boolean {
+  if (!showWhen) return true;
+  const actual = attrs?.[showWhen.key];
+  return Array.isArray(showWhen.equals)
+    ? showWhen.equals.includes(actual ?? '')
+    : actual === showWhen.equals;
+}
 
 export function resolveAttrs(
   attrs: Record<string, string> | undefined,
@@ -508,7 +632,7 @@ export function resolveAttrs(
   for (const def of ATTRIBUTE_PROTOCOL) {
     if (def.surface !== 'both' && def.surface !== surface) continue;
     if (def.appliesTo && propType && !def.appliesTo.includes(propType)) continue;
-    if (def.showWhen && attrs[def.showWhen.key] !== def.showWhen.equals) continue;
+    if (!showWhenMatches(def.showWhen, attrs)) continue;
     if (def.key in attrs) out[def.key] = attrs[def.key]!;
   }
   return out;

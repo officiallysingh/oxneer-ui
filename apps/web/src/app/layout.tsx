@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter, Space_Grotesk } from 'next/font/google';
 import { ThemeProvider, TooltipProvider, Toaster } from '@repo/ui';
+import { ApiSessionWatcher } from '@/components/common/ApiSessionWatcher';
 import './globals.css';
 
 const inter = Inter({
@@ -34,6 +35,7 @@ export default function RootLayout({
           storageKey="theme"
         >
           <TooltipProvider delayDuration={300}>
+            <ApiSessionWatcher />
             {children}
             <Toaster richColors position="bottom-right" />
           </TooltipProvider>

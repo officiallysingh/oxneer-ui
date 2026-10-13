@@ -13,7 +13,7 @@ set -euo pipefail
 #   MANAGED_TYPE_ID=xxx LISTING_ID=yyy ./scripts/create-demo-auctions.sh
 #
 # Optional:
-#   NUM_AUCTIONS=5 PUBLISH=false ./scripts/create-demo-auctions.sh
+#   NUM_AUCTIONS=5 PUBLISH=false ACCESSIBILITY=PRIVATE ./scripts/create-demo-auctions.sh
 
 BASE_URL="${BASE_URL:-http://localhost:8090}"
 API="$BASE_URL/api/v1"
@@ -22,6 +22,7 @@ MANAGED_TYPE_ID="${MANAGED_TYPE_ID:-}"
 LISTING_ID="${LISTING_ID:-}"
 SUBCATEGORY_ID="${SUBCATEGORY_ID:-}"
 PUBLISH="${PUBLISH:-true}"
+ACCESSIBILITY="${ACCESSIBILITY:-PUBLIC}"
 COOKIE_JAR="/tmp/oxneer-cookies.txt"
 rm -f "$COOKIE_JAR"
 
@@ -32,7 +33,7 @@ warn()  { printf "\033[1;33m[WARN]\033[0m  %s\n" "$*"; }
 fail()  { printf "\033[1;31m[FAIL]\033[0m  %s\n" "$*"; exit 1; }
 
 extract_id() {
-  echo "$1" | grep -o '"id"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"id"[[:space:]]*:[[:space:]]*"//;s/"$//' | grep -o '[0-9a-f-]\{8,\}'
+  echo "$1" | grep -o '"id"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"id"[[:space:]]*:[[:space:]]*"//;s/"$//' | grep -o '[0-9a-f-]\{8,\}' || true
 }
 
 http_post() {
@@ -131,7 +132,7 @@ for i in $(seq 1 "$NUM_AUCTIONS"); do
     "type": "OFFER_BASE_STEP_PRICED_ATOMIC_UNIT_AUCTION",
     "format": "SIMPLE",
     "protocol": {
-      "accessibility": "PUBLIC",
+      "accessibility": "'"$ACCESSIBILITY"'",
       "direction": "FORWARD",
       "dimension": "ONE_DIMENSIONAL",
       "participantVisibility": "ALIAS",

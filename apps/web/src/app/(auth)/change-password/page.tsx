@@ -16,8 +16,9 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  toast,
 } from '@repo/ui';
-import { authApi } from '@repo/api';
+import { authApi, getApiErrorMessage } from '@repo/api';
 import { useAuthStore, useAuthHydrated } from '@/store/authStore';
 import { AuthIllustration } from '@/components/auth/AuthIllustration';
 import { PASSWORD_PATTERN, PASSWORD_ERROR, PASSWORD_RULES } from '@/lib/validation';
@@ -232,8 +233,8 @@ export default function ChangePasswordPage() {
                   onClick={async () => {
                     try {
                       await authApi.logout();
-                    } catch {
-                      /* ignore */
+                    } catch (err) {
+                      toast.error(getApiErrorMessage(err, 'Failed to sign out. Please try again.'));
                     }
                     clearUser();
                     router.push('/login');

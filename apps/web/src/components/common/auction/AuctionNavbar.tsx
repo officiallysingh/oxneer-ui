@@ -3,18 +3,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import {
-  User,
-  LogOut,
-  LayoutDashboard,
-  Menu,
-  X,
-  ChevronDown,
-  Settings,
-} from 'lucide-react';
-import { Button, DropdownMenuItem, DropdownMenuSeparator } from '@repo/ui';
+import { User, LogOut, LayoutDashboard, Menu, X, ChevronDown, Settings } from 'lucide-react';
+import { Button, DropdownMenuItem, DropdownMenuSeparator, toast } from '@repo/ui';
 import { useAuthStore } from '@/store/authStore';
-import { authApi } from '@repo/api';
+import { authApi, getApiErrorMessage } from '@repo/api';
 import { ThemeToggle } from '@/components/common/Header/ThemeToggle';
 import { UserAvatar } from '@/components/common/admin/UserAvatar';
 import { UserMenu } from '@/components/admin/UserMenu';
@@ -36,8 +28,8 @@ const AuctionNavbar = () => {
   const handleSignOut = async () => {
     try {
       await authApi.logout();
-    } catch {
-      /* ignore */
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Failed to sign out. Please try again.'));
     }
     clearUser();
     router.push('/');

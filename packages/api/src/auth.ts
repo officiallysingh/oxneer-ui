@@ -1,4 +1,10 @@
-import { apiClient } from './client';
+import {
+  API_BASE,
+  SESSION_ERROR_KEY,
+  apiClient,
+  clearSessionError,
+  getApiErrorMessage,
+} from './client';
 
 export interface LoginParams {
   username: string;
@@ -78,8 +84,34 @@ export const authApi = {
     return response.data;
   },
 
-  /** Invalidate the server session. Spring Security default logout endpoint. */
-  logout: async () => {
-    await apiClient.post('/logout');
+  /** Invalidate the server session — POST /logout (Spring Security default endpoint). */
+  logout: async (): Promise<void> => {
+    const response = await fetch(`${API_BASE}/logout`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { Accept: 'application/json, text/plain, */*' },
+    });
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => '');
+      let error: unknown;
+      try {
+        error = { response: { status: response.status, data: body ? JSON.parse(body) : body } };
+      } catch {
+        error = { response: { status: response.status, data: body } };
+      }
+      const message = getApiErrorMessage(error, `Logout failed (HTTP ${response.status}).`);
+      // An expired session answers 401/403 — keep the message so the login page can show it.
+      if (response.status === 401 || response.status === 403) {
+        try {
+          window.sessionStorage.setItem(SESSION_ERROR_KEY, message);
+        } catch {
+          /* ignore */
+        }
+      }
+      throw new Error(message);
+    }
+
+    clearSessionError();
   },
 };

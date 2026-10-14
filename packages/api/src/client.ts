@@ -8,8 +8,96 @@ const getBaseUrl = () => {
   return 'http://localhost:8090';
 };
 
+/** Origin of the API — use it for non-axios calls, e.g. `fetch(\`${API_BASE}/logout\`)`. */
+export const API_BASE = getBaseUrl();
+
+/** sessionStorage key holding the error returned when the session expires (shown on /login). */
+export const SESSION_ERROR_KEY = 'oxneer.session-error';
+
+export function readSessionError(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.sessionStorage.getItem(SESSION_ERROR_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function clearSessionError(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.removeItem(SESSION_ERROR_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+/**
+ * Reads a human readable message out of an API error, keeping the server's
+ * payload structure: plain text bodies, Spring problem-detail
+ * (`{ status, title, detail, code }`) or constraint violations
+ * (`{ violations: [{ propertyPath, detail }] }`).
+ */
+export function getApiErrorMessage(
+  error: unknown,
+  fallback = 'Something went wrong. Please try again.',
+): string {
+  const response = (error as { response?: { data?: unknown } })?.response;
+  const data = response?.data;
+
+  if (typeof data === 'string') {
+    const text = data.trim();
+    if (text) {
+      if (text.startsWith('{') || text.startsWith('[')) {
+        try {
+          return getApiErrorMessage({ response: { data: JSON.parse(text) } }, fallback);
+        } catch {
+          /* fall through to the raw text */
+        }
+      }
+      return text;
+    }
+  }
+
+  if (data && typeof data === 'object') {
+    const payload = data as {
+      detail?: string;
+      title?: string;
+      message?: string;
+      violations?: { propertyPath?: string; detail?: string }[];
+    };
+    const violations = (payload.violations ?? [])
+      .map((v) => v.detail)
+      .filter((d): d is string => Boolean(d));
+    if (violations.length) return violations.join(' ');
+    if (payload.detail) return payload.detail;
+    if (payload.message) return payload.message;
+    if (payload.title) return payload.title;
+  }
+
+  const message = (error as Error)?.message;
+  return message && message !== 'Network Error' ? message : fallback;
+}
+
+/** Fired on the window when the API answers 401/403 (expired session). */
+export const SESSION_ERROR_EVENT = 'oxneer:session-error';
+
+/** True when a signed-in user is persisted — tells "session expired" from "not signed in". */
+function hasSignedInUser(): boolean {
+  try {
+    const raw = window.localStorage.getItem('auth-store');
+    if (!raw) return false;
+    const parsed = JSON.parse(raw) as { state?: { user?: { authenticated?: boolean } } };
+    return parsed.state?.user?.authenticated === true;
+  } catch {
+    return false;
+  }
+}
+
+let redirectingToLogin = false;
+
 export const apiClient = axios.create({
-  baseURL: getBaseUrl(),
+  baseURL: API_BASE,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -23,8 +111,30 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        window.location.href = '/login';
+      const status = error.response?.status;
+      if (status === 401 || status === 403) {
+        const signedIn = hasSignedInUser();
+        if (signedIn || status === 401) {
+          const serverMessage = getApiErrorMessage(error, 'Please sign in again.');
+          const message = signedIn
+            ? `Your session has expired. ${serverMessage}`
+            : `Please sign in to continue. ${serverMessage}`;
+
+          try {
+            window.sessionStorage.setItem(SESSION_ERROR_KEY, message);
+          } catch {
+            /* ignore */
+          }
+          window.dispatchEvent(new CustomEvent(SESSION_ERROR_EVENT, { detail: message }));
+        }
+
+        if (!redirectingToLogin) {
+          redirectingToLogin = true;
+          // Give the toast a moment to render before the page unloads.
+          window.setTimeout(() => {
+            if (!window.location.pathname.startsWith('/login')) window.location.href = '/login';
+          }, 1500);
+        }
       }
     }
     return Promise.reject(error);

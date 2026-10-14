@@ -4,7 +4,8 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore, useAuthHydrated } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
-import { authApi } from '@repo/api';
+import { toast } from '@repo/ui';
+import { authApi, getApiErrorMessage } from '@repo/api';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { AdminTopbar } from '@/components/admin/AdminTopbar';
 import { PageLoadingScreen } from '@/components/common/PageLoadingScreen';
@@ -28,8 +29,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const handleSignOut = async () => {
     try {
       await authApi.logout();
-    } catch {
-      /* ignore */
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Failed to sign out. Please try again.'));
     }
     clearUser();
     router.push('/login');

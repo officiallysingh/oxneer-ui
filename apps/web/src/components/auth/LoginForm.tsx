@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   User,
@@ -15,7 +15,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { Button, Input, Label, Separator } from '@repo/ui';
-import { authApi } from '@repo/api';
+import { authApi, clearSessionError, readSessionError } from '@repo/api';
 import { useAuthStore } from '@/store/authStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { authUserFromLoginResponse, establishAuthSession } from '@/lib/auth-session';
@@ -56,6 +56,15 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [identifierError, setIdentifierError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  // Surface the error returned when the session expired (set by the API client / logout).
+  useEffect(() => {
+    const stored = readSessionError();
+    if (stored) {
+      setError(stored);
+      clearSessionError();
+    }
+  }, []);
 
   const handleIdentityContinue = (e: React.FormEvent) => {
     e.preventDefault();

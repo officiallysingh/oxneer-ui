@@ -3,6 +3,8 @@ set -euo pipefail
 
 BASE_URL="${OXNEER_BASE_URL:-http://localhost:8090}"
 API="$BASE_URL/api/v1"
+COOKIE_JAR="/tmp/oxneer-cookies.txt"
+rm -f "$COOKIE_JAR"
 
 info()  { printf "\033[1;34m[INFO]\033[0m  %s\n" "$*"; }
 ok()    { printf "\033[1;32m[OK]\033[0m    %s\n" "$*"; }
@@ -20,12 +22,28 @@ check_health() {
   fi
 }
 
+login() {
+  info "Logging in as superadmin…"
+  local http_code
+  http_code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$BASE_URL/login" \
+    -H 'Accept: application/json, text/plain, */*' \
+    -H 'Content-Type: application/x-www-form-urlencoded' \
+    -H 'Origin: http://localhost:3000' \
+    -H 'Referer: http://localhost:3000/' \
+    --data-raw 'username=superadmin&password=Valentine%401' \
+    -c "$COOKIE_JAR")
+  if [ "$http_code" != "200" ]; then
+    fail "Login failed (HTTP $http_code). Check server and credentials."
+  fi
+  ok "Logged in (JSESSIONID saved)"
+}
+
 delete_auction() {
   local auction_id="$1"
   info "Deleting auction $auction_id …"
 
   local resp http_code body
-  resp=$(curl -s -w "\n%{http_code}" -X DELETE "$API/auctions/$auction_id")
+  resp=$(curl -s -w "\n%{http_code}" -X DELETE "$API/auctions/$auction_id" -b "$COOKIE_JAR")
   http_code=$(echo "$resp" | tail -1)
   body=$(echo "$resp" | sed '$d')
 
@@ -45,14 +63,14 @@ main() {
   echo ""
 
   check_health
+  login
 
   info "Fetching all auctions …"
   local auction_ids
-  auction_ids=$(curl -sf "$API/auctions" 2>/dev/null | python3 -c "
-import sys,json
-d=json.load(sys.stdin)
-for a in d.get('content', []):
-    print(a['id'])
+  auction_ids=$(curl -sf -b "$COOKIE_JAR" "$API/auctions?page=0&size=100" 2>/dev/null | node -e "
+let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{
+  try{for(const a of (JSON.parse(d).content||[]))console.log(a.id);}catch(e){}
+});
 " 2>/dev/null || echo "")
 
   if [ -z "$auction_ids" ]; then

@@ -69,3 +69,17 @@ export { Badge, type BadgeProps } from './components/badge';
 export { RichTextEditor, type RichTextEditorProps } from './components/rich-text-editor';
 export * from './hooks';
 export { ThemeProvider } from './components/theme-provider';
+export {
+  Sheet,
+  SheetTrigger,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetFooter,
+  SheetTitle,
+  SheetDescription,
+} from './components/sheet';
+export { Popover, PopoverTrigger, PopoverContent } from './components/popover';
+export { Checkbox } from './components/checkbox';
+export { Switch } from './components/switch';
+export { Skeleton } from './components/skeleton';

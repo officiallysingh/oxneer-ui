@@ -19,6 +19,9 @@ import PageHeader from '@/components/common/admin/PageHeader';
 import { SectionCard, DetailRow, PageLoading } from '@/components/common/admin/SectionCard';
 import { TagList } from '@/components/common/admin/TagList';
 import { UserAvatar } from '@/components/common/admin/UserAvatar';
+import { Pill } from '@/components/common/admin/Pill';
+import { UserStatusBadge } from '../../_components/UserStatusBadge';
+import { fullName as getFullName } from '../../_lib/user-display';
 
 function BoolBadge({
   value,
@@ -29,40 +32,7 @@ function BoolBadge({
   trueLabel: string;
   falseLabel: string;
 }) {
-  return (
-    <span
-      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${
-        value
-          ? 'bg-success/10 text-success border-success/20'
-          : 'bg-muted text-muted-foreground border-border'
-      }`}
-    >
-      {value ? trueLabel : falseLabel}
-    </span>
-  );
-}
-
-function AccountStatusBadges({ user }: { user: UserDetailVM }) {
-  return (
-    <div className="flex flex-wrap items-center gap-1.5 justify-end">
-      <BoolBadge value={user.enabled} trueLabel="Active" falseLabel="Inactive" />
-      {!user.accountNonLocked && (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-destructive/10 text-destructive border border-destructive/20">
-          Locked
-        </span>
-      )}
-      {!user.accountNonExpired && (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warning/10 text-warning border border-warning/20">
-          Expired
-        </span>
-      )}
-      {!user.credentialsNonExpired && (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warning/10 text-warning border border-warning/20">
-          Credentials expired
-        </span>
-      )}
-    </div>
-  );
+  return <Pill tone={value ? 'success' : 'muted'}>{value ? trueLabel : falseLabel}</Pill>;
 }
 
 export default function UserViewPage() {
@@ -104,7 +74,7 @@ export default function UserViewPage() {
     );
   }
 
-  const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ') || '—';
+  const fullName = getFullName(user);
 
   return (
     <div className="space-y-6">
@@ -154,7 +124,7 @@ export default function UserViewPage() {
 
         <SectionCard title="Account status" icon={Shield}>
           <DetailRow label="Status">
-            <AccountStatusBadges user={user} />
+            <UserStatusBadge user={user} />
           </DetailRow>
           <DetailRow label="Account locked">
             <BoolBadge value={!user.accountNonLocked} trueLabel="Locked" falseLabel="Not locked" />

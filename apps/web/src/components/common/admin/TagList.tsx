@@ -3,17 +3,28 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 
+type TagVariant = 'primary' | 'muted' | 'info' | 'outline';
+
 interface Tag {
   id: string;
   label: string;
   mono?: boolean;
+  /** Overrides the list-level variant for this tag. */
+  variant?: TagVariant;
 }
 
 interface TagListProps {
   tags: Tag[];
   max?: number;
-  variant?: 'primary' | 'muted';
+  variant?: TagVariant;
 }
+
+const TAG_CLASSES: Record<TagVariant, string> = {
+  primary: 'bg-primary/10 text-primary border border-primary/20',
+  muted: 'bg-muted text-muted-foreground border border-border',
+  info: 'bg-info/10 text-info border border-transparent',
+  outline: 'bg-transparent text-foreground border border-border',
+};
 
 interface PopoverPos {
   top: number;
@@ -24,11 +35,6 @@ export function TagList({ tags, max = 2, variant = 'primary' }: TagListProps) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<PopoverPos | null>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
-
-  const tagClass =
-    variant === 'primary'
-      ? 'bg-primary/10 text-primary border border-primary/20'
-      : 'bg-muted text-muted-foreground border border-border';
 
   const openPopover = useCallback(() => {
     if (!btnRef.current) return;
@@ -59,12 +65,7 @@ export function TagList({ tags, max = 2, variant = 'primary' }: TagListProps) {
   return (
     <div className="flex flex-wrap items-center gap-1">
       {visible.map((t) => (
-        <span
-          key={t.id}
-          className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${t.mono ? 'font-mono' : ''} ${tagClass}`}
-        >
-          {t.label}
-        </span>
+        <TagChip key={t.id} tag={t} fallback={variant} />
       ))}
 
       {hidden.length > 0 && (
@@ -83,20 +84,22 @@ export function TagList({ tags, max = 2, variant = 'primary' }: TagListProps) {
             typeof document !== 'undefined' &&
             createPortal(
               <>
-                {/* backdrop to close */}
-                <div className="fixed inset-0 z-[9998]" onClick={() => setOpen(false)} />
+                {/* backdrop to close; stop propagation so React doesn't bubble the click to a clickable parent row */}
+                <div
+                  className="fixed inset-0 z-[9998]"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpen(false);
+                  }}
+                />
                 <div
                   className="fixed z-[9999] min-w-[160px] max-w-[280px] rounded-lg border border-border bg-card shadow-xl p-2.5"
                   style={{ top: pos.top, left: pos.left }}
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex flex-wrap gap-1">
                     {hidden.map((t) => (
-                      <span
-                        key={t.id}
-                        className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${t.mono ? 'font-mono' : ''} ${tagClass}`}
-                      >
-                        {t.label}
-                      </span>
+                      <TagChip key={t.id} tag={t} fallback={variant} />
                     ))}
                   </div>
                 </div>
@@ -106,5 +109,15 @@ export function TagList({ tags, max = 2, variant = 'primary' }: TagListProps) {
         </>
       )}
     </div>
+  );
+}
+
+function TagChip({ tag, fallback }: { tag: Tag; fallback: TagVariant }) {
+  return (
+    <span
+      className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${tag.mono ? 'font-mono' : ''} ${TAG_CLASSES[tag.variant ?? fallback]}`}
+    >
+      {tag.label}
+    </span>
   );
 }

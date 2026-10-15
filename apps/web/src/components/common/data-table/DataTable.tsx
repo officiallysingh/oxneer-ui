@@ -12,6 +12,8 @@ import {
   ColumnDef,
   SortingState,
   ColumnFiltersState,
+  RowSelectionState,
+  OnChangeFn,
 } from '@tanstack/react-table';
 import { ChevronDown, ChevronUp, ChevronsUpDown, Loader2, Search } from 'lucide-react';
 import { Button } from '@repo/ui';
@@ -41,6 +43,33 @@ interface DataTableProps<TData> {
   rowCount?: number;
   /** Called with the next zero-based page index when Previous/Next is clicked. Required when manualPagination is true. */
   onPageChange?: (pageIndex: number) => void;
+  /** Shows a "Rows per page" select in the footer (server pagination). */
+  pageSizeOptions?: number[];
+  onPageSizeChange?: (pageSize: number) => void;
+  /** Noun for the footer caption, e.g. "users". */
+  itemLabel?: string;
+  /** When true, sorting is owned by the parent (e.g. sent to the server) via `sorting`/`onSortingChange`. */
+  manualSorting?: boolean;
+  sorting?: SortingState;
+  onSortingChange?: (sorting: SortingState) => void;
+  /** Row selection (add a checkbox column yourself; see tanstack `row.getToggleSelectedHandler`). */
+  rowSelection?: RowSelectionState;
+  onRowSelectionChange?: OnChangeFn<RowSelectionState>;
+  getRowId?: (row: TData) => string;
+  /** Called when a row is clicked or activated with Enter; clicks on buttons/links/inputs are ignored. */
+  onRowClick?: (row: TData) => void;
+  /** Replaces the default spinner row while loading. */
+  loadingState?: React.ReactNode;
+  /** Replaces `emptyMessage` when there are no rows. */
+  emptyState?: React.ReactNode;
+  /** When set, rows render as these cards below the `md` breakpoint instead of the table. */
+  renderMobileCard?: (row: TData) => React.ReactNode;
+}
+
+const INTERACTIVE_SELECTOR = 'button, a, input, select, textarea, label, [role="menuitem"]';
+
+function isFromInteractiveElement(e: React.SyntheticEvent) {
+  return !!(e.target as HTMLElement).closest(INTERACTIVE_SELECTOR);
 }
 
 export function DataTable<TData>({
@@ -60,6 +89,19 @@ export function DataTable<TData>({
   pageCount,
   rowCount,
   onPageChange,
+  pageSizeOptions,
+  onPageSizeChange,
+  itemLabel,
+  manualSorting = false,
+  sorting: controlledSorting,
+  onSortingChange,
+  rowSelection,
+  onRowSelectionChange,
+  getRowId,
+  onRowClick,
+  loadingState,
+  emptyState,
+  renderMobileCard,
 }: DataTableProps<TData>) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -151,17 +193,27 @@ export function DataTable<TData>({
     }
   }, [globalFilter, enableUrlState, manualPagination]);
 
+  const effectiveSorting = manualSorting ? (controlledSorting ?? []) : sorting;
+
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
     columns,
+    getRowId,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: manualPagination ? undefined : getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
+    getSortedRowModel: manualSorting ? undefined : getSortedRowModel(),
     getFilteredRowModel: onSearch ? undefined : getFilteredRowModel(),
     manualPagination,
+    manualSorting,
+    enableRowSelection: !!onRowSelectionChange,
+    onRowSelectionChange,
     pageCount: manualPagination ? (pageCount ?? -1) : undefined,
-    onSortingChange: setSorting,
+    onSortingChange: (updater) => {
+      const next = typeof updater === 'function' ? updater(effectiveSorting) : updater;
+      if (manualSorting) onSortingChange?.(next);
+      else setSorting(next);
+    },
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: onSearch ? undefined : setGlobalFilter,
     onPaginationChange: (updater) => {
@@ -173,10 +225,11 @@ export function DataTable<TData>({
       }
     },
     state: {
-      sorting,
+      sorting: effectiveSorting,
       columnFilters,
       globalFilter: onSearch ? undefined : globalFilter,
       pagination,
+      ...(rowSelection ? { rowSelection } : {}),
     },
   });
 
@@ -212,8 +265,34 @@ export function DataTable<TData>({
       )}
       {hideSearch && toolbar && <div className="flex items-center gap-3">{toolbar}</div>}
 
+      {/* Card list (below md) */}
+      {renderMobileCard && (
+        <div className="space-y-2.5 md:hidden">
+          {isLoading || table.getRowModel().rows.length === 0 ? (
+            <div className="rounded-lg border bg-card overflow-hidden">
+              {isLoading
+                ? (loadingState ?? (
+                    <div className="px-4 py-10 text-center text-muted-foreground">
+                      <Loader2 className="h-5 w-5 animate-spin inline mr-2" />
+                      Loading...
+                    </div>
+                  ))
+                : (emptyState ?? (
+                    <p className="px-4 py-10 text-center text-muted-foreground">{emptyMessage}</p>
+                  ))}
+            </div>
+          ) : (
+            table
+              .getRowModel()
+              .rows.map((row) => <div key={row.id}>{renderMobileCard(row.original)}</div>)
+          )}
+        </div>
+      )}
+
       {/* Table */}
-      <div className="rounded-lg border bg-card overflow-hidden">
+      <div
+        className={`rounded-lg border bg-card overflow-hidden ${renderMobileCard ? 'hidden md:block' : ''}`}
+      >
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wide">
@@ -255,27 +334,60 @@ export function DataTable<TData>({
             </thead>
             <tbody className="divide-y divide-border">
               {isLoading ? (
-                <tr>
-                  <td
-                    colSpan={columns.length}
-                    className="px-4 py-10 text-center text-muted-foreground"
-                  >
-                    <Loader2 className="h-5 w-5 animate-spin inline mr-2" />
-                    Loading...
-                  </td>
-                </tr>
+                loadingState ? (
+                  <tr>
+                    <td colSpan={columns.length} className="p-0">
+                      {loadingState}
+                    </td>
+                  </tr>
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={columns.length}
+                      className="px-4 py-10 text-center text-muted-foreground"
+                    >
+                      <Loader2 className="h-5 w-5 animate-spin inline mr-2" />
+                      Loading...
+                    </td>
+                  </tr>
+                )
               ) : table.getRowModel().rows.length === 0 ? (
                 <tr>
                   <td
                     colSpan={columns.length}
-                    className="px-4 py-10 text-center text-muted-foreground"
+                    className={emptyState ? 'p-0' : 'px-4 py-10 text-center text-muted-foreground'}
                   >
-                    {emptyMessage}
+                    {emptyState ?? emptyMessage}
                   </td>
                 </tr>
               ) : (
                 table.getRowModel().rows.map((row) => (
-                  <tr key={row.id} className="hover:bg-muted/30 transition-colors">
+                  <tr
+                    key={row.id}
+                    data-state={row.getIsSelected() ? 'selected' : undefined}
+                    tabIndex={onRowClick ? 0 : undefined}
+                    onClick={
+                      onRowClick
+                        ? (e) => {
+                            if (!isFromInteractiveElement(e)) onRowClick(row.original);
+                          }
+                        : undefined
+                    }
+                    onKeyDown={
+                      onRowClick
+                        ? (e) => {
+                            if (e.key === 'Enter' && e.target === e.currentTarget) {
+                              onRowClick(row.original);
+                            }
+                          }
+                        : undefined
+                    }
+                    className={`hover:bg-muted/30 transition-colors data-[state=selected]:bg-primary/[0.06] ${
+                      onRowClick
+                        ? 'cursor-pointer focus-visible:outline-none focus-visible:bg-muted/40'
+                        : ''
+                    }`}
+                  >
                     {row.getVisibleCells().map((cell) => (
                       <td key={cell.id} className="px-4 py-3">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -303,6 +415,9 @@ export function DataTable<TData>({
           }
         }}
         isLoading={isLoading}
+        pageSizeOptions={pageSizeOptions}
+        onPageSizeChange={onPageSizeChange}
+        itemLabel={itemLabel}
       />
     </div>
   );

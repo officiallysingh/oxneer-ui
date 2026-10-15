@@ -1,37 +1,46 @@
 'use client';
 
+import { useId } from 'react';
+import { Switch } from '@repo/ui';
+import { SettingRow } from './SettingRow';
+
 interface ToggleFieldProps {
   label: string;
-  description?: string;
+  description?: React.ReactNode;
   value: boolean;
   onChange: (v: boolean) => void;
+  disabled?: boolean;
+  /** Marks the setting as an unsaved change. */
+  changed?: boolean;
 }
 
 /**
- * A labelled pill-toggle for boolean fields in admin forms.
+ * A labelled switch row for boolean fields in admin forms.
  */
-export function ToggleField({ label, description, value, onChange }: ToggleFieldProps) {
+export function ToggleField({
+  label,
+  description,
+  value,
+  onChange,
+  disabled,
+  changed,
+}: ToggleFieldProps) {
+  const labelId = useId();
   return (
-    <div className="flex items-center justify-between gap-3 py-2.5">
-      <div>
-        <p className="text-sm font-medium text-foreground">{label}</p>
-        {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
-      </div>
-      <button
-        type="button"
-        onClick={() => onChange(!value)}
-        aria-checked={value}
-        role="switch"
-        className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-          value ? 'bg-primary' : 'bg-muted'
-        }`}
-      >
-        <span
-          className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${
-            value ? 'translate-x-4' : 'translate-x-0'
-          }`}
+    <SettingRow
+      label={label}
+      description={description}
+      labelId={labelId}
+      disabled={disabled}
+      changed={changed}
+      control={
+        <Switch
+          checked={value}
+          onCheckedChange={onChange}
+          disabled={disabled}
+          aria-labelledby={labelId}
         />
-      </button>
-    </div>
+      }
+    />
   );
 }

@@ -111,7 +111,7 @@ export default function AuctionViewPage() {
   if (!auction) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4">
-        <div className="p-4 rounded-full bg-rose-500/10 text-rose-500">
+        <div className="p-4 rounded-full bg-destructive/10 text-destructive">
           <AlertCircle className="h-8 w-8" />
         </div>
         <h2 className="text-xl font-bold text-foreground">Auction Not Found</h2>

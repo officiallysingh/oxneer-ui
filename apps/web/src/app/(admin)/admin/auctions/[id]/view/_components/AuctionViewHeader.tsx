@@ -126,7 +126,7 @@ export function AuctionViewHeader({
               title="Click to copy ID"
             >
               {copied ? (
-                <Check className="h-3.5 w-3.5 text-emerald-500" />
+                <Check className="h-3.5 w-3.5 text-success" />
               ) : (
                 <Copy className="h-3.5 w-3.5" />
               )}
@@ -145,7 +145,7 @@ export function AuctionViewHeader({
         {/* Highlight Stats Chips */}
         <div className="flex flex-wrap items-center gap-3 shrink-0">
           <div className="bg-muted/40 border border-border/60 rounded-xl p-3 flex items-center gap-3 min-w-[140px]">
-            <div className="p-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg">
+            <div className="p-2 bg-success/10 text-success rounded-lg">
               <IndianRupee className="h-4 w-4" />
             </div>
             <div>

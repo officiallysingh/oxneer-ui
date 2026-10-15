@@ -128,7 +128,7 @@ export function AuctionUnitSection({ auction }: { auction: AuctionVM }) {
               </div>
               <div className="p-4 flex flex-col justify-center">
                 <span className="text-xs text-muted-foreground font-medium">Standing Price</span>
-                <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                <span className="text-lg font-bold text-success mt-0.5">
                   {unit.standingPrice != null ? (
                     <>
                       {auction.monetaryOptions?.currencyUnit

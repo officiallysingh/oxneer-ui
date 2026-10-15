@@ -58,7 +58,7 @@ const BidDialog = ({ open, onOpenChange, item }: BidDialogProps) => {
                 ${item.currentBid.toLocaleString()}
               </p>
             </div>
-            <div className="flex items-center gap-1 text-emerald">
+            <div className="flex items-center gap-1 text-success">
               <TrendingUp className="h-4 w-4" />
               <span className="font-body text-sm font-medium">{item.totalBids} bids</span>
             </div>

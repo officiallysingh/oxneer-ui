@@ -70,7 +70,7 @@ export function ParticipantCustomForm({
         </h3>
         {step.description && <p className="text-xs text-muted-foreground">{step.description}</p>}
         {resolveStepType(step) === 'PARTICIPATION_FORM_STEP' && step.manualApproval && (
-          <p className="text-xs text-amber-600 bg-amber-500/10 px-3 py-1.5 rounded-xl border border-amber-500/20">
+          <p className="text-xs text-warning bg-warning/10 px-3 py-1.5 rounded-xl border border-warning/20">
             Your registration will be reviewed and approved manually before you can participate.
           </p>
         )}

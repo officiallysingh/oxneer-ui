@@ -57,11 +57,11 @@ export function StepIndicator({
                       ? 'bg-violet-500 text-white ring-4 ring-violet-500/20'
                       : 'bg-primary text-primary-foreground ring-4 ring-primary/20'
                     : done
-                      ? 'bg-emerald-500 text-white'
+                      ? 'bg-success text-success-foreground'
                       : isOptional
                         ? 'bg-violet-500/15 text-violet-600'
                         : 'bg-muted text-muted-foreground'
-                } ${clickable ? 'cursor-pointer hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-emerald-400/40' : ''}`}
+                } ${clickable ? 'cursor-pointer hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-success/40' : ''}`}
               >
                 {s}
               </div>
@@ -75,7 +75,7 @@ export function StepIndicator({
             {showConnector && (
               <div
                 className={`h-0.5 mb-4 rounded-full transition-colors ${
-                  done ? 'bg-emerald-500' : 'bg-muted'
+                  done ? 'bg-success' : 'bg-muted'
                 } ${connector === 'flex' ? 'flex-1 mx-4 mb-5' : 'w-12'}`}
               />
             )}

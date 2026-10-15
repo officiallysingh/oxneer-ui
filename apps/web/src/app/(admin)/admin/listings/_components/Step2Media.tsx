@@ -306,22 +306,22 @@ function MediaBlock({
   const Icon = classifier === 'IMAGE' ? ImageIcon : classifier === 'VIDEO' ? Film : FileText;
   const iconColor =
     classifier === 'IMAGE'
-      ? 'text-blue-500'
+      ? 'text-info'
       : classifier === 'VIDEO'
         ? 'text-purple-500'
-        : 'text-amber-500';
+        : 'text-warning';
   const borderColor =
     classifier === 'IMAGE'
-      ? 'border-blue-200 dark:border-blue-900'
+      ? 'border-info/30'
       : classifier === 'VIDEO'
         ? 'border-purple-200 dark:border-purple-900'
-        : 'border-amber-200 dark:border-amber-900';
+        : 'border-warning/30';
   const headerBg =
     classifier === 'IMAGE'
-      ? 'bg-blue-10 dark:bg-blue-950/30'
+      ? 'bg-info/10'
       : classifier === 'VIDEO'
         ? 'bg-purple-10 dark:bg-purple-950/30'
-        : 'bg-amber-10 dark:bg-amber-950/30';
+        : 'bg-warning/10';
   const label = classifier === 'IMAGE' ? 'Images' : classifier === 'VIDEO' ? 'Videos' : 'Documents';
 
   return (
@@ -355,10 +355,10 @@ function MediaBlock({
                   ? atLimit
                     ? 'bg-destructive'
                     : classifier === 'IMAGE'
-                      ? 'bg-blue-500'
+                      ? 'bg-info'
                       : classifier === 'VIDEO'
                         ? 'bg-purple-500'
-                        : 'bg-amber-500'
+                        : 'bg-warning'
                   : 'bg-muted'
               }`}
             />
@@ -390,7 +390,7 @@ function MediaBlock({
                     ) : classifier === 'VIDEO' ? (
                       <Film className="h-8 w-8 text-purple-400" />
                     ) : (
-                      <FileText className="h-8 w-8 text-amber-400" />
+                      <FileText className="h-8 w-8 text-warning" />
                     )}
                     {isThumbnail && (
                       <div className="absolute top-1 left-1 rounded bg-primary px-1 py-0.5 text-[9px] text-primary-foreground font-medium leading-none">
@@ -457,7 +457,7 @@ function MediaBlock({
                   ) : classifier === 'VIDEO' ? (
                     <Film className="h-8 w-8 text-purple-400" />
                   ) : (
-                    <FileText className="h-8 w-8 text-amber-400" />
+                    <FileText className="h-8 w-8 text-warning" />
                   )}
                   {u.uploading && (
                     <div className="absolute inset-0 bg-background/80 flex flex-col items-center justify-center gap-1 rounded-lg">
@@ -467,7 +467,7 @@ function MediaBlock({
                   )}
                   {!u.uploading && u.blob && (
                     <div className="absolute top-1 left-1">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 drop-shadow" />
+                      <CheckCircle2 className="h-3.5 w-3.5 text-success drop-shadow" />
                     </div>
                   )}
                   <button

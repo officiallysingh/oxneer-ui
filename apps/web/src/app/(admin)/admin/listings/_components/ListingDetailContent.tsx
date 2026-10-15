@@ -276,7 +276,7 @@ function PropValue({ prop, def }: { prop: EmbeddedProp; def?: PropertyDef }) {
     const isTrue = strVal === 'true';
     if (uiDisplay === 'badge' || uiComponent === 'toggle' || uiComponent === 'checkbox') {
       return isTrue ? (
-        <span className="inline-flex items-center gap-1 text-emerald-600 text-sm font-medium">
+        <span className="inline-flex items-center gap-1 text-success text-sm font-medium">
           <CheckCircle2 className="h-4 w-4" /> Yes
         </span>
       ) : (
@@ -300,24 +300,24 @@ function PropValue({ prop, def }: { prop: EmbeddedProp; def?: PropertyDef }) {
           : 'text-xs px-2';
     const colorCls =
       badgeColor === 'success'
-        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+        ? 'bg-success/10 text-success border-success/30'
         : badgeColor === 'warning'
-          ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
+          ? 'bg-warning/10 text-warning border-warning/30'
           : badgeColor === 'danger'
-            ? 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30'
+            ? 'bg-destructive/10 text-destructive border-destructive/30'
             : badgeColor === 'info'
-              ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/30'
+              ? 'bg-info/10 text-info border-info/30'
               : badgeColor === 'muted'
                 ? 'bg-muted text-muted-foreground border-border'
                 : 'bg-primary/10 text-primary border-primary/30';
     const variantCls =
       badgeVariant === 'solid'
         ? badgeColor === 'success'
-          ? 'bg-emerald-500 text-white'
+          ? 'bg-success text-success-foreground'
           : badgeColor === 'warning'
-            ? 'bg-amber-500 text-white'
+            ? 'bg-warning text-warning-foreground'
             : badgeColor === 'danger'
-              ? 'bg-red-500 text-white'
+              ? 'bg-destructive text-destructive-foreground'
               : 'bg-primary text-primary-foreground'
         : badgeVariant === 'outline'
           ? 'bg-transparent border'
@@ -349,7 +349,7 @@ function PropValue({ prop, def }: { prop: EmbeddedProp; def?: PropertyDef }) {
   if (listDisplay === 'boolean') {
     const on = strVal === 'true' || strVal === '1' || strVal === 'yes';
     return (
-      <span className={on ? 'text-sm font-medium text-emerald-600' : 'text-sm text-muted-foreground'}>
+      <span className={on ? 'text-sm font-medium text-success' : 'text-sm text-muted-foreground'}>
         {on ? listAttrs['list:boolean.true'] || 'Yes' : listAttrs['list:boolean.false'] || 'No'}
       </span>
     );
@@ -371,7 +371,9 @@ function PropValue({ prop, def }: { prop: EmbeddedProp; def?: PropertyDef }) {
 
   if (listDisplay === 'monospace') {
     return withModifiers(
-      <span className="font-mono text-sm text-foreground">{applyFormat(displayValue, listFormat)}</span>,
+      <span className="font-mono text-sm text-foreground">
+        {applyFormat(displayValue, listFormat)}
+      </span>,
     );
   }
 
@@ -883,7 +885,7 @@ export function ListingDetailContent({
           {/* Availability */}
           <div className="flex items-center gap-2">
             {listing.available === true ? (
-              <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30">
+              <Badge className="bg-success/15 text-success border-success/30">
                 In Stock
                 {listing.quantity?.available != null &&
                   ` — ${listing.quantity.available} available`}
@@ -891,7 +893,7 @@ export function ListingDetailContent({
             ) : listing.available === false ? (
               <Badge
                 variant="destructive"
-                className="bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30"
+                className="bg-destructive/15 text-destructive border-destructive/30"
               >
                 Out of Stock
               </Badge>

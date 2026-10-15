@@ -119,8 +119,8 @@ export default function InvitationSlugPage({ params }: { params: Promise<{ slug:
     return (
       <div className="min-h-[60vh] flex items-center justify-center px-4">
         <div className="rounded-xl border border-border bg-card p-8 text-center max-w-md">
-          <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
+          <div className="w-16 h-16 rounded-full bg-destructive/15 flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="h-8 w-8 text-destructive" />
           </div>
           <h1 className="text-xl font-semibold text-foreground mb-2">Invalid Link</h1>
           <p className="text-muted-foreground mb-6">
@@ -148,8 +148,8 @@ export default function InvitationSlugPage({ params }: { params: Promise<{ slug:
     return (
       <div className="min-h-[60vh] flex items-center justify-center px-4">
         <div className="rounded-xl border border-border bg-card p-8 text-center max-w-md">
-          <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
+          <div className="w-16 h-16 rounded-full bg-destructive/15 flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="h-8 w-8 text-destructive" />
           </div>
           <h1 className="text-xl font-semibold text-foreground mb-2">Error</h1>
           <p className="text-muted-foreground mb-6">{error ?? 'Auction not found.'}</p>

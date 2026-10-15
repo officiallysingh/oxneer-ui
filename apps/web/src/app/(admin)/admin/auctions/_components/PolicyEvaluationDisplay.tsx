@@ -21,16 +21,19 @@ function statusStyle(statusType: string): { className: string; Icon: typeof Cloc
   switch (statusType) {
     case 'COMPLETED':
       return {
-        className: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30',
+        className: 'bg-success/10 text-success border-success/30',
         Icon: CheckCircle2,
       };
     case 'PENDING':
     case 'IN_PROGRESS':
     case 'RUNNING':
-      return { className: 'bg-blue-500/10 text-blue-600 border-blue-500/30', Icon: Clock };
+      return { className: 'bg-info/10 text-info border-info/30', Icon: Clock };
     case 'FAILED':
     case 'CANCELLED':
-      return { className: 'bg-red-500/10 text-red-600 border-red-500/30', Icon: XCircle };
+      return {
+        className: 'bg-destructive/10 text-destructive border-destructive/30',
+        Icon: XCircle,
+      };
     default:
       return { className: 'bg-muted text-muted-foreground border-border', Icon: Clock };
   }
@@ -408,7 +411,7 @@ export function EvaluationCard({
             </span>
           )}
           {showStatus && evaluation.condition === false && (
-            <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-400 px-2 py-0.5 text-[10px] font-medium">
+            <span className="inline-flex items-center rounded-full border border-warning/30 bg-warning/10 text-warning px-2 py-0.5 text-[10px] font-medium">
               Not yet active
             </span>
           )}
@@ -426,7 +429,7 @@ export function EvaluationCard({
             </span>
           )}
           {showStatus && evaluation.condition === false && (
-            <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-400 px-2 py-0.5 text-[10px] font-medium">
+            <span className="inline-flex items-center rounded-full border border-warning/30 bg-warning/10 text-warning px-2 py-0.5 text-[10px] font-medium">
               Not yet active
             </span>
           )}
@@ -448,7 +451,7 @@ export function EvaluationCard({
 
       {/* Result - pending message style */}
       {isPendingMessage && (
-        <div className="flex items-center gap-2 rounded-md bg-amber-500/5 border border-amber-200/50 px-2.5 py-1.5 text-amber-700 dark:text-amber-400">
+        <div className="flex items-center gap-2 rounded-md bg-warning/5 border border-warning/20 px-2.5 py-1.5 text-warning">
           <Clock className="h-3.5 w-3.5 shrink-0" />
           <span className="text-[11px]">{resultStr}</span>
         </div>
@@ -541,7 +544,7 @@ export function EvaluationCard({
                 <div className="flex justify-between items-center pt-0.5 border-t border-border/30">
                   <span className="text-[10px] text-muted-foreground">Refundable</span>
                   <span
-                    className={`text-[10px] font-medium ${d.rendered.refundable === 'Yes' ? 'text-emerald-600' : 'text-red-500'}`}
+                    className={`text-[10px] font-medium ${d.rendered.refundable === 'Yes' ? 'text-success' : 'text-destructive'}`}
                   >
                     {d.rendered.refundable}
                   </span>
@@ -549,7 +552,7 @@ export function EvaluationCard({
               )}
             </div>
           ) : d.rendered.kind === 'pending-message' ? (
-            <div className="flex items-center gap-2 rounded-md bg-amber-500/5 border border-amber-200/50 px-2.5 py-1.5 text-amber-700 dark:text-amber-400">
+            <div className="flex items-center gap-2 rounded-md bg-warning/5 border border-warning/20 px-2.5 py-1.5 text-warning">
               <Clock className="h-3.5 w-3.5 shrink-0" />
               <span className="text-[11px]">{d.rendered.text}</span>
             </div>

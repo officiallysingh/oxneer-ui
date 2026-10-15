@@ -144,7 +144,7 @@ export function buildAuctionColumns({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 p-0 text-muted-foreground hover:text-amber-600 hover:bg-amber-500/10"
+                  className="h-8 w-8 p-0 text-muted-foreground hover:text-warning hover:bg-warning/10"
                   onClick={() => router.push(`/admin/auctions/${row.original.id}/edit?step=5`)}
                 >
                   <CalendarClock className="h-3.5 w-3.5" />
@@ -156,7 +156,7 @@ export function buildAuctionColumns({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 p-0 text-muted-foreground hover:text-blue-600 hover:bg-blue-500/10"
+                  className="h-8 w-8 p-0 text-muted-foreground hover:text-info hover:bg-info/10"
                   onClick={() => onPublish(row.original.id)}
                   disabled={publishingId === row.original.id}
                 >

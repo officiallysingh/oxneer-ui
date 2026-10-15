@@ -107,7 +107,7 @@ function isSuperAdmin(user: UserDetailVM): boolean {
 
 function VerifiedBadge({ verified }: { verified: boolean }) {
   return verified ? (
-    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+    <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0" />
   ) : (
     <Circle className="h-3.5 w-3.5 text-muted-foreground/30 shrink-0" />
   );
@@ -433,7 +433,7 @@ export default function UsersPage() {
             <span
               className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                 enabled
-                  ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                  ? 'bg-success/10 text-success border border-success/20'
                   : 'bg-muted text-muted-foreground border border-border'
               }`}
             >
@@ -523,7 +523,7 @@ export default function UsersPage() {
             <Button
               variant="ghost"
               size="sm"
-              className={`h-8 w-8 p-0 ${user.enabled ? 'text-amber-500 hover:text-amber-600 hover:bg-amber-500/10' : 'text-emerald-500 hover:text-emerald-600 hover:bg-emerald-500/10'}`}
+              className={`h-8 w-8 p-0 ${user.enabled ? 'text-warning hover:text-warning/80 hover:bg-warning/10' : 'text-success hover:text-success/80 hover:bg-success/10'}`}
               onClick={() =>
                 patchUser(
                   user,
@@ -547,7 +547,7 @@ export default function UsersPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 w-8 p-0 text-emerald-500 hover:text-emerald-600 hover:bg-emerald-500/10"
+                className="h-8 w-8 p-0 text-success hover:text-success/80 hover:bg-success/10"
                 onClick={() =>
                   patchUser(user, { accountNonLocked: true }, 'Failed to unlock user.')
                 }
@@ -565,7 +565,7 @@ export default function UsersPage() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+              className="h-8 w-8 p-0 text-destructive hover:text-destructive/80 hover:bg-destructive/10"
               onClick={() => setConfirmId(user.id)}
               disabled={deletingId === user.id || superAdmin}
             >

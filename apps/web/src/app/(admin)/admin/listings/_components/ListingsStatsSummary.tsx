@@ -31,14 +31,14 @@ export function ListingsStatsSummary({
       label: 'Active Listings',
       count: counts.active,
       icon: CheckCircle,
-      color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
+      color: 'text-success bg-success/10 border-success/20',
     },
     {
       key: 'PENDING',
       label: 'Pending Review',
       count: counts.pending,
       icon: Clock,
-      color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
+      color: 'text-warning bg-warning/10 border-warning/20',
     },
     {
       key: 'DRAFT',

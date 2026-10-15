@@ -124,7 +124,7 @@ export function PaymentStepDetails({ step }: { step: AuctionWorkflowStep }) {
               </div>
               {h.description && <p className="text-muted-foreground mt-0.5">{h.description}</p>}
               {h.refundable && (
-                <span className="inline-block mt-1 rounded-full bg-emerald-500/10 text-emerald-600 px-1.5 py-0.5 text-[10px]">
+                <span className="inline-block mt-1 rounded-full bg-success/10 text-success px-1.5 py-0.5 text-[10px]">
                   Refundable
                 </span>
               )}

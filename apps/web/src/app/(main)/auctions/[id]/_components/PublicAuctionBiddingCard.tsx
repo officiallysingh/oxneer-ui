@@ -39,7 +39,7 @@ export function PublicAuctionBiddingCard({
           Opening Price
         </p>
         <div className="flex items-baseline gap-1 text-3xl font-extrabold text-foreground tracking-tight">
-          <span className="text-emerald-600 dark:text-emerald-400">₹</span>
+          <span className="text-success">₹</span>
           <span>{price != null ? price.toLocaleString() : 'N/A'}</span>
         </div>
       </div>
@@ -68,7 +68,7 @@ export function PublicAuctionBiddingCard({
       <div className="space-y-3 pt-2">
         {isJoined ? (
           <div className="space-y-3">
-            <div className="flex items-center gap-2 p-3 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded-2xl border border-emerald-500/30 text-xs font-semibold">
+            <div className="flex items-center gap-2 p-3 bg-success/10 text-success rounded-2xl border border-success/30 text-xs font-semibold">
               <CheckCircle2 className="h-4 w-4 shrink-0" />
               You are registered for this auction
             </div>
@@ -86,7 +86,7 @@ export function PublicAuctionBiddingCard({
           <Button
             onClick={onJoin}
             disabled={joining}
-            className="w-full gap-2 rounded-2xl font-semibold text-sm py-6 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md transition-all"
+            className="w-full gap-2 rounded-2xl font-semibold text-sm py-6 bg-success hover:bg-success/90 text-success-foreground shadow-md transition-all"
           >
             {joining ? <Loader2 className="h-4 w-4 animate-spin" /> : <Gavel className="h-4 w-4" />}
             {isLoggedIn ? 'Register to Bid' : 'Sign in to Register'}

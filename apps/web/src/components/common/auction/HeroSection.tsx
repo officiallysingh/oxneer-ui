@@ -82,7 +82,7 @@ const FeaturedAuctionCard = () => {
       </div>
       <div className="p-6">
         <div className="flex items-center justify-between">
-          <span className="rounded-full bg-emerald/10 px-3 py-1 font-body text-xs font-medium text-emerald">
+          <span className="rounded-full bg-success/10 px-3 py-1 font-body text-xs font-medium text-success">
             ● Open now
           </span>
           <span className="font-body text-sm text-muted-foreground">Browse live listings</span>

@@ -82,7 +82,7 @@ export function useCountdownRange(
     if (diff < 86_400_000) {
       return {
         label: (
-          <span className="text-amber-600 dark:text-amber-400 font-medium text-xs tabular-nums">
+          <span className="text-warning font-medium text-xs tabular-nums">
             Starts in {h}h {m}m {s}s
           </span>
         ),
@@ -106,7 +106,7 @@ export function useCountdownRange(
     const s = Math.floor((diff % 60_000) / 1_000);
     return {
       label: (
-        <span className="text-emerald-600 dark:text-emerald-400 font-medium text-xs tabular-nums">
+        <span className="text-success font-medium text-xs tabular-nums">
           Ends in {h}h {m}m {s}s
         </span>
       ),

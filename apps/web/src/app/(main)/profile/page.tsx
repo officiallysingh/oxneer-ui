@@ -196,7 +196,7 @@ function ChangePasswordDialog({ open, onClose }: { open: boolean; onClose: () =>
           <DialogTitle>Change password</DialogTitle>
         </DialogHeader>
         {success ? (
-          <div className="py-6 flex flex-col items-center gap-2 text-emerald-500">
+          <div className="py-6 flex flex-col items-center gap-2 text-success">
             <CheckCircle2 className="h-8 w-8" />
             <p className="text-sm font-medium">Password updated successfully</p>
           </div>
@@ -960,7 +960,7 @@ export default function ProfilePage() {
                 )}
               </Button>
               {success && (
-                <span className="flex items-center gap-1.5 text-sm text-emerald-500 font-medium">
+                <span className="flex items-center gap-1.5 text-sm text-success font-medium">
                   <CheckCircle2 className="h-4 w-4" />
                   Saved
                 </span>

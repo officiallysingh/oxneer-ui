@@ -60,11 +60,11 @@ function auctionIsJoinable(status?: unknown): boolean {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  LIVE: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30',
-  PUBLISHED: 'bg-blue-500/10 text-blue-600 border-blue-500/30',
-  SCHEDULED: 'bg-amber-500/10 text-amber-600 border-amber-500/30',
+  LIVE: 'bg-success/10 text-success border-success/30',
+  PUBLISHED: 'bg-info/10 text-info border-info/30',
+  SCHEDULED: 'bg-warning/10 text-warning border-warning/30',
   DRAFT: 'bg-muted text-muted-foreground border-border',
-  CANCELLED: 'bg-red-500/10 text-red-600 border-red-500/30',
+  CANCELLED: 'bg-destructive/10 text-destructive border-destructive/30',
   COMPLETED: 'bg-violet-500/10 text-violet-600 border-violet-500/30',
 };
 
@@ -181,8 +181,8 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
     return (
       <div className="min-h-[60vh] flex items-center justify-center px-4">
         <div className="rounded-2xl border border-border bg-card p-8 text-center max-w-md shadow-sm">
-          <div className="w-14 h-14 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="h-7 w-7 text-red-600 dark:text-red-400" />
+          <div className="w-14 h-14 rounded-full bg-destructive/15 flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="h-7 w-7 text-destructive" />
           </div>
           <h1 className="text-xl font-semibold text-foreground mb-2">Auction Unavailable</h1>
           <p className="text-muted-foreground mb-6 text-sm">
@@ -228,7 +228,7 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
               className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border ${statusColor}`}
             >
               {status === 'LIVE' && (
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
               )}
               {formatLabel(auction.status)}
             </span>
@@ -244,10 +244,7 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
               </Badge>
             )}
             {isParticipant && (
-              <Badge
-                variant="outline"
-                className="text-xs gap-1 border-emerald-500/40 text-emerald-600"
-              >
+              <Badge variant="outline" className="text-xs gap-1 border-success/40 text-success">
                 <CheckCircle2 className="h-3 w-3" />
                 Registered
               </Badge>
@@ -371,7 +368,7 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
           <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-border/60">
             {isParticipant ? (
               <div className="flex flex-wrap items-center gap-3 w-full">
-                <div className="flex items-center gap-2 text-emerald-600 font-medium text-sm">
+                <div className="flex items-center gap-2 text-success font-medium text-sm">
                   <CheckCircle2 className="h-5 w-5" />
                   {justJoined
                     ? "You've joined this auction"
@@ -381,7 +378,7 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
                 {joinable && (
                   <>
                     {workflowAllDone ? (
-                      <div className="flex items-center gap-1.5 text-sm text-emerald-600 bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20">
+                      <div className="flex items-center gap-1.5 text-sm text-success bg-success/10 px-3 py-1.5 rounded-lg border border-success/20">
                         <CheckCircle2 className="h-4 w-4" />
                         All registration steps completed
                       </div>

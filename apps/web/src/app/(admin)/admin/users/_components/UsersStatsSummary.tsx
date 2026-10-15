@@ -31,21 +31,21 @@ export function UsersStatsSummary({
       label: 'Active Users',
       count: counts.active,
       icon: UserCheck,
-      color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
+      color: 'text-success bg-success/10 border-success/20',
     },
     {
       key: 'PENDING',
       label: 'Pending Approval',
       count: counts.pending,
       icon: Clock,
-      color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
+      color: 'text-warning bg-warning/10 border-warning/20',
     },
     {
       key: 'DISABLED',
       label: 'Disabled / Suspended',
       count: counts.disabled,
       icon: UserX,
-      color: 'text-rose-600 bg-rose-500/10 border-rose-500/20',
+      color: 'text-destructive bg-destructive/10 border-destructive/20',
     },
   ];
 

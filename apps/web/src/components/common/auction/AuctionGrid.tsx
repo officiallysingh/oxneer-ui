@@ -47,11 +47,11 @@ const reactSelectStyles = makeReactSelectStyles<true>() as any;
 function auctionStatusColor(status?: unknown): string {
   const s = resolveStr(status);
   const map: Record<string, string> = {
-    LIVE: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30',
-    PUBLISHED: 'bg-blue-500/10 text-blue-600 border-blue-500/30',
-    SCHEDULED: 'bg-amber-500/10 text-amber-600 border-amber-500/30',
+    LIVE: 'bg-success/10 text-success border-success/30',
+    PUBLISHED: 'bg-info/10 text-info border-info/30',
+    SCHEDULED: 'bg-warning/10 text-warning border-warning/30',
     COMPLETED: 'bg-violet-500/10 text-violet-600 border-violet-500/30',
-    CANCELLED: 'bg-red-500/10 text-red-600 border-red-500/30',
+    CANCELLED: 'bg-destructive/10 text-destructive border-destructive/30',
   };
   return map[s] ?? 'bg-muted text-muted-foreground border-border';
 }
@@ -76,7 +76,7 @@ function CountdownOrSchedule({ startIso, endIso }: { startIso?: string; endIso?:
     const s = Math.floor((diff % 60_000) / 1_000);
     if (diff < 86_400_000) {
       return (
-        <span className="text-amber-600 dark:text-amber-400 font-medium text-xs tabular-nums">
+        <span className="text-warning font-medium text-xs tabular-nums">
           Starts in {h}h {m}m {s}s
         </span>
       );
@@ -90,7 +90,7 @@ function CountdownOrSchedule({ startIso, endIso }: { startIso?: string; endIso?:
     const m = Math.floor((diff % 3_600_000) / 60_000);
     const s = Math.floor((diff % 60_000) / 1_000);
     return (
-      <span className="text-emerald-600 dark:text-emerald-400 font-medium text-xs tabular-nums">
+      <span className="text-success font-medium text-xs tabular-nums">
         Ends in {h}h {m}m {s}s
       </span>
     );
@@ -139,7 +139,7 @@ function PublicAuctionCard({ auction, index }: { auction: AuctionVM; index: numb
           className={`inline-flex items-center gap-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${statusColor}`}
         >
           {status === 'LIVE' && (
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
           )}
           {formatLabel(auction.status)}
         </span>

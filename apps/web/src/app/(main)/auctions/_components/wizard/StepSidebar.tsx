@@ -37,7 +37,7 @@ export function StepSidebar({ steps, currentIndex, participant }: StepSidebarPro
               active
                 ? 'bg-primary/10 text-primary font-semibold shadow-xs'
                 : done
-                  ? 'text-emerald-600 bg-emerald-500/5'
+                  ? 'text-success bg-success/5'
                   : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
             }`}
           >
@@ -46,7 +46,7 @@ export function StepSidebar({ steps, currentIndex, participant }: StepSidebarPro
                 active
                   ? 'bg-primary text-primary-foreground'
                   : done
-                    ? 'bg-emerald-500/20 text-emerald-600'
+                    ? 'bg-success/20 text-success'
                     : 'bg-muted text-muted-foreground'
               }`}
             >

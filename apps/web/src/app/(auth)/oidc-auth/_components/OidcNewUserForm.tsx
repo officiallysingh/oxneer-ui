@@ -242,7 +242,7 @@ export function OidcNewUserForm({
     details: (
       <>
         Signed in as <span className="font-medium text-foreground">{emailId}</span>
-        {emailIdVerified && <span className="ml-1 text-xs text-emerald-500">✓ verified</span>}
+        {emailIdVerified && <span className="ml-1 text-xs text-success">✓ verified</span>}
       </>
     ),
     mobile: "We'll send a code to verify your number",

@@ -33,7 +33,7 @@ function BoolBadge({
     <span
       className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${
         value
-          ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+          ? 'bg-success/10 text-success border-success/20'
           : 'bg-muted text-muted-foreground border-border'
       }`}
     >
@@ -52,12 +52,12 @@ function AccountStatusBadges({ user }: { user: UserDetailVM }) {
         </span>
       )}
       {!user.accountNonExpired && (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 border border-amber-500/20">
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warning/10 text-warning border border-warning/20">
           Expired
         </span>
       )}
       {!user.credentialsNonExpired && (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 border border-amber-500/20">
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warning/10 text-warning border border-warning/20">
           Credentials expired
         </span>
       )}
@@ -141,7 +141,7 @@ export default function UserViewPage() {
             <span className="inline-flex items-center gap-1.5">
               <span className="font-mono text-xs">{user.emailId}</span>
               {user.emailIdVerified ? (
-                <Mail className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                <Mail className="h-3.5 w-3.5 text-success shrink-0" />
               ) : (
                 <Mail className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
               )}
@@ -178,7 +178,7 @@ export default function UserViewPage() {
             <span className="inline-flex items-center gap-1.5">
               <span>{user.mobileNo ?? '—'}</span>
               {user.mobileNo && user.mobileNoVerified && (
-                <Phone className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                <Phone className="h-3.5 w-3.5 text-success shrink-0" />
               )}
             </span>
           </DetailRow>

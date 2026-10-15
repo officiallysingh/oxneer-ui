@@ -21,16 +21,16 @@ const STATUS_CONFIG: Record<
   { bg: string; icon: LucideIcon; animate?: boolean; label?: string }
 > = {
   DRAFT: { bg: 'bg-muted text-muted-foreground border-border', icon: FileEdit },
-  SCHEDULED: { bg: 'bg-amber-500/10 text-amber-600 border-amber-500/30', icon: Clock },
-  PUBLISHED: { bg: 'bg-blue-500/10 text-blue-600 border-blue-500/30', icon: Send },
+  SCHEDULED: { bg: 'bg-warning/10 text-warning border-warning/30', icon: Clock },
+  PUBLISHED: { bg: 'bg-info/10 text-info border-info/30', icon: Send },
   LIVE: {
-    bg: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30',
+    bg: 'bg-success/10 text-success border-success/30',
     icon: Activity,
     animate: true,
   },
-  CANCELLED: { bg: 'bg-rose-500/10 text-rose-600 border-rose-500/30', icon: AlertCircle },
+  CANCELLED: { bg: 'bg-destructive/10 text-destructive border-destructive/30', icon: AlertCircle },
   COMPLETED: {
-    bg: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30',
+    bg: 'bg-success/10 text-success border-success/30',
     icon: ShieldCheck,
   },
   AWARDED: { bg: 'bg-violet-500/10 text-violet-600 border-violet-500/30', icon: Trophy },

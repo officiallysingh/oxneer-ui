@@ -219,9 +219,9 @@ export function PoliciesTimeline({
             ) : undefined;
 
           const iconMap: Record<string, React.ReactNode> = {
-            'before-start': <Users className="h-5 w-5 text-amber-600" />,
-            'auction-start': <Minus className="h-5 w-5 text-emerald-600" />,
-            'auction-running': <TrendingUp className="h-5 w-5 text-blue-600" />,
+            'before-start': <Users className="h-5 w-5 text-warning" />,
+            'auction-start': <Minus className="h-5 w-5 text-success" />,
+            'auction-running': <TrendingUp className="h-5 w-5 text-info" />,
             'auction-complete': <Minus className="h-5 w-5 text-indigo-600" />,
             winner: <Trophy className="h-5 w-5 text-violet-600" />,
           };

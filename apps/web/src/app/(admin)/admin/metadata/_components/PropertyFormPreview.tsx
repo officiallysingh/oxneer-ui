@@ -1095,7 +1095,7 @@ function ListViewField({ prop, value }: { prop: PropertyDef; value: unknown }) {
   if (mt === 'BOOLEAN') {
     const on = strVal === 'true';
     return on ? (
-      <span className="inline-flex items-center gap-1 text-emerald-600 text-sm font-medium">
+      <span className="inline-flex items-center gap-1 text-success text-sm font-medium">
         <CheckCircle2 className="h-4 w-4" /> Yes
       </span>
     ) : (
@@ -1108,7 +1108,10 @@ function ListViewField({ prop, value }: { prop: PropertyDef; value: unknown }) {
   if (listDisplay === 'link') {
     const label = listAttrs['list:link.label'] || strVal;
     return (
-      <a href={strVal} className="text-sm font-medium text-primary underline-offset-2 hover:underline">
+      <a
+        href={strVal}
+        className="text-sm font-medium text-primary underline-offset-2 hover:underline"
+      >
         {label}
       </a>
     );
@@ -1142,11 +1145,11 @@ function ListViewField({ prop, value }: { prop: PropertyDef; value: unknown }) {
     const badgeColor = listAttrs['list:badge.color'];
     const colorCls =
       badgeColor === 'success'
-        ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30'
+        ? 'bg-success/10 text-success border-success/30'
         : badgeColor === 'warning'
-          ? 'bg-amber-500/10 text-amber-600 border-amber-500/30'
+          ? 'bg-warning/10 text-warning border-warning/30'
           : badgeColor === 'danger'
-            ? 'bg-red-500/10 text-red-600 border-red-500/30'
+            ? 'bg-destructive/10 text-destructive border-destructive/30'
             : 'bg-primary/10 text-primary border-primary/30';
     return (
       <span

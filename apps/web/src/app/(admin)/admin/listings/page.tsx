@@ -291,10 +291,10 @@ export default function ListingsPage() {
         const { available, quantity } = row.original;
         if (available === undefined || available === null)
           return <span className="text-xs text-muted-foreground">—</span>;
-        if (!available) return <span className="text-sm font-medium text-red-500">No</span>;
+        if (!available) return <span className="text-sm font-medium text-destructive">No</span>;
         return (
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-emerald-500">Yes</span>
+            <span className="text-sm font-medium text-success">Yes</span>
             {quantity?.available != null && (
               <span className="text-xs text-muted-foreground">({quantity.available})</span>
             )}

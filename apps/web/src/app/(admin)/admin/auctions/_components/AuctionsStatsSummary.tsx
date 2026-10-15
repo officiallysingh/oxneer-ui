@@ -33,14 +33,14 @@ export function AuctionsStatsSummary({
       label: 'Published',
       count: counts.published,
       icon: Send,
-      color: 'text-blue-600 bg-blue-500/10 border-blue-500/20',
+      color: 'text-info bg-info/10 border-info/20',
     },
     {
       key: 'LIVE',
       label: 'Live / Running',
       count: counts.live,
       icon: Activity,
-      color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
+      color: 'text-success bg-success/10 border-success/20',
     },
     {
       key: 'COMPLETED',
@@ -54,7 +54,7 @@ export function AuctionsStatsSummary({
       label: 'Cancelled',
       count: counts.cancelled,
       icon: XCircle,
-      color: 'text-rose-600 bg-rose-500/10 border-rose-500/20',
+      color: 'text-destructive bg-destructive/10 border-destructive/20',
     },
   ];
 

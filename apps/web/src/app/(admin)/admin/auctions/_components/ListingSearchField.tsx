@@ -194,7 +194,7 @@ function AddListingModal({
                     <span
                       className={`px-2 py-0.5 rounded-full font-medium ${
                         detail.available
-                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                          ? 'bg-success/15 text-success'
                           : 'bg-muted text-muted-foreground'
                       }`}
                     >

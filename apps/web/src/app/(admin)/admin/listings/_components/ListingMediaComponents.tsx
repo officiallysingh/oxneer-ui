@@ -42,10 +42,10 @@ export function MediaCountBadge({ blobs, type, onClick }: MediaCountBadgeProps) 
   const label = type === 'image' ? 'Images' : type === 'video' ? 'Videos' : 'Docs';
   const colorClass =
     type === 'image'
-      ? 'text-blue-600 hover:text-blue-700'
+      ? 'text-info hover:text-info/80'
       : type === 'video'
         ? 'text-purple-600 hover:text-purple-700'
-        : 'text-amber-600 hover:text-amber-700';
+        : 'text-warning hover:text-warning/80';
 
   return (
     <button
@@ -148,7 +148,7 @@ export function MediaModal({ modal, onClose }: MediaModalProps) {
                 className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-border bg-muted/30"
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  <FileText className="h-4 w-4 text-amber-500 shrink-0" />
+                  <FileText className="h-4 w-4 text-warning shrink-0" />
                   <span className="text-sm text-foreground truncate">
                     {blob.fileName ?? blob.id}
                   </span>
@@ -287,7 +287,7 @@ export function ListingCardGrid({
 
               <div className="flex items-center justify-between mt-auto pt-1 border-t border-border">
                 <span
-                  className={`text-xs font-medium ${listing.available === false ? 'text-red-500' : listing.available ? 'text-emerald-500' : 'text-muted-foreground'}`}
+                  className={`text-xs font-medium ${listing.available === false ? 'text-destructive' : listing.available ? 'text-success' : 'text-muted-foreground'}`}
                 >
                   {listing.available === false
                     ? 'Unavailable'

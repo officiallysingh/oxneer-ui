@@ -68,15 +68,13 @@ export function InvitationActionCard({ auction, action, identifier }: Invitation
         <div className="flex flex-col items-center gap-4">
           <div
             className={`w-16 h-16 rounded-full flex items-center justify-center ${
-              action === 'accept'
-                ? 'bg-emerald-100 dark:bg-emerald-900/30'
-                : 'bg-red-100 dark:bg-red-900/30'
+              action === 'accept' ? 'bg-success/15' : 'bg-destructive/15'
             }`}
           >
             {action === 'accept' ? (
-              <CheckCircle2 className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+              <CheckCircle2 className="h-8 w-8 text-success" />
             ) : (
-              <XCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
+              <XCircle className="h-8 w-8 text-destructive" />
             )}
           </div>
           <h2 className="text-xl font-semibold text-foreground">
@@ -151,15 +149,13 @@ export function InvitationActionCard({ auction, action, identifier }: Invitation
         <div className="flex items-center gap-2 mb-5">
           <div
             className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              action === 'accept'
-                ? 'bg-emerald-100 dark:bg-emerald-900/30'
-                : 'bg-red-100 dark:bg-red-900/30'
+              action === 'accept' ? 'bg-success/15' : 'bg-destructive/15'
             }`}
           >
             {action === 'accept' ? (
-              <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              <CheckCircle2 className="h-4 w-4 text-success" />
             ) : (
-              <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+              <XCircle className="h-4 w-4 text-destructive" />
             )}
           </div>
           <h2 className="text-base font-semibold text-foreground">

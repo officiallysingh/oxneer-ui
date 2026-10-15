@@ -20,8 +20,8 @@ export function DirectionCell({ value }: { value?: unknown }) {
         <span
           className={`inline-flex items-center gap-1.5 cursor-default rounded-full px-2 py-0.5 text-xs font-medium border ${
             isForward
-              ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30'
-              : 'bg-amber-500/10 text-amber-700 border-amber-500/30'
+              ? 'bg-success/10 text-success border-success/30'
+              : 'bg-warning/10 text-warning border-warning/30'
           }`}
         >
           <Icon className="h-3 w-3 shrink-0" />
@@ -50,7 +50,7 @@ export function AccessibilityCell({ value }: { value?: unknown }) {
         <span
           className={`inline-flex items-center gap-1.5 cursor-default rounded-full px-2 py-0.5 text-xs font-medium border ${
             isPublic
-              ? 'bg-blue-500/10 text-blue-700 border-blue-500/30'
+              ? 'bg-info/10 text-info border-info/30'
               : 'bg-violet-500/10 text-violet-700 border-violet-500/30'
           }`}
         >

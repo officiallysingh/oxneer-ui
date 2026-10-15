@@ -55,12 +55,12 @@ export function PublicAuctionHeader({ auction }: PublicAuctionHeaderProps) {
               </span>
             )}
 
-            <span className="flex items-center gap-1.5 bg-blue-500/10 text-blue-700 dark:text-blue-400 font-medium px-2.5 py-1 rounded-lg">
+            <span className="flex items-center gap-1.5 bg-info/10 text-info font-medium px-2.5 py-1 rounded-lg">
               <AccessIcon className="h-3.5 w-3.5" />
               {isPublic ? 'Public Auction' : 'Invite Only'}
             </span>
 
-            <span className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-medium px-2.5 py-1 rounded-lg">
+            <span className="flex items-center gap-1.5 bg-success/10 text-success font-medium px-2.5 py-1 rounded-lg">
               <DirIcon className="h-3.5 w-3.5" />
               {isReverse ? 'Reverse Auction' : 'Forward Auction'}
             </span>

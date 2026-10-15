@@ -43,6 +43,13 @@
     --emerald: 160 60% 35%;
     --ruby: 0 72% 51%;
 
+    --success: 160 60% 35%;
+    --success-foreground: 0 0% 100%;
+    --warning: 32 95% 44%;
+    --warning-foreground: 0 0% 100%;
+    --info: 217 85% 50%;
+    --info-foreground: 0 0% 100%;
+
     --gradient-gold: linear-gradient(135deg, hsl(42, 78%, 45%), hsl(42, 80%, 58%));
     --gradient-card: linear-gradient(180deg, hsl(0, 0%, 100%), hsl(40, 25%, 97%));
     --shadow-gold: 0 4px 30px -4px hsl(42 78% 45% / 0.2);
@@ -98,6 +105,13 @@
     --cream: 40 20% 92%;
     --emerald: 160 60% 45%;
     --ruby: 0 72% 51%;
+
+    --success: 160 60% 45%;
+    --success-foreground: 220 20% 7%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 220 20% 7%;
+    --info: 213 90% 62%;
+    --info-foreground: 220 20% 7%;
 
     --gradient-gold: linear-gradient(135deg, hsl(42, 78%, 55%), hsl(42, 80%, 68%));
     --gradient-card: linear-gradient(180deg, hsl(220, 18%, 12%), hsl(220, 18%, 8%));

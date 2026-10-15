@@ -245,9 +245,9 @@ function WorkflowStepCard({
   const isRunning = statusType === 'IN_PROGRESS' || statusType === 'RUNNING';
 
   const bubbleClass = isCompleted
-    ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600'
+    ? 'border-success bg-success/10 text-success'
     : isRunning
-      ? 'border-blue-500 bg-blue-500/10 text-blue-600'
+      ? 'border-info bg-info/10 text-info'
       : 'border-border bg-muted text-muted-foreground';
 
   return (
@@ -303,7 +303,7 @@ function WorkflowStepCard({
 
         {/* Draft chip */}
         {isDraft && (
-          <span className="rounded-full bg-amber-500/15 text-amber-600 px-2 py-0.5 text-[10px] font-medium shrink-0">
+          <span className="rounded-full bg-warning/15 text-warning px-2 py-0.5 text-[10px] font-medium shrink-0">
             Draft
           </span>
         )}
@@ -928,7 +928,7 @@ export function AuctionStep5Workflow({
             </div>
           )}
           {hasDrafts && (
-            <div className="px-4 py-2 text-xs bg-amber-500/10 border-b border-amber-500/20 text-amber-700 dark:text-amber-400">
+            <div className="px-4 py-2 text-xs bg-warning/10 border-b border-warning/20 text-warning">
               {Object.keys(draftRequests).length} unsaved step
               {Object.keys(draftRequests).length !== 1 ? 's' : ''} — marked as Draft, they are
               evaluated and saved together when you continue.

@@ -44,10 +44,9 @@ export function WorkflowStagesTimeline({
       phase: 'PRE_AUCTION',
       iso: startIso ?? undefined,
       contextLabel: 'Before',
-      badgeClass: 'bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300',
-      iconWrapClass: 'bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-300',
-      cardClassName:
-        'bg-rose-50/70 border border-rose-200/70 dark:bg-rose-950/20 dark:border-rose-900/40',
+      badgeClass: 'bg-destructive/15 text-destructive',
+      iconWrapClass: 'bg-destructive/15 text-destructive',
+      cardClassName: 'bg-destructive/5 border border-destructive/20',
       subLine:
         'Steps that must be completed before the auction starts (registration, payment, verification).',
       nodes: preAuctionNodes,
@@ -62,8 +61,8 @@ export function WorkflowStagesTimeline({
       phase: 'AUCTION',
       iso: auction.schedule.startTime,
       contextLabel: 'Auction opens',
-      badgeClass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300',
-      iconWrapClass: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300',
+      badgeClass: 'bg-success/15 text-success',
+      iconWrapClass: 'bg-success/15 text-success',
       nodes: [],
       isMarker: true,
     });

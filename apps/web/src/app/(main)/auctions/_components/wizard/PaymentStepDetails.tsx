@@ -48,7 +48,7 @@ export function PaymentStepDetails({ step, onSubmit, submitting, error }: Paymen
             <span className="text-muted-foreground flex items-center gap-2 font-medium">
               {h.name || `Head ${i + 1}`}
               {h.refundable && (
-                <span className="text-[10px] font-bold rounded-full bg-emerald-500/10 text-emerald-600 px-2 py-0.5 border border-emerald-500/30">
+                <span className="text-[10px] font-bold rounded-full bg-success/10 text-success px-2 py-0.5 border border-success/30">
                   Refundable
                 </span>
               )}

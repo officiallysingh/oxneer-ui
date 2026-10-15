@@ -88,7 +88,7 @@ export function TimelineItem({
               <div key={child.id} className="relative flex gap-4">
                 <div className="w-28 text-right shrink-0 pt-1 z-10">
                   {child.time ? (
-                    <div className="text-xs font-semibold text-blue-600 dark:text-blue-400 leading-tight">
+                    <div className="text-xs font-semibold text-info leading-tight">
                       {child.time}
                       {child.timeTo && (
                         <>
@@ -105,7 +105,7 @@ export function TimelineItem({
                 </div>
 
                 <div className="relative flex-1">
-                  <div className="absolute -left-[5px] top-2 w-3 h-3 rounded-full bg-background border-2 border-blue-500 z-10" />
+                  <div className="absolute -left-[5px] top-2 w-3 h-3 rounded-full bg-background border-2 border-info z-10" />
 
                   <div className="pl-5">
                     <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
@@ -140,7 +140,7 @@ export function TimelineItem({
         <ul className="mt-3 space-y-1.5">
           {subs.map((sub, i) => (
             <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-success mt-0.5 shrink-0" />
               <span>{sub}</span>
             </li>
           ))}
@@ -150,7 +150,7 @@ export function TimelineItem({
       {details && <div className="mt-3">{details}</div>}
 
       {userTip && (
-        <div className="mt-4 flex items-start gap-2 text-sm bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 rounded-lg px-3 py-2">
+        <div className="mt-4 flex items-start gap-2 text-sm bg-info/10 text-info rounded-lg px-3 py-2">
           <span>{userTip}</span>
         </div>
       )}

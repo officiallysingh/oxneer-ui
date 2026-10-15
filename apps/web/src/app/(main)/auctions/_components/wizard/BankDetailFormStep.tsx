@@ -108,7 +108,7 @@ export function BankDetailFormStep({ step, onSubmit, submitting, error }: BankDe
                   </p>
                 </div>
                 {d.primary && (
-                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 shrink-0 border border-emerald-500/30">
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-success/10 text-success shrink-0 border border-success/30">
                     Primary
                   </span>
                 )}

@@ -29,13 +29,13 @@ export function resolveInvitationStatus(p: ParticipantVM): string {
 export function statusBadgeClass(status: string): string {
   switch (status) {
     case 'ACCEPTED':
-      return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
+      return 'bg-success/10 text-success border-success/20';
     case 'DECLINED':
     case 'EXPIRED':
       return 'bg-destructive/10 text-destructive border-destructive/20';
     case 'PENDING':
     case 'INVITED':
-      return 'bg-amber-500/10 text-amber-600 border-amber-500/20';
+      return 'bg-warning/10 text-warning border-warning/20';
     case 'NA':
       return 'bg-muted text-muted-foreground border-border';
     default:

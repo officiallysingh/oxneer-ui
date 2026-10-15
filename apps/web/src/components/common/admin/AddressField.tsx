@@ -182,10 +182,8 @@ export function AddressField({ value, onChange, disabled }: AddressFieldProps) {
             <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 animate-spin text-muted-foreground" />
           )}
         </div>
-        {pincodeError && <p className="text-xs text-amber-500 mt-0.5">{pincodeError}</p>}
-        {autoFilled && (
-          <p className="text-xs text-emerald-500 mt-0.5">✓ City and state auto-filled</p>
-        )}
+        {pincodeError && <p className="text-xs text-warning mt-0.5">{pincodeError}</p>}
+        {autoFilled && <p className="text-xs text-success mt-0.5">✓ City and state auto-filled</p>}
       </Field>
 
       {/* Area — dropdown when options available, plain text otherwise */}

@@ -73,7 +73,7 @@ const AuctionCard = ({ item, index }: { item: AuctionItem; index: number }) => {
           </button>
 
           {item.isLive && (
-            <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-emerald/90 px-2.5 py-1">
+            <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-success/90 px-2.5 py-1">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-foreground" />
               <span className="font-body text-[10px] font-semibold text-foreground uppercase">
                 Live

@@ -215,8 +215,8 @@ export function WorkflowWizard({ auctionId, onClose }: WorkflowWizardProps) {
   if (allDone || steps.length === 0) {
     return (
       <div className="flex flex-col items-center gap-5 py-12 px-6 text-center">
-        <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center">
-          <CheckCircle2 className="h-8 w-8 text-emerald-500" />
+        <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center">
+          <CheckCircle2 className="h-8 w-8 text-success" />
         </div>
         <div>
           <h3 className="text-lg font-bold text-foreground">All steps completed!</h3>

@@ -70,7 +70,7 @@ export function WorkflowStatusCard({
         </div>
         <div className="h-2 rounded-full bg-muted overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all duration-500 ${allDone ? 'bg-emerald-500' : 'bg-primary'}`}
+            className={`h-full rounded-full transition-all duration-500 ${allDone ? 'bg-success' : 'bg-primary'}`}
             style={{ width: `${progressPct}%` }}
           />
         </div>
@@ -87,16 +87,16 @@ export function WorkflowStatusCard({
               key={stepId}
               className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm ${
                 done
-                  ? 'bg-emerald-500/5 text-emerald-700'
+                  ? 'bg-success/5 text-success'
                   : pending
-                    ? 'bg-amber-500/5 text-amber-700'
+                    ? 'bg-warning/5 text-warning'
                     : 'bg-muted/30 text-muted-foreground'
               }`}
             >
               {done ? (
-                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
               ) : pending ? (
-                <Loader2 className="h-4 w-4 shrink-0 text-amber-500" />
+                <Loader2 className="h-4 w-4 shrink-0 text-warning" />
               ) : (
                 <div className="h-4 w-4 shrink-0 rounded-full border-2 border-current opacity-40" />
               )}
@@ -104,7 +104,7 @@ export function WorkflowStatusCard({
                 {stepNameById.get(stepId) || formatLabel(t) || 'Step'}
               </span>
               <span
-                className={`text-[11px] font-medium shrink-0 ${done ? 'text-emerald-600' : pending ? 'text-amber-600' : 'text-muted-foreground'}`}
+                className={`text-[11px] font-medium shrink-0 ${done ? 'text-success' : pending ? 'text-warning' : 'text-muted-foreground'}`}
               >
                 {formatLabel(t)}
               </span>
@@ -119,7 +119,7 @@ export function WorkflowStatusCard({
       </div>
 
       {allDone && (
-        <div className="flex items-center gap-2 text-sm text-emerald-600 bg-emerald-500/10 px-4 py-2.5 rounded-lg">
+        <div className="flex items-center gap-2 text-sm text-success bg-success/10 px-4 py-2.5 rounded-lg">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
           All registration steps completed. You are fully registered to participate.
         </div>

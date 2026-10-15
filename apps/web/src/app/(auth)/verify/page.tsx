@@ -361,7 +361,7 @@ export default function VerifyPage() {
                 <Card className="border-border shadow-card">
                   <CardHeader className="text-center pb-2">
                     {needsEmail && (
-                      <div className="mx-auto mb-3 flex items-center gap-1.5 text-xs font-body text-emerald font-medium">
+                      <div className="mx-auto mb-3 flex items-center gap-1.5 text-xs font-body text-success font-medium">
                         <CheckCircle2 className="h-4 w-4" />
                         Email verified
                       </div>

@@ -660,7 +660,7 @@ export function AuctionStep3Policies({
               return (
                 <div
                   key="PRECONDITION"
-                  className="rounded-xl border border-dashed border-sky-300 dark:border-sky-800 bg-sky-50/20 dark:bg-sky-950/10 p-4 flex items-center justify-between"
+                  className="rounded-xl border border-dashed border-info/40 bg-info/5 p-4 flex items-center justify-between"
                 >
                   <div>
                     <p className="text-sm font-medium text-foreground">Preconditions</p>
@@ -768,7 +768,7 @@ export function AuctionStep3Policies({
             return (
               <div key="PRICE_PROGRESSION">
                 {form.priceProgressionPolicyId && editingKey !== 'priceProgression' ? (
-                  <div className="rounded-xl border border-blue-200 dark:border-blue-900/50 bg-blue-50/30 dark:bg-blue-950/10 p-1">
+                  <div className="rounded-xl border border-info/30 bg-info/5 p-1">
                     <PolicyItemCard
                       auctionId={auctionId!}
                       policyId={form.priceProgressionPolicyId}
@@ -851,7 +851,7 @@ export function AuctionStep3Policies({
             return (
               <div key="EXTENSION">
                 {form.extensionPolicyId && editingKey !== 'extension' ? (
-                  <div className="rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50/30 dark:bg-amber-950/10 p-1">
+                  <div className="rounded-xl border border-warning/30 bg-warning/5 p-1">
                     <PolicyItemCard
                       auctionId={auctionId!}
                       policyId={form.extensionPolicyId}
@@ -876,7 +876,7 @@ export function AuctionStep3Policies({
                   !form.extensionEnabled &&
                   !form.extensionPolicyId &&
                   !editingKey ? (
-                  <div className="rounded-xl border border-dashed border-amber-300 dark:border-amber-800 bg-amber-50/20 dark:bg-amber-950/10 p-4 flex items-center justify-between">
+                  <div className="rounded-xl border border-dashed border-warning/40 bg-warning/5 p-4 flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-foreground">Extension</p>
                       <p className="text-xs text-muted-foreground">
@@ -963,7 +963,7 @@ export function AuctionStep3Policies({
               return (
                 <div
                   key="WINNER"
-                  className="space-y-3 rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/30 dark:bg-emerald-950/10 p-1"
+                  className="space-y-3 rounded-xl border border-success/30 bg-success/5 p-1"
                 >
                   {form.winnerDeterminationPolicyId && (
                     <PolicyItemCard
@@ -1023,7 +1023,7 @@ export function AuctionStep3Policies({
               return (
                 <div
                   key="WINNER"
-                  className="rounded-xl border border-dashed border-emerald-300 dark:border-emerald-800 bg-emerald-50/20 dark:bg-emerald-950/10 p-4 flex items-center justify-between"
+                  className="rounded-xl border border-dashed border-success/40 bg-success/5 p-4 flex items-center justify-between"
                 >
                   <div>
                     <p className="text-sm font-medium text-foreground">

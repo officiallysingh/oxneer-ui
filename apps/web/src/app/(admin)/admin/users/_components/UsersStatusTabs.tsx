@@ -2,6 +2,7 @@
 
 import { Tabs, TabsList, TabsTrigger } from '@repo/ui';
 import { STATUS_TABS, type StatusTabId } from '../_lib/users-filters';
+import { TabCount } from './TabCount';
 import type { StatusCounts } from '../_hooks/useUserStatusCounts';
 
 interface UsersStatusTabsProps {
@@ -20,11 +21,7 @@ export function UsersStatusTabs({ value, counts, onChange }: UsersStatusTabsProp
           {STATUS_TABS.map((tab) => (
             <TabsTrigger key={tab.id} value={tab.id} className="group gap-2">
               {tab.label}
-              {counts[tab.id] !== undefined && (
-                <span className="rounded-full bg-foreground/[0.07] px-[7px] text-xs font-semibold group-data-[state=active]:bg-primary/15 group-data-[state=active]:text-primary">
-                  {counts[tab.id]}
-                </span>
-              )}
+              <TabCount n={counts[tab.id]} />
             </TabsTrigger>
           ))}
         </TabsList>

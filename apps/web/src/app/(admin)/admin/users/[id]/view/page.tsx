@@ -1,257 +1,166 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { usersApi, bankDetailsApi, UserDetailVM, BankDetailVM } from '@repo/api';
+import { Lock } from 'lucide-react';
+import { usersApi, type UserDetailVM } from '@repo/api';
+import { Button, Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui';
+import { PageLoading } from '@/components/common/admin/SectionCard';
+import { useBankAccounts } from '@/components/common/bank';
+import { DeleteUserDialog } from '../../_components/DeleteUserDialog';
+import type { UserRowHandlers } from '../../_components/UserActionsMenu';
+import { UserBankAccountList } from '../../_components/UserBankAccounts';
 import {
-  ArrowLeft,
-  AtSign,
-  Building2,
-  CreditCard,
-  Mail,
-  Pencil,
-  Phone,
-  Shield,
-  User as UserIcon,
-} from 'lucide-react';
-import { Button } from '@repo/ui';
-import PageHeader from '@/components/common/admin/PageHeader';
-import { SectionCard, DetailRow, PageLoading } from '@/components/common/admin/SectionCard';
-import { TagList } from '@/components/common/admin/TagList';
-import { UserAvatar } from '@/components/common/admin/UserAvatar';
-import { Pill } from '@/components/common/admin/Pill';
-import { UserStatusBadge } from '../../_components/UserStatusBadge';
-import { fullName as getFullName } from '../../_lib/user-display';
+  AccessDetailItems,
+  ContactDetailItems,
+  DetailGrid,
+  DetailItem,
+} from '../../_components/UserDetailParts';
+import { TabCount } from '../../_components/TabCount';
+import { UsersBreadcrumb } from '../../_components/UsersBreadcrumb';
+import { AccountHealthPanel } from '../../_components/user-profile/AccountHealthPanel';
+import { ProfileCard } from '../../_components/user-profile/ProfileCard';
+import { UserProfileHeader } from '../../_components/user-profile/UserProfileHeader';
+import { useUserActions } from '../../_hooks/useUserActions';
+import { fullName } from '../../_lib/user-display';
 
-function BoolBadge({
-  value,
-  trueLabel,
-  falseLabel,
-}: {
-  value: boolean;
-  trueLabel: string;
-  falseLabel: string;
-}) {
-  return <Pill tone={value ? 'success' : 'muted'}>{value ? trueLabel : falseLabel}</Pill>;
-}
+const USERS_PATH = '/admin/users';
 
 export default function UserViewPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-
-  const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<UserDetailVM | null>(null);
-  const [bankDetails, setBankDetails] = useState<BankDetailVM[] | null>(null);
+  const [notFound, setNotFound] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     usersApi
       .getUserById(id, ['roles', 'permissions'])
-      .then((u) => {
-        setUser(u);
-        if (u.username) {
-          bankDetailsApi
-            .getByUsername(u.username)
-            .then(setBankDetails)
-            .catch(() => setBankDetails(null));
-        } else {
-          setBankDetails(null);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .then(setUser)
+      .catch(() => setNotFound(true));
   }, [id]);
 
-  if (loading) return <PageLoading message="Loading user..." />;
+  const bank = useBankAccounts(user?.username ? { username: user.username } : null);
+  const actions = useUserActions({
+    onUpdated: (_, patch) => setUser((u) => (u ? { ...u, ...patch } : u)),
+  });
 
-  if (!user) {
+  if (notFound) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-3">
+      <div className="flex flex-col items-center justify-center gap-3 py-20">
         <p className="text-muted-foreground">User not found.</p>
-        <Button variant="outline" size="sm" onClick={() => router.push('/admin/users')}>
-          Back to users
+        <Button variant="outline" asChild>
+          <Link href={USERS_PATH}>Back to users</Link>
         </Button>
       </div>
     );
   }
+  if (!user) return <PageLoading message="Loading user..." />;
 
-  const fullName = getFullName(user);
+  const editPath = `${USERS_PATH}/${user.id}/edit`;
+  const handlers: Omit<UserRowHandlers, 'onView'> = {
+    onEdit: () => router.push(editPath),
+    onManageAccess: () => router.push(`${editPath}#access`),
+    onResetPassword: actions.resetPassword,
+    onToggleEnabled: (u) => actions.setEnabled([u], !u.enabled),
+    onUnlock: actions.unlock,
+    onDelete: () => setConfirmDelete(true),
+    busyIds: actions.busyIds,
+  };
+  const accessCount = (user.roles?.length ?? 0) + (user.permissions?.length ?? 0);
+  const bankCount = bank.isLoading ? undefined : bank.accounts.length;
+
+  const profileCard = (
+    <ProfileCard title="Profile & contact" action={{ label: 'Edit', href: editPath }}>
+      <DetailGrid labelWidth={160}>
+        <DetailItem label="Full name">
+          <span className="font-medium">{fullName(user)}</span>
+        </DetailItem>
+        <DetailItem label="Username">@{user.username ?? '—'}</DetailItem>
+        <ContactDetailItems user={user} />
+      </DetailGrid>
+    </ProfileCard>
+  );
+  const accessCard = (
+    <ProfileCard title="Access" action={{ label: 'Manage access', href: `${editPath}#access` }}>
+      <DetailGrid labelWidth={160}>
+        <AccessDetailItems user={user} />
+      </DetailGrid>
+    </ProfileCard>
+  );
+  const bankCard = (
+    <ProfileCard title="Bank accounts">
+      <UserBankAccountList accounts={bank.accounts} isLoading={bank.isLoading} error={bank.error} />
+    </ProfileCard>
+  );
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title={fullName}
-        description={user.username ? `@${user.username}` : 'User details'}
-        actions={
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => router.push('/admin/users')}>
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Back
-            </Button>
-            <Button size="sm" onClick={() => router.push(`/admin/users/${id}/edit`)}>
-              <Pencil className="h-4 w-4 mr-1" />
-              Edit
-            </Button>
+    <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-5">
+      <UsersBreadcrumb current={fullName(user)} />
+      <UserProfileHeader user={user} handlers={handlers} />
+
+      {user.passwordSet === false && (
+        <div
+          role="status"
+          className="flex flex-wrap items-center gap-3 rounded-lg border border-warning/40 bg-warning/[0.08] px-4 py-3.5"
+        >
+          <Lock className="h-[18px] w-[18px] shrink-0 text-warning" aria-hidden />
+          <div className="flex-[1_1_300px]">
+            <p className="font-semibold">No password set</p>
+            <p className="text-[12.5px] text-muted-foreground">
+              The user can’t sign in with a password until they set one.
+            </p>
           </div>
-        }
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={actions.busyIds.has(user.id)}
+            onClick={() => actions.resetPassword(user)}
+          >
+            Send set-password link
+          </Button>
+        </div>
+      )}
+
+      <Tabs defaultValue="overview" className="flex flex-col gap-5">
+        <TabsList className="h-10 self-start">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="access" className="group gap-2">
+            Access <TabCount n={accessCount} />
+          </TabsTrigger>
+          <TabsTrigger value="bank" className="group gap-2">
+            Bank accounts <TabCount n={bankCount} />
+          </TabsTrigger>
+        </TabsList>
+
+        <div className="flex flex-wrap items-start gap-5">
+          <div className="flex min-w-0 flex-[999_1_560px] flex-col">
+            <TabsContent value="overview" className="mt-0 flex flex-col gap-5">
+              {profileCard}
+              {accessCard}
+              {bankCard}
+            </TabsContent>
+            <TabsContent value="access" className="mt-0">
+              {accessCard}
+            </TabsContent>
+            <TabsContent value="bank" className="mt-0">
+              {bankCard}
+            </TabsContent>
+          </div>
+          <AccountHealthPanel user={user} />
+        </div>
+      </Tabs>
+
+      <DeleteUserDialog
+        user={confirmDelete ? user : null}
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={async (u) => {
+          const deleted = await actions.deleteUser(u);
+          if (deleted) router.push(USERS_PATH);
+          return deleted;
+        }}
       />
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <SectionCard title="Identity" icon={UserIcon}>
-          <DetailRow label="Avatar">
-            <UserAvatar
-              src={user.profilePicture}
-              firstName={user.firstName}
-              lastName={user.lastName}
-              username={user.username}
-              size={40}
-            />
-          </DetailRow>
-          <DetailRow label="Full name">{fullName}</DetailRow>
-          <DetailRow label="Email">
-            <span className="inline-flex items-center gap-1.5">
-              <span className="font-mono text-xs">{user.emailId}</span>
-              {user.emailIdVerified ? (
-                <Mail className="h-3.5 w-3.5 text-success shrink-0" />
-              ) : (
-                <Mail className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
-              )}
-            </span>
-          </DetailRow>
-          <DetailRow label="Username">
-            <span className="font-mono text-xs">{user.username ?? '—'}</span>
-          </DetailRow>
-        </SectionCard>
-
-        <SectionCard title="Account status" icon={Shield}>
-          <DetailRow label="Status">
-            <UserStatusBadge user={user} />
-          </DetailRow>
-          <DetailRow label="Account locked">
-            <BoolBadge value={!user.accountNonLocked} trueLabel="Locked" falseLabel="Not locked" />
-          </DetailRow>
-          <DetailRow label="Account expired">
-            <BoolBadge value={!user.accountNonExpired} trueLabel="Expired" falseLabel="Valid" />
-          </DetailRow>
-          <DetailRow label="Credentials expired">
-            <BoolBadge value={!user.credentialsNonExpired} trueLabel="Expired" falseLabel="Valid" />
-          </DetailRow>
-          <DetailRow label="Password set">
-            <BoolBadge value={user.passwordSet ?? false} trueLabel="Yes" falseLabel="Not set" />
-          </DetailRow>
-          <DetailRow label="Force password change">
-            <BoolBadge value={user.promptChangePassword} trueLabel="Yes" falseLabel="No" />
-          </DetailRow>
-        </SectionCard>
-
-        <SectionCard title="Contact" icon={AtSign}>
-          <DetailRow label="Mobile">
-            <span className="inline-flex items-center gap-1.5">
-              <span>{user.mobileNo ?? '—'}</span>
-              {user.mobileNo && user.mobileNoVerified && (
-                <Phone className="h-3.5 w-3.5 text-success shrink-0" />
-              )}
-            </span>
-          </DetailRow>
-          <DetailRow label="Email verified">
-            <BoolBadge
-              value={user.emailIdVerified}
-              trueLabel="Verified"
-              falseLabel="Not verified"
-            />
-          </DetailRow>
-          <DetailRow label="Mobile verified">
-            <BoolBadge
-              value={user.mobileNoVerified}
-              trueLabel="Verified"
-              falseLabel="Not verified"
-            />
-          </DetailRow>
-        </SectionCard>
-
-        <SectionCard title="Roles & permissions" icon={Pencil}>
-          <DetailRow label="Roles">
-            <TagList
-              variant="primary"
-              max={3}
-              tags={(user.roles ?? []).map((r) => ({ id: r.id, label: r.label }))}
-            />
-          </DetailRow>
-          <DetailRow label="Permissions">
-            <TagList
-              variant="muted"
-              max={3}
-              tags={(user.permissions ?? []).map((p) => ({ id: p.id, label: p.label }))}
-            />
-          </DetailRow>
-        </SectionCard>
-      </div>
-
-      {/* Bank details */}
-      <SectionCard title="Bank details" icon={CreditCard}>
-        {bankDetails === null ? (
-          <div className="px-4 py-6">
-            {user.username ? (
-              <p className="text-sm text-muted-foreground">Failed to load bank details.</p>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                No username — bank details cannot be looked up.
-              </p>
-            )}
-          </div>
-        ) : bankDetails.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 py-10 text-muted-foreground">
-            <Building2 className="h-8 w-8 opacity-30" />
-            <p className="text-sm font-medium">No bank accounts linked</p>
-          </div>
-        ) : (
-          <div className="w-full overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/20">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    Bank
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    Account No
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    IFSC Code
-                  </th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/60">
-                {bankDetails.map((d) => (
-                  <tr key={d.id} className={d.primary ? 'bg-primary/[0.03]' : 'hover:bg-muted/30'}>
-                    <td className="px-4 py-3.5">
-                      <span className="font-medium text-foreground">{d.bank.name}</span>
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <span className="font-mono text-sm text-foreground tracking-widest">
-                        ••••&nbsp;{d.accountNo.slice(-4)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <span className="font-mono text-sm text-foreground">{d.ifscCode}</span>
-                    </td>
-                    <td className="px-4 py-3.5 text-center">
-                      {d.primary ? (
-                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary/10 border border-primary/20 rounded-full px-2.5 py-1">
-                          Primary
-                        </span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </SectionCard>
     </div>
   );
 }

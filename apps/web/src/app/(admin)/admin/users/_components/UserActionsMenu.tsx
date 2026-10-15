@@ -37,22 +37,26 @@ export interface UserRowHandlers {
 
 interface UserActionsMenuProps {
   user: UserDetailVM;
-  handlers: UserRowHandlers;
+  /** `onView` is optional here: without it the "View details" item is hidden. */
+  handlers: Omit<UserRowHandlers, 'onView'> & Partial<Pick<UserRowHandlers, 'onView'>>;
+  /** `page`: outlined trigger, and items the page already shows as buttons are hidden. */
+  variant?: 'row' | 'page';
 }
 
 /** "⋮" menu with the per-user actions. */
-export function UserActionsMenu({ user, handlers }: UserActionsMenuProps) {
+export function UserActionsMenu({ user, handlers, variant = 'row' }: UserActionsMenuProps) {
   const busy = handlers.busyIds.has(user.id);
   const superAdmin = isSuperAdmin(user);
   const label = user.username ?? user.emailId;
+  const onPage = variant === 'page';
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="ghost"
+          variant={onPage ? 'outline' : 'ghost'}
           size="icon"
-          className="h-9 w-9 text-muted-foreground hover:text-foreground"
+          className={onPage ? undefined : 'h-9 w-9 text-muted-foreground hover:text-foreground'}
           aria-label={`More actions for ${label}`}
           disabled={busy}
         >
@@ -62,18 +66,22 @@ export function UserActionsMenu({ user, handlers }: UserActionsMenuProps) {
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={() => handlers.onView(user)}>
-          <Eye className="mr-2 h-4 w-4" />
-          View details
-        </DropdownMenuItem>
+        {handlers.onView && (
+          <DropdownMenuItem onSelect={() => handlers.onView?.(user)}>
+            <Eye className="mr-2 h-4 w-4" />
+            View details
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem onSelect={() => handlers.onManageAccess(user)}>
           <ShieldCheck className="mr-2 h-4 w-4" />
           Manage access
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => handlers.onResetPassword(user)}>
-          <KeyRound className="mr-2 h-4 w-4" />
-          Reset password
-        </DropdownMenuItem>
+        {!onPage && (
+          <DropdownMenuItem onSelect={() => handlers.onResetPassword(user)}>
+            <KeyRound className="mr-2 h-4 w-4" />
+            Reset password
+          </DropdownMenuItem>
+        )}
         {!user.accountNonLocked && (
           <DropdownMenuItem onSelect={() => handlers.onUnlock(user)}>
             <LockOpen className="mr-2 h-4 w-4" />

@@ -32,6 +32,9 @@ interface FormFieldProps {
   changed?: boolean;
   autoComplete?: string;
   inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode'];
+  maxLength?: number;
+  /** Extra classes for the <input>, e.g. monospace for codes. */
+  inputClassName?: string;
 }
 
 /**
@@ -60,6 +63,8 @@ export function FormField({
   changed,
   autoComplete = 'off',
   inputMode,
+  maxLength,
+  inputClassName,
 }: FormFieldProps) {
   const labelClass = error ? 'text-destructive' : disabled ? 'text-muted-foreground' : '';
   const errorId = `${id}-error`;
@@ -78,6 +83,7 @@ export function FormField({
     placeholder,
     autoComplete,
     inputMode,
+    maxLength,
     disabled,
     readOnly,
     'aria-invalid': !!error || undefined,
@@ -136,6 +142,7 @@ export function FormField({
               'h-full min-w-0 flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed',
               muted && 'text-muted-foreground',
               !prefix && 'pl-3',
+              inputClassName,
             )}
           />
           {suffix && <span className="flex shrink-0 items-center gap-1.5 pr-3">{suffix}</span>}
@@ -143,7 +150,7 @@ export function FormField({
       ) : (
         <Input
           {...inputProps}
-          className={cn(borderClass, disabled && 'opacity-60 cursor-not-allowed')}
+          className={cn(borderClass, disabled && 'opacity-60 cursor-not-allowed', inputClassName)}
         />
       )}
 

@@ -5,7 +5,8 @@ import { toast } from '@repo/ui';
 import { SESSION_ERROR_EVENT } from '@repo/api';
 
 /**
- * Surfaces API errors raised when the session expires (401/403) as a toast,
+ * Surfaces API errors raised when the session expires (401, or a 403 whose
+ * session check also fails — a plain permission 403 doesn't log out) as a toast,
  * before the client is redirected to /login. The message is also stored in
  * sessionStorage so the login page can render it.
  */

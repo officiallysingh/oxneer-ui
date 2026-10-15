@@ -24,6 +24,7 @@ import { useRolesAndPermissions } from './_hooks/useRolesAndPermissions';
 import { useUserActions } from './_hooks/useUserActions';
 import { useUsersFilters } from './_hooks/useUsersFilters';
 import { PAGE_SIZE_OPTIONS, useUsersList } from './_hooks/useUsersList';
+import { useUserById } from './_hooks/useUserById';
 import { useUserStatusCounts } from './_hooks/useUserStatusCounts';
 import { exportUsersCsv } from './_lib/export-users';
 import { plural } from './_lib/user-display';
@@ -31,13 +32,12 @@ import { activeStatusTab, applyStatusTab, hasAnyFilter } from './_lib/users-filt
 
 export default function UsersPage() {
   const router = useRouter();
-  const { filters, setFilters, updateFilters, resetFilters } = useUsersFilters();
+  const { filters, setFilters, updateFilters, resetFilters, viewId, setViewId } = useUsersFilters();
   const list = useUsersList(filters);
   const { counts, reload: reloadCounts } = useUserStatusCounts();
   const { roles, roleOptions, permissionOptions } = useRolesAndPermissions();
 
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [viewingId, setViewingId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<UserDetailVM | null>(null);
   const [exporting, setExporting] = useState(false);
 
@@ -53,7 +53,7 @@ export default function UsersPage() {
   }, [filters, list.pageIndex, list.pageSize, list.sorting]);
 
   const handlers: UserRowHandlers = {
-    onView: (u) => setViewingId(u.id),
+    onView: (u) => setViewId(u.id),
     onEdit: (u) => router.push(`/admin/users/${u.id}/edit`),
     onManageAccess: (u) => router.push(`/admin/users/${u.id}/edit#access`),
     onResetPassword: actions.resetPassword,
@@ -64,7 +64,10 @@ export default function UsersPage() {
   };
 
   const selectedUsers = list.data.filter((u) => rowSelection[u.id]);
-  const viewingUser = list.data.find((u) => u.id === viewingId) ?? null;
+  const viewingUser = useUserById(
+    viewId,
+    list.data.find((u) => u.id === viewId),
+  );
   const filtered = hasAnyFilter(filters);
 
   const refresh = () => {
@@ -188,14 +191,14 @@ export default function UsersPage() {
         )}
       />
 
-      <UserDetailsSheet user={viewingUser} handlers={handlers} onClose={() => setViewingId(null)} />
+      <UserDetailsSheet user={viewingUser} handlers={handlers} onClose={() => setViewId(null)} />
 
       <DeleteUserDialog
         user={deleting}
         onCancel={() => setDeleting(null)}
         onConfirm={async (u) => {
           const deleted = await actions.deleteUser(u);
-          if (deleted && viewingId === u.id) setViewingId(null);
+          if (deleted && viewId === u.id) setViewId(null);
           return deleted;
         }}
       />

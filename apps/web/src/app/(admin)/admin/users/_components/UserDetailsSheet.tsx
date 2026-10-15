@@ -12,13 +12,17 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
 } from '@repo/ui';
-import { TagList } from '@/components/common/admin/TagList';
 import { fullName, isSuperAdmin } from '../_lib/user-display';
 import type { UserRowHandlers } from './UserActionsMenu';
+import { UserBankAccounts } from './UserBankAccounts';
 import { UserIdentity } from './UserIdentity';
 import { UserStatusBadge } from './UserStatusBadge';
-import { VerificationMark } from './VerificationMark';
+import { AccessDetailItems, ContactDetailItems, DetailGrid, DetailItem } from './UserDetailParts';
 
 interface UserDetailsSheetProps {
   /** The user to show; null closes the drawer. */
@@ -27,12 +31,15 @@ interface UserDetailsSheetProps {
   onClose: () => void;
 }
 
-/** Right-hand drawer with a user's contact, account and access details. */
+const TAB_CONTENT = 'mt-0 flex flex-col gap-5 focus-visible:ring-offset-0';
+
+/** Right-hand drawer with a user's details in Overview / Access / Bank accounts tabs. */
 export function UserDetailsSheet({ user, handlers, onClose }: UserDetailsSheetProps) {
   return (
     <Sheet open={!!user} onOpenChange={(open) => !open && onClose()}>
       <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-[480px]">
-        {user && <UserDetails user={user} handlers={handlers} />}
+        {/* keyed so the tab resets to Overview for each user */}
+        {user && <UserDetails key={user.id} user={user} handlers={handlers} />}
       </SheetContent>
     </Sheet>
   );
@@ -40,7 +47,6 @@ export function UserDetailsSheet({ user, handlers, onClose }: UserDetailsSheetPr
 
 function UserDetails({ user, handlers }: { user: UserDetailVM; handlers: UserRowHandlers }) {
   const busy = handlers.busyIds.has(user.id);
-  const superAdmin = isSuperAdmin(user);
 
   return (
     <>
@@ -50,92 +56,33 @@ function UserDetails({ user, handlers }: { user: UserDetailVM; handlers: UserRow
         <UserIdentity user={user} size="lg" meta={<UserStatusBadge user={user} />} />
       </SheetHeader>
 
-      <div className="flex flex-1 flex-col gap-5 overflow-y-auto border-t border-border px-6 py-5">
-        <DrawerSection title="Contact">
-          <DetailGrid>
-            <DetailItem label="Email">
-              <span className="truncate">{user.emailId}</span>
-              <VerificationMark verified={user.emailIdVerified} subject="Email" variant="pill" />
-            </DetailItem>
-            <DetailItem label="Mobile">
-              {user.mobileNo ? (
-                <>
-                  {user.mobileNo}
-                  <VerificationMark
-                    verified={user.mobileNoVerified}
-                    subject="Mobile"
-                    variant="pill"
-                  />
-                </>
-              ) : (
-                <span className="text-muted-foreground">Not added</span>
-              )}
-            </DetailItem>
-          </DetailGrid>
-        </DrawerSection>
-
-        <DrawerSection title="Account">
-          <DetailGrid>
-            <DetailItem label="Sign-in">{user.enabled ? 'Enabled' : 'Disabled'}</DetailItem>
-            <DetailItem label="Password">
-              {user.credentialsNonExpired ? 'Valid' : 'Expired'}
-              {user.promptChangePassword && (
-                <span className="text-muted-foreground">· change at next sign-in</span>
-              )}
-            </DetailItem>
-            {!user.accountNonLocked && <DetailItem label="Lock">Locked</DetailItem>}
-          </DetailGrid>
-        </DrawerSection>
-
-        <DrawerSection title="Roles" onManage={() => handlers.onManageAccess(user)}>
-          {user.roles?.length ? (
-            <TagList
-              tags={user.roles.map((r) => ({ id: r.id, label: r.label }))}
-              variant="info"
-              max={20}
-            />
-          ) : (
-            <p className="text-[13px] text-muted-foreground">No roles assigned</p>
-          )}
-        </DrawerSection>
-
-        <DrawerSection title="Direct permissions" onManage={() => handlers.onManageAccess(user)}>
-          {user.permissions?.length ? (
-            <TagList
-              tags={user.permissions.map((p) => ({ id: p.id, label: p.label }))}
-              variant="outline"
-              max={20}
-            />
-          ) : (
-            <p className="text-[13px] text-muted-foreground">No direct permissions</p>
-          )}
-        </DrawerSection>
-
-        <div className="flex flex-col gap-2.5 rounded-lg border border-destructive/35 p-3.5">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-destructive">
-            Danger zone
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={busy}
-              onClick={() => handlers.onToggleEnabled(user)}
-            >
-              {user.enabled ? 'Disable account' : 'Enable account'}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={busy || superAdmin}
-              onClick={() => handlers.onDelete(user)}
-              className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
-            >
-              {superAdmin ? 'Superadmin can’t be deleted' : 'Delete user…'}
-            </Button>
-          </div>
+      <Tabs defaultValue="overview" className="flex min-h-0 flex-1 flex-col">
+        <div className="px-6 pb-3">
+          <TabsList className="grid h-10 w-full grid-cols-3">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="access">Access</TabsTrigger>
+            <TabsTrigger value="bank">Bank accounts</TabsTrigger>
+          </TabsList>
         </div>
-      </div>
+
+        <div className="flex-1 overflow-y-auto px-6 pb-5 pt-2">
+          <TabsContent value="overview" className={TAB_CONTENT}>
+            <OverviewTab user={user} handlers={handlers} busy={busy} />
+          </TabsContent>
+          <TabsContent value="access" className={TAB_CONTENT}>
+            <AccessTab user={user} onManage={() => handlers.onManageAccess(user)} />
+          </TabsContent>
+          <TabsContent value="bank" className={TAB_CONTENT}>
+            {user.username ? (
+              <UserBankAccounts username={user.username} />
+            ) : (
+              <p className="text-[13px] text-muted-foreground">
+                This user has no username, so bank accounts can’t be looked up.
+              </p>
+            )}
+          </TabsContent>
+        </div>
+      </Tabs>
 
       <SheetFooter className="gap-2 border-t border-border px-6 py-4 sm:space-x-0">
         <Button variant="ghost" asChild className="sm:mr-auto">
@@ -154,6 +101,75 @@ function UserDetails({ user, handlers }: { user: UserDetailVM; handlers: UserRow
         </Button>
       </SheetFooter>
     </>
+  );
+}
+
+function OverviewTab({
+  user,
+  handlers,
+  busy,
+}: {
+  user: UserDetailVM;
+  handlers: UserRowHandlers;
+  busy: boolean;
+}) {
+  const superAdmin = isSuperAdmin(user);
+  return (
+    <>
+      <DrawerSection title="Contact">
+        <DetailGrid>
+          <ContactDetailItems user={user} />
+        </DetailGrid>
+      </DrawerSection>
+
+      <DrawerSection title="Account">
+        <DetailGrid>
+          <DetailItem label="Sign-in">{user.enabled ? 'Enabled' : 'Disabled'}</DetailItem>
+          <DetailItem label="Password">
+            {user.credentialsNonExpired ? 'Valid' : 'Expired'}
+            {user.promptChangePassword && (
+              <span className="text-muted-foreground">· change at next sign-in</span>
+            )}
+          </DetailItem>
+          {!user.accountNonLocked && <DetailItem label="Lock">Locked</DetailItem>}
+        </DetailGrid>
+      </DrawerSection>
+
+      <div className="flex flex-col gap-2.5 rounded-lg border border-destructive/35 p-3.5">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-destructive">
+          Danger zone
+        </h3>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={busy}
+            onClick={() => handlers.onToggleEnabled(user)}
+          >
+            {user.enabled ? 'Disable account' : 'Enable account'}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={busy || superAdmin}
+            onClick={() => handlers.onDelete(user)}
+            className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+          >
+            {superAdmin ? 'Superadmin can’t be deleted' : 'Delete user…'}
+          </Button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function AccessTab({ user, onManage }: { user: UserDetailVM; onManage: () => void }) {
+  return (
+    <DrawerSection title="Access" onManage={onManage}>
+      <DetailGrid labelWidth={130}>
+        <AccessDetailItems user={user} />
+      </DetailGrid>
+    </DrawerSection>
   );
 }
 
@@ -184,20 +200,5 @@ function DrawerSection({
       </div>
       {children}
     </section>
-  );
-}
-
-function DetailGrid({ children }: { children: ReactNode }) {
-  return (
-    <dl className="grid grid-cols-[110px_minmax(0,1fr)] items-center gap-3 text-sm">{children}</dl>
-  );
-}
-
-function DetailItem({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <>
-      <dt className="text-[13px] text-muted-foreground">{label}</dt>
-      <dd className="flex min-w-0 flex-wrap items-center gap-1.5">{children}</dd>
-    </>
   );
 }

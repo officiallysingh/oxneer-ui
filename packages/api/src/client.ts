@@ -79,8 +79,11 @@ export function getApiErrorMessage(
   return message && message !== 'Network Error' ? message : fallback;
 }
 
-/** Fired on the window when the API answers 401/403 (expired session). */
+/** Fired on the window when the session has expired (see the response interceptor below). */
 export const SESSION_ERROR_EVENT = 'oxneer:session-error';
+
+/** Cheap authenticated endpoint used to tell an expired session from a permission denial. */
+const SESSION_PROBE_PATH = '/api/v1/users/me/info';
 
 /** True when a signed-in user is persisted — tells "session expired" from "not signed in". */
 function hasSignedInUser(): boolean {
@@ -107,35 +110,66 @@ export const apiClient = axios.create({
   xsrfHeaderName: 'X-XSRF-TOKEN',
 });
 
+let sessionProbe: Promise<boolean> | null = null;
+
+/**
+ * After a 403: is the session still valid? Spring answers 403 both for "not allowed"
+ * (session fine) and for some expired-session cases, so ask a cheap authenticated endpoint.
+ * Concurrent 403s share one probe. Network errors count as alive — never log out on a blip.
+ */
+function isSessionAlive(): Promise<boolean> {
+  sessionProbe ??= axios
+    .get(`${API_BASE}${SESSION_PROBE_PATH}`, { withCredentials: true })
+    .then(
+      () => true,
+      (probeError) => {
+        const status = probeError?.response?.status;
+        return status !== 401 && status !== 403;
+      },
+    )
+    .finally(() => {
+      sessionProbe = null;
+    });
+  return sessionProbe;
+}
+
+/** Stores/announces the session error (shown as a toast and on /login), then redirects there. */
+function handleSessionExpired(error: unknown, status: number) {
+  const signedIn = hasSignedInUser();
+  if (signedIn || status === 401) {
+    const serverMessage = getApiErrorMessage(error, 'Please sign in again.');
+    const message = signedIn
+      ? `Your session has expired. ${serverMessage}`
+      : `Please sign in to continue. ${serverMessage}`;
+
+    try {
+      window.sessionStorage.setItem(SESSION_ERROR_KEY, message);
+    } catch {
+      /* ignore */
+    }
+    window.dispatchEvent(new CustomEvent(SESSION_ERROR_EVENT, { detail: message }));
+  }
+
+  if (!redirectingToLogin) {
+    redirectingToLogin = true;
+    // Give the toast a moment to render before the page unloads.
+    window.setTimeout(() => {
+      if (!window.location.pathname.startsWith('/login')) window.location.href = '/login';
+    }, 1500);
+  }
+}
+
+/**
+ * 401 → session expired. 403 → only when the session probe also fails; otherwise it is a
+ * permission denial and the error is left to the caller (no logout).
+ */
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
-      const status = error.response?.status;
-      if (status === 401 || status === 403) {
-        const signedIn = hasSignedInUser();
-        if (signedIn || status === 401) {
-          const serverMessage = getApiErrorMessage(error, 'Please sign in again.');
-          const message = signedIn
-            ? `Your session has expired. ${serverMessage}`
-            : `Please sign in to continue. ${serverMessage}`;
-
-          try {
-            window.sessionStorage.setItem(SESSION_ERROR_KEY, message);
-          } catch {
-            /* ignore */
-          }
-          window.dispatchEvent(new CustomEvent(SESSION_ERROR_EVENT, { detail: message }));
-        }
-
-        if (!redirectingToLogin) {
-          redirectingToLogin = true;
-          // Give the toast a moment to render before the page unloads.
-          window.setTimeout(() => {
-            if (!window.location.pathname.startsWith('/login')) window.location.href = '/login';
-          }, 1500);
-        }
-      }
+      const status: number | undefined = error.response?.status;
+      const expired = status === 401 || (status === 403 && !(await isSessionAlive()));
+      if (expired && status) handleSessionExpired(error, status);
     }
     return Promise.reject(error);
   },

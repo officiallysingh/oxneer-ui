@@ -9,17 +9,25 @@ import {
   type UsersFilters,
 } from '../_lib/users-filters';
 
-/** Users list filters, initialised from and mirrored to the URL query. */
+const VIEW_PARAM = 'view';
+
+/**
+ * Users list URL state: the filters plus `?view=<id>` for the open details drawer.
+ * Initialised from the URL and mirrored back to it, so links can be shared and reloaded.
+ */
 export function useUsersFilters() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [filters, setFilters] = useState<UsersFilters>(() => parseFilters(searchParams));
+  const [viewId, setViewId] = useState<string | null>(() => searchParams.get(VIEW_PARAM));
 
   useEffect(() => {
-    const qs = filtersToSearchParams(filters).toString();
+    const params = filtersToSearchParams(filters);
+    if (viewId) params.set(VIEW_PARAM, viewId);
+    const qs = params.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-  }, [filters, pathname, router]);
+  }, [filters, viewId, pathname, router]);
 
   const updateFilters = useCallback(
     (patch: Partial<UsersFilters>) => setFilters((prev) => ({ ...prev, ...patch })),
@@ -27,5 +35,5 @@ export function useUsersFilters() {
   );
   const resetFilters = useCallback(() => setFilters(EMPTY_FILTERS), []);
 
-  return { filters, setFilters, updateFilters, resetFilters };
+  return { filters, setFilters, updateFilters, resetFilters, viewId, setViewId };
 }

@@ -1,189 +1,195 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { adminApi, RoleVM, PermissionVM } from '@repo/api';
-import { ColumnDef } from '@tanstack/react-table';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useMemo, useState } from 'react';
+import { Plus, RefreshCw, Search } from 'lucide-react';
+import { adminApi, type RoleVM } from '@repo/api';
+import { Button, Input, toast } from '@repo/ui';
 import { DataTable } from '@/components/common/data-table';
-import PageHeader from '@/components/common/admin/PageHeader';
-import { PhraseSearchBar } from '@/components/common/admin/PhraseSearchBar';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';
-import ConfirmDialog from '@/components/common/admin/ConfirmDialog';
-import { TagList } from '@/components/common/admin/TagList';
-import { ListToolbarActions } from '@/components/common/admin/ListToolbarActions';
-import { RowActions } from '@/components/common/admin/RowActions';
-import { RoleFormDialog, EditRoleDialog } from './_components/RoleFormDialog';
+import PageHeader from '@/components/common/admin/PageHeader';
+import Tip from '@/components/common/admin/Tip';
+import { parseApiError } from '@/lib/api-errors';
+import { CanManage, buildRoleColumns } from './_components/roleColumns';
+import { DeleteRoleDialog } from './_components/DeleteRoleDialog';
+import { RoleActionsMenu, type RoleRowHandlers } from './_components/RoleActionsMenu';
+import { RoleEditorSheet } from './_components/RoleEditorSheet';
+import { RolesEmptyState, RolesListSkeleton } from './_components/RolesListStates';
+import { useRolesData } from './_hooks/useRolesData';
+import { plural, roleToForm, type RoleEditorTarget } from './_lib/role-form';
 
-// Extend RoleVM locally to cache fetched permissions
-type RoleRow = RoleVM & { _perms?: PermissionVM[] };
+type SortKey = 'label' | 'permissions' | 'name';
+
+const SORTS: Record<SortKey, { label: string; compare: (a: RoleVM, b: RoleVM) => number }> = {
+  label: { label: 'Label A–Z', compare: (a, b) => a.label.localeCompare(b.label) },
+  permissions: {
+    label: 'Most permissions',
+    compare: (a, b) =>
+      (b.permissions?.length ?? 0) - (a.permissions?.length ?? 0) || a.label.localeCompare(b.label),
+  },
+  name: { label: 'Name', compare: (a, b) => a.name.localeCompare(b.name) },
+};
 
 export default function RolesPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [groups, setGroups] = useState<RoleRow[]>([]);
-  const [allPermissions, setAllPermissions] = useState<PermissionVM[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [editRole, setEditRole] = useState<RoleVM | null>(null);
-  const [confirmId, setConfirmId] = useState<string | null>(null);
-  const [phrases, setPhrases] = useState<string[]>(() => searchParams.getAll('phrases'));
+  const data = useRolesData();
+  const [query, setQuery] = useState('');
+  const [sort, setSort] = useState<SortKey>('label');
+  const [editor, setEditor] = useState<RoleEditorTarget | null>(null);
+  const [deleting, setDeleting] = useState<RoleVM | null>(null);
 
-  const fetchGroups = async (ph?: string[]) => {
-    setIsLoading(true);
-    setError(null);
+  const rows = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const filtered = q
+      ? data.roles.filter((r) =>
+          [r.label, r.name, r.description ?? ''].some((s) => s.toLowerCase().includes(q)),
+        )
+      : data.roles;
+    return [...filtered].sort(SORTS[sort].compare);
+  }, [data.roles, query, sort]);
+
+  const handlers: RoleRowHandlers = {
+    onEdit: (role) => setEditor({ mode: 'edit', role }),
+    onDuplicate: (role) =>
+      setEditor({
+        mode: 'create',
+        initial: {
+          ...roleToForm(role),
+          label: `${role.label} copy`,
+          name: '',
+        },
+      }),
+    onCopyName: async (role) => {
+      try {
+        await navigator.clipboard.writeText(role.name);
+        toast.success(`Copied ${role.name}`);
+      } catch {
+        toast.error('Couldn’t copy. Select the name and copy it manually.');
+      }
+    },
+    onDelete: setDeleting,
+  };
+
+  const deleteRole = async (role: RoleVM) => {
     try {
-      const [data, perms] = await Promise.all([
-        adminApi.getRoles(true, ph?.length ? ph : undefined),
-        adminApi.getPermissions(),
-      ]);
-      setGroups(data.map((g) => ({ ...g, _perms: g.permissions ?? [] })));
-      setAllPermissions(perms);
-    } catch {
-      setError('Failed to load roles.');
-    } finally {
-      setIsLoading(false);
+      await adminApi.deleteRole(role.id);
+      data.removeRole(role.id);
+      toast.success(`${role.label} deleted`);
+      return true;
+    } catch (err) {
+      toast.error(parseApiError(err).general ?? 'Couldn’t delete the role. Please try again.');
+      return false;
     }
   };
 
-  useEffect(() => {
-    fetchGroups(searchParams.getAll('phrases'));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleSearch = () => {
-    const params = new URLSearchParams();
-    phrases.forEach((p) => params.append('phrases', p));
-    router.replace(params.toString() ? `?${params.toString()}` : '', { scroll: false });
-    fetchGroups(phrases.length ? phrases : undefined);
-  };
-
-  const handleReset = () => {
-    setPhrases([]);
-    router.replace('', { scroll: false });
-    fetchGroups([]);
-  };
-
-  const handleDelete = async (id: string) => {
-    setDeletingId(id);
-    setConfirmId(null);
-    try {
-      await adminApi.deleteRole(id);
-      setGroups((prev) => prev.filter((g) => g.id !== id));
-    } catch {
-      setError('Failed to delete role.');
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
-  const columns: ColumnDef<RoleRow>[] = [
-    {
-      accessorKey: 'name',
-      header: 'Name',
-      cell: ({ row }) => (
-        <span className="font-medium text-foreground font-mono text-xs">{row.original.name}</span>
-      ),
-    },
-    {
-      accessorKey: 'label',
-      header: 'Label',
-      cell: ({ row }) => <span className="text-foreground">{row.original.label}</span>,
-    },
-    {
-      accessorKey: 'description',
-      header: 'Description',
-      cell: ({ row }) => (
-        <span className="text-muted-foreground">{row.original.description ?? '—'}</span>
-      ),
-    },
-    {
-      id: 'permissions',
-      header: 'Permissions',
-      cell: ({ row }) => (
-        <TagList
-          tags={(row.original._perms ?? []).map((p) => ({
-            id: p.id,
-            label: p.label || p.name,
-            mono: true,
-          }))}
-          variant="muted"
-          max={2}
-        />
-      ),
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      cell: ({ row }) => (
-        <RowActions
-          editLabel="Edit role"
-          deleteLabel="Delete role"
-          deleting={deletingId === row.original.id}
-          onEdit={() => setEditRole(row.original)}
-          onDelete={() => setConfirmId(row.original.id)}
-        />
-      ),
-    },
-  ];
+  const count = data.roles.length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         title="Roles"
-        description="Manage roles and their assigned permissions"
+        description={`Bundles of permissions you assign to users${
+          data.isLoading ? '' : ` · ${plural(count, 'role')}`
+        }`}
         actions={
-          <ListToolbarActions
-            onAdd={() => setIsCreateOpen(true)}
-            addLabel="Add role"
-            onRefresh={() => fetchGroups(phrases.length ? phrases : undefined)}
-            refreshing={isLoading}
-          />
+          <>
+            <Tip label="Refresh">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={data.refresh}
+                disabled={data.isLoading}
+                aria-label="Refresh"
+              >
+                <RefreshCw className={data.isLoading ? 'animate-spin' : ''} />
+              </Button>
+            </Tip>
+            <Button onClick={() => setEditor({ mode: 'create' })}>
+              <Plus />
+              New role
+            </Button>
+          </>
         }
       />
 
-      {error && <ErrorAlert message={error} />}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative min-w-0 max-w-[520px] flex-[1_1_360px]">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
+          <Input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by label, name or description"
+            aria-label="Search roles"
+            className="pl-9"
+          />
+        </div>
+        <div className="flex-1" />
+        <label className="flex items-center gap-2 text-[13px] text-muted-foreground">
+          Sort
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as SortKey)}
+            className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {(Object.keys(SORTS) as SortKey[]).map((k) => (
+              <option key={k} value={k}>
+                {SORTS[k].label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
 
-      <PhraseSearchBar
-        phrases={phrases}
-        onPhrasesChange={setPhrases}
-        onSearch={handleSearch}
-        onReset={handleReset}
-        placeholder="Search roles..."
-      />
+      {data.error && <ErrorAlert message={data.error} />}
 
       <DataTable
-        data={groups}
-        columns={columns}
-        isLoading={isLoading}
-        emptyMessage="No roles found."
+        data={rows}
+        columns={buildRoleColumns(handlers, data.groups)}
+        isLoading={data.isLoading}
         hideSearch
+        getRowId={(r) => r.id}
+        onRowClick={handlers.onEdit}
+        itemLabel="roles"
+        loadingState={<RolesListSkeleton />}
+        emptyState={
+          <RolesEmptyState
+            query={query}
+            onClearSearch={() => setQuery('')}
+            onCreate={(label) =>
+              setEditor({ mode: 'create', initial: label ? { label } : undefined })
+            }
+          />
+        }
+        renderMobileCard={(role) => (
+          <div className="flex items-start gap-3 p-4">
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <div>
+                <div className="font-semibold text-foreground">{role.label}</div>
+                <div className="truncate font-mono text-xs text-muted-foreground">{role.name}</div>
+              </div>
+              {role.description && (
+                <p className="text-[13px] text-muted-foreground">{role.description}</p>
+              )}
+              <CanManage role={role} groups={data.groups} />
+            </div>
+            <RoleActionsMenu role={role} handlers={handlers} />
+          </div>
+        )}
       />
 
-      <RoleFormDialog
-        open={isCreateOpen}
-        onOpenChange={setIsCreateOpen}
-        allPermissions={allPermissions}
-        onCreated={() => fetchGroups(phrases.length ? phrases : undefined)}
+      <RoleEditorSheet
+        target={editor}
+        roles={data.roles}
+        groups={data.groups}
+        totalPermissions={data.permissions.length}
+        onClose={() => setEditor(null)}
+        onSaved={data.refresh}
+        onOpenRole={(role) => setEditor({ mode: 'edit', role })}
       />
 
-      <EditRoleDialog
-        role={editRole}
-        allPermissions={allPermissions}
-        onClose={() => setEditRole(null)}
-        onUpdated={() => fetchGroups(phrases.length ? phrases : undefined)}
-      />
-
-      <ConfirmDialog
-        open={confirmId !== null}
-        title="Delete role?"
-        description="This will permanently remove the role and unassign it from all users."
-        confirmLabel="Delete"
-        onConfirm={() => {
-          if (confirmId) handleDelete(confirmId);
-        }}
-        onCancel={() => setConfirmId(null)}
-      />
+      <DeleteRoleDialog role={deleting} onCancel={() => setDeleting(null)} onConfirm={deleteRole} />
     </div>
   );
 }

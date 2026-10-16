@@ -7,23 +7,74 @@ import { ChevronDown, ChevronRight, LogOut } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@repo/ui';
 import { UserAvatar } from '@/components/common/admin/UserAvatar';
 import { navEntries, groupHasActive } from './nav-config';
-import { SidebarToggle } from './SidebarToggle';
 import type { UserInfoLike } from './UserMenu';
 
 interface AdminSidebarProps {
   username: string;
   userInfo?: UserInfoLike | null;
   collapsed?: boolean;
-  onToggleCollapse?: () => void;
   onNavClick?: () => void;
   onSignOut: () => void;
+}
+
+// Shared item styles: one size, one hover, one active treatment across flat and grouped items.
+const focusRing =
+  'outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sidebar-ring';
+const itemBase = `flex items-center gap-3 h-9 rounded-lg text-sm transition-colors ${focusRing}`;
+const itemIdle = 'text-muted-foreground hover:text-foreground hover:bg-sidebar-accent';
+const itemActive = 'bg-primary/10 text-foreground font-medium';
+
+interface NavLinkProps {
+  href: string;
+  label: string;
+  description: string;
+  icon: React.ElementType;
+  active: boolean;
+  collapsed: boolean;
+  onClick: () => void;
+}
+
+function NavLink({
+  href,
+  label,
+  description,
+  icon: Icon,
+  active,
+  collapsed,
+  onClick,
+}: NavLinkProps) {
+  const link = (
+    <Link
+      href={href}
+      onClick={onClick}
+      aria-current={active ? 'page' : undefined}
+      aria-label={collapsed ? label : undefined}
+      className={`${itemBase} ${active ? itemActive : itemIdle} ${
+        collapsed ? 'justify-center w-full' : 'px-3'
+      }`}
+    >
+      <Icon className={`h-4 w-4 shrink-0 ${active ? 'text-primary' : ''}`} />
+      {!collapsed && <span className="font-body flex-1 truncate">{label}</span>}
+    </Link>
+  );
+
+  if (!collapsed) return link;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{link}</TooltipTrigger>
+      <TooltipContent side="right" className="flex flex-col gap-0.5">
+        <span className="font-medium text-xs">{label}</span>
+        <span className="text-xs text-muted-foreground">{description}</span>
+      </TooltipContent>
+    </Tooltip>
+  );
 }
 
 export function AdminSidebar({
   username,
   userInfo,
   collapsed = false,
-  onToggleCollapse,
   onNavClick = () => {},
   onSignOut,
 }: AdminSidebarProps) {
@@ -51,10 +102,14 @@ export function AdminSidebar({
     <TooltipProvider delayDuration={150}>
       <div className="flex flex-col h-full bg-card select-none">
         {/* Brand Header */}
-        <div className="h-16 flex items-center justify-between px-3.5 border-b border-border/60 shrink-0">
-          <Link href="/admin" className="flex items-center gap-3 overflow-hidden py-1">
+        <div className="h-16 flex items-center px-3.5 border-b border-border shrink-0">
+          <Link
+            href="/admin"
+            aria-label="Oxneer admin home"
+            className={`flex items-center gap-3 overflow-hidden py-1 rounded-lg ${focusRing}`}
+          >
             {collapsed ? (
-              <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-primary via-primary/95 to-primary/80 flex items-center justify-center text-primary-foreground font-bold text-lg shadow-sm shadow-primary/20 shrink-0">
+              <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-display font-bold text-lg shrink-0">
                 O
               </div>
             ) : (
@@ -69,120 +124,72 @@ export function AdminSidebar({
                   alt="Oxneer"
                   className="h-8 w-auto shrink-0 hidden dark:block"
                 />
-                {/* <div className="flex flex-col truncate">
-                  <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">
-                    Admin Portal
-                  </span>
-                </div> */}
               </>
             )}
           </Link>
-
-          {/* {onToggleCollapse && (
-            <SidebarToggle
-              collapsed={collapsed}
-              onClick={onToggleCollapse}
-              className="hidden md:flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-            />
-          )} */}
         </div>
 
         {/* Navigation List */}
-        <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1.5 scrollbar-thin">
-          {navEntries.map((entry) => {
+        <nav aria-label="Admin" className="flex-1 overflow-y-auto py-3 px-2 scrollbar-thin">
+          {navEntries.map((entry, index) => {
             // ── Flat item (Listings / Auctions) ─────────────────────────────
             if (entry.kind === 'flat') {
-              const active = pathname.startsWith(entry.href);
-              const Icon = entry.icon;
-
-              const linkContent = (
-                <Link
-                  key={entry.href}
-                  href={entry.href}
-                  onClick={onNavClick}
-                  className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200 ${
-                    active
-                      ? 'bg-primary/10 text-primary font-semibold shadow-xs'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-accent/70'
-                  } ${collapsed ? 'justify-center px-0 h-10 w-full' : ''}`}
-                >
-                  {active && (
-                    <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-primary" />
-                  )}
-                  <Icon
-                    className={`h-4 w-4 shrink-0 transition-transform group-hover:scale-110 ${active ? 'text-primary' : ''}`}
+              // Separate the flat block from the groups above it.
+              const afterGroup = navEntries[index - 1]?.kind === 'group';
+              const separator = !afterGroup
+                ? 'mt-0.5'
+                : collapsed
+                  ? 'mt-2 pt-2 border-t border-border'
+                  : 'mt-3 pt-3 border-t border-border';
+              return (
+                <div key={entry.href} className={separator}>
+                  <NavLink
+                    {...entry}
+                    active={pathname.startsWith(entry.href)}
+                    collapsed={collapsed}
+                    onClick={onNavClick}
                   />
-                  {!collapsed && <span className="font-body flex-1 truncate">{entry.label}</span>}
-                </Link>
+                </div>
               );
-
-              if (collapsed) {
-                return (
-                  <Tooltip key={entry.href}>
-                    <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
-                    <TooltipContent side="right" className="flex flex-col gap-0.5">
-                      <span className="font-medium text-xs">{entry.label}</span>
-                      <span className="text-[10px] text-muted-foreground">{entry.description}</span>
-                    </TooltipContent>
-                  </Tooltip>
-                );
-              }
-
-              return linkContent;
             }
 
             // ── Collapsible group ────────────────────────────────────────────
             const isOpen = !!openGroups[entry.label];
             const hasActive = groupHasActive(entry, pathname);
+            const groupId = `admin-nav-${entry.label.toLowerCase().replace(/\s+/g, '-')}`;
+            const items = entry.items.map((item) => (
+              <NavLink
+                key={item.href ?? item.label}
+                href={item.href ?? '#'}
+                label={item.label}
+                description={item.description}
+                icon={item.icon}
+                active={item.href ? pathname.startsWith(item.href) : false}
+                collapsed={collapsed}
+                onClick={onNavClick}
+              />
+            ));
 
             if (collapsed) {
               return (
                 <div
                   key={entry.label}
-                  className="pt-2 first:pt-0 space-y-1 border-t border-border/40 first:border-0"
+                  className="space-y-0.5 mt-2 pt-2 border-t border-border first:mt-0 first:pt-0 first:border-t-0"
                 >
-                  {entry.items.map((item) => {
-                    const { href, label, icon: Icon, description } = item;
-                    const active = href ? pathname.startsWith(href) : false;
-
-                    return (
-                      <Tooltip key={href ?? label}>
-                        <TooltipTrigger asChild>
-                          <Link
-                            href={href ?? '#'}
-                            onClick={onNavClick}
-                            className={`group relative flex items-center justify-center h-10 w-full rounded-xl text-sm transition-all duration-200 ${
-                              active
-                                ? 'bg-primary/10 text-primary font-semibold'
-                                : 'text-muted-foreground hover:text-foreground hover:bg-accent/70'
-                            }`}
-                          >
-                            {active && (
-                              <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-primary" />
-                            )}
-                            <Icon
-                              className={`h-4 w-4 shrink-0 transition-transform group-hover:scale-110 ${active ? 'text-primary' : ''}`}
-                            />
-                          </Link>
-                        </TooltipTrigger>
-                        <TooltipContent side="right" className="flex flex-col gap-0.5">
-                          <span className="font-medium text-xs">{label}</span>
-                          <span className="text-[10px] text-muted-foreground">{description}</span>
-                        </TooltipContent>
-                      </Tooltip>
-                    );
-                  })}
+                  {items}
                 </div>
               );
             }
 
             return (
-              <div key={entry.label} className="pt-1.5">
+              <div key={entry.label} className="mt-4 first:mt-0">
                 <button
                   type="button"
                   onClick={() => toggleGroup(entry.label)}
-                  className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-colors outline-none ${
-                    hasActive ? 'text-primary' : 'text-muted-foreground/70 hover:text-foreground'
+                  aria-expanded={isOpen}
+                  aria-controls={groupId}
+                  className={`w-full flex items-center gap-2 h-7 px-3 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors ${focusRing} ${
+                    hasActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   <span className="flex-1 text-left truncate">{entry.label}</span>
@@ -192,30 +199,8 @@ export function AdminSidebar({
                 </button>
 
                 {isOpen && (
-                  <div className="mt-1 space-y-0.5 pl-2 border-l border-border/40 ml-3">
-                    {entry.items.map((item) => {
-                      const { href, label, icon: Icon } = item;
-                      const active = href ? pathname.startsWith(href) : false;
-
-                      return (
-                        <Link
-                          key={href ?? label}
-                          href={href ?? '#'}
-                          onClick={onNavClick}
-                          className={`group flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-all ${
-                            active
-                              ? 'bg-primary/10 text-primary font-semibold'
-                              : 'text-muted-foreground hover:text-foreground hover:bg-accent/70'
-                          }`}
-                        >
-                          <Icon
-                            className={`h-3.5 w-3.5 shrink-0 ${active ? 'text-primary' : ''}`}
-                          />
-                          <span className="font-body flex-1 truncate">{label}</span>
-                          {active && <ChevronRight className="h-3 w-3 shrink-0 text-primary/70" />}
-                        </Link>
-                      );
-                    })}
+                  <div id={groupId} className="mt-1 space-y-0.5">
+                    {items}
                   </div>
                 )}
               </div>
@@ -224,29 +209,27 @@ export function AdminSidebar({
         </nav>
 
         {/* User Profile Footer */}
-        <div className="border-t border-border/60 p-2.5 shrink-0 space-y-1 bg-muted/20">
+        <div className="border-t border-border p-2 shrink-0 space-y-0.5">
           {!collapsed ? (
             <Link
               href="/profile"
               onClick={onNavClick}
-              className="flex items-center gap-3 px-2.5 py-2 rounded-xl hover:bg-accent transition-colors group"
+              className={`flex items-center gap-3 px-2.5 py-2 rounded-lg hover:bg-sidebar-accent transition-colors group ${focusRing}`}
             >
               <UserAvatar
                 src={userInfo?.profilePicture}
                 firstName={userInfo?.firstName}
                 lastName={userInfo?.lastName}
                 username={username}
-                size={34}
+                size={32}
               />
               <div className="min-w-0 flex-1">
-                <p className="font-body text-xs font-semibold text-foreground truncate leading-snug">
+                <p className="font-body text-sm font-medium text-foreground truncate leading-snug">
                   {username}
                 </p>
-                <p className="font-body text-[10px] font-medium text-muted-foreground">
-                  Administrator
-                </p>
+                <p className="font-body text-xs text-muted-foreground">Administrator</p>
               </div>
-              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 group-hover:text-muted-foreground shrink-0" />
+              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
             </Link>
           ) : (
             <Tooltip>
@@ -254,7 +237,8 @@ export function AdminSidebar({
                 <Link
                   href="/profile"
                   onClick={onNavClick}
-                  className="flex justify-center py-1 rounded-xl hover:bg-accent transition-colors"
+                  aria-label="Profile"
+                  className={`flex justify-center py-1 rounded-lg hover:bg-sidebar-accent transition-colors ${focusRing}`}
                 >
                   <UserAvatar
                     src={userInfo?.profilePicture}
@@ -267,7 +251,7 @@ export function AdminSidebar({
               </TooltipTrigger>
               <TooltipContent side="right">
                 <p className="font-medium text-xs">{username}</p>
-                <p className="text-[10px] text-muted-foreground">Administrator Profile</p>
+                <p className="text-xs text-muted-foreground">Administrator profile</p>
               </TooltipContent>
             </Tooltip>
           )}
@@ -276,10 +260,10 @@ export function AdminSidebar({
             <button
               type="button"
               onClick={onSignOut}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors font-medium"
+              className={`${itemBase} w-full px-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10`}
             >
-              <LogOut className="h-3.5 w-3.5 shrink-0" />
-              <span>Sign out</span>
+              <LogOut className="h-4 w-4 shrink-0" />
+              <span className="font-body">Sign out</span>
             </button>
           ) : (
             <Tooltip>
@@ -287,7 +271,8 @@ export function AdminSidebar({
                 <button
                   type="button"
                   onClick={onSignOut}
-                  className="w-full flex justify-center py-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl transition-colors"
+                  aria-label="Sign out"
+                  className={`${itemBase} w-full justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10`}
                 >
                   <LogOut className="h-4 w-4 shrink-0" />
                 </button>

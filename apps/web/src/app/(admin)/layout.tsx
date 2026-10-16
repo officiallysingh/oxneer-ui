@@ -4,7 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore, useAuthHydrated } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
-import { toast } from '@repo/ui';
+import { Sheet, SheetContent, SheetTitle, toast } from '@repo/ui';
 import { authApi, getApiErrorMessage } from '@repo/api';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { AdminTopbar } from '@/components/admin/AdminTopbar';
@@ -40,7 +40,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     username: user.username,
     userInfo: userInfo ?? null,
     collapsed: sidebarCollapsed,
-    onToggleCollapse: toggleSidebarCollapsed,
     onSignOut: handleSignOut,
   };
 
@@ -48,25 +47,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="h-screen flex overflow-hidden bg-background">
       {/* Desktop sidebar */}
       <aside
-        className={`hidden md:flex flex-col h-full border-r border-border bg-card shrink-0 transition-all duration-300 ease-in-out ${
+        className={`hidden md:flex flex-col h-full border-r border-border bg-card shrink-0 transition-[width] duration-200 ease-out ${
           sidebarCollapsed ? 'w-16' : 'w-64'
         }`}
       >
         <AdminSidebar {...sidebarProps} />
       </aside>
 
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex">
-          <div
-            className="absolute inset-0 bg-background/80 backdrop-blur-sm transition-opacity"
-            onClick={closeSidebar}
-          />
-          <aside className="relative w-72 bg-card border-r border-border flex flex-col z-10 shadow-2xl">
-            <AdminSidebar {...sidebarProps} collapsed={false} onNavClick={closeSidebar} />
-          </aside>
-        </div>
-      )}
+      {/* Mobile sidebar drawer: Esc, overlay click, close button and focus trap via Sheet */}
+      <Sheet open={sidebarOpen} onOpenChange={(open) => !open && closeSidebar()}>
+        <SheetContent side="left" className="md:hidden w-72 sm:max-w-72 p-0 gap-0 bg-card">
+          <SheetTitle className="sr-only">Admin navigation</SheetTitle>
+          <AdminSidebar {...sidebarProps} collapsed={false} onNavClick={closeSidebar} />
+        </SheetContent>
+      </Sheet>
 
       {/* Main content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden h-full">
@@ -79,7 +73,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           onSignOut={handleSignOut}
         />
         <PageErrorProvider>
-          <div className="flex-1 p-6 overflow-y-auto">{children}</div>
+          {/* `relative` keeps absolutely positioned descendants (e.g. Radix's hidden form inputs)
+              inside this scroller instead of stretching the document and scrolling the shell. */}
+          <div className="relative flex-1 p-6 overflow-y-auto">{children}</div>
         </PageErrorProvider>
       </main>
     </div>

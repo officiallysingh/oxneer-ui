@@ -53,13 +53,12 @@ export const AREA_PIN_CODE_TIP = '6-digit Indian PIN code · cannot start with 0
 
 // ── Role ──────────────────────────────────────────────────────────────────────
 /**
- * Backend pattern: ^[a-zA-Z-&()]+$
- * Letters, dash, ampersand, and parentheses only.
+ * Role names are lowercase, dot-separated system keys, e.g. `master.data.categories.admin`.
  */
-export const ROLE_NAME_PATTERN = /^[a-zA-Z\-&()]+$/;
-export const ROLE_NAME_ERROR = 'Only letters, dash (-), ampersand (&) and parentheses are allowed.';
+export const ROLE_NAME_PATTERN = /^[a-z0-9]+(?:\.[a-z0-9]+)*$/;
+export const ROLE_NAME_ERROR = 'Use lowercase letters, numbers and dots, like auction.manager';
 export const ROLE_NAME_TIP =
-  'Letters, dash (-), ampersand (&) and parentheses only (e.g. Auction-Manager).';
+  'Lowercase letters, numbers and dots (e.g. auction.manager). Used by the system.';
 
 // ── Permission label ──────────────────────────────────────────────────────────
 export const PERMISSION_LABEL_PATTERN = /^[a-zA-Z.\-&()]+$/;

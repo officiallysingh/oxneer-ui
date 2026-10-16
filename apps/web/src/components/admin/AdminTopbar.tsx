@@ -10,6 +10,9 @@ import { UserMenu, type UserInfoLike } from './UserMenu';
 import { UserAvatar } from '@/components/common/admin/UserAvatar';
 import { ThemeToggle } from '@/components/common/Header/ThemeToggle';
 
+const iconButton =
+  'items-center justify-center h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring';
+
 interface AdminTopbarProps {
   username: string;
   userInfo?: UserInfoLike | null;
@@ -31,12 +34,13 @@ export function AdminTopbar({
   const { label } = resolveTitle(pathname);
 
   return (
-    <header className="h-16 border-b border-border bg-card/80 backdrop-blur-md px-6 flex items-center justify-between shrink-0 z-30">
-      <div className="flex items-center gap-3">
+    <header className="h-16 border-b border-border bg-card px-4 md:px-6 flex items-center justify-between shrink-0 z-30">
+      <div className="flex items-center gap-3 min-w-0">
         <button
-          className="md:hidden text-muted-foreground hover:text-foreground transition-colors p-1 rounded-lg hover:bg-accent"
+          type="button"
+          className={`flex md:hidden ${iconButton}`}
           onClick={onToggleSidebar}
-          aria-label="Toggle mobile sidebar"
+          aria-label="Open navigation menu"
         >
           <Menu className="h-5 w-5" />
         </button>
@@ -44,15 +48,10 @@ export function AdminTopbar({
         <SidebarToggle
           collapsed={sidebarCollapsed}
           onClick={onToggleCollapse}
-          className="hidden md:flex text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-lg hover:bg-accent"
+          className={`hidden md:flex ${iconButton}`}
         />
 
-        <div className="flex flex-col min-w-0">
-          <p className="font-body text-[11px] uppercase tracking-wider text-muted-foreground">
-            Admin
-          </p>
-          <h2 className="font-body text-sm font-semibold text-foreground truncate">{label}</h2>
-        </div>
+        <h2 className="font-body text-base font-semibold text-foreground truncate">{label}</h2>
       </div>
 
       <div className="flex items-center gap-3">
@@ -79,7 +78,10 @@ export function AdminTopbar({
             </>
           }
           trigger={
-            <button className="flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 hover:bg-accent transition-colors outline-none border border-border/40">
+            <button
+              type="button"
+              className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 border border-border hover:bg-muted transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
               <UserAvatar
                 src={userInfo?.profilePicture}
                 firstName={userInfo?.firstName}
@@ -91,7 +93,7 @@ export function AdminTopbar({
                 <span className="font-body text-xs font-semibold text-foreground leading-none truncate max-w-[120px]">
                   {username}
                 </span>
-                <span className="font-body text-[10px] font-medium text-muted-foreground leading-none mt-1">
+                <span className="font-body text-xs text-muted-foreground leading-none mt-1">
                   Administrator
                 </span>
               </div>

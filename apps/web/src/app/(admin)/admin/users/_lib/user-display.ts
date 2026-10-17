@@ -1,13 +1,20 @@
 import type { UserDetailVM } from '@repo/api';
 
-export type UserStatus = 'active' | 'disabled' | 'locked' | 'password-expired';
+export type UserStatus = 'active' | 'disabled' | 'locked' | 'account-expired' | 'password-expired';
 
-/** One headline status per user, most severe first. */
-export function getUserStatus(
-  user: Pick<UserDetailVM, 'enabled' | 'accountNonLocked' | 'credentialsNonExpired'>,
-): UserStatus {
+export type StatusFlags = Pick<
+  UserDetailVM,
+  'enabled' | 'accountNonLocked' | 'accountNonExpired' | 'credentialsNonExpired'
+>;
+
+/**
+ * One headline status per user: the first failing check wins, in this order —
+ * Disabled, Locked, Account expired, Password expired. Otherwise Active.
+ */
+export function getUserStatus(user: StatusFlags): UserStatus {
   if (!user.enabled) return 'disabled';
   if (!user.accountNonLocked) return 'locked';
+  if (!user.accountNonExpired) return 'account-expired';
   if (!user.credentialsNonExpired) return 'password-expired';
   return 'active';
 }

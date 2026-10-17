@@ -18,9 +18,10 @@ import { buildUserColumns } from './_components/userColumns';
 import { UserDetailsSheet } from './_components/UserDetailsSheet';
 import { UsersBulkBar } from './_components/UsersBulkBar';
 import { UsersFilterBar } from './_components/UsersFilterBar';
+import { UsersMobileFooter } from './_components/UsersMobileFooter';
 import { UsersEmptyState, UsersListSkeleton } from './_components/UsersListStates';
 import { UsersStatusTabs } from './_components/UsersStatusTabs';
-import { useRolesAndPermissions } from './_hooks/useRolesAndPermissions';
+import { useAccessCatalog } from '@/hooks/admin';
 import { useUserActions } from './_hooks/useUserActions';
 import { useUsersFilters } from './_hooks/useUsersFilters';
 import { PAGE_SIZE_OPTIONS, useUsersList } from './_hooks/useUsersList';
@@ -35,7 +36,7 @@ export default function UsersPage() {
   const { filters, setFilters, updateFilters, resetFilters, viewId, setViewId } = useUsersFilters();
   const list = useUsersList(filters);
   const { counts, reload: reloadCounts } = useUserStatusCounts();
-  const { roles, roleOptions, permissionOptions } = useRolesAndPermissions();
+  const { roles, roleOptions, permissionOptions } = useAccessCatalog();
 
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [deleting, setDeleting] = useState<UserDetailVM | null>(null);
@@ -69,6 +70,8 @@ export default function UsersPage() {
     list.data.find((u) => u.id === viewId),
   );
   const filtered = hasAnyFilter(filters);
+
+  const addUser = () => router.push('/admin/users/new');
 
   const refresh = () => {
     list.refresh();
@@ -113,7 +116,7 @@ export default function UsersPage() {
               {exporting ? <Loader2 className="animate-spin" /> : <Download />}
               Export
             </Button>
-            <Button onClick={() => router.push('/admin/users/new')}>
+            <Button className="hidden md:inline-flex" onClick={addUser}>
               <UserPlus />
               Add user
             </Button>
@@ -179,6 +182,18 @@ export default function UsersPage() {
         itemLabel="users"
         loadingState={<UsersListSkeleton />}
         emptyState={<UsersEmptyState filtered={filtered} onClearFilters={resetFilters} />}
+        mobileFooter={
+          <UsersMobileFooter
+            onAddUser={addUser}
+            pageIndex={list.pageIndex}
+            pageCount={list.totalPages}
+            pageSize={list.pageSize}
+            itemCount={list.data.length}
+            totalRecords={list.totalRecords}
+            onPageChange={list.fetchPage}
+            isLoading={list.isLoading}
+          />
+        }
         renderMobileCard={(u) => (
           <UserCard
             user={u}

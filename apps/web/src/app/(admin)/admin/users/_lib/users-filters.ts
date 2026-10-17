@@ -37,17 +37,11 @@ interface StatusFilterDef {
   options: readonly SegmentOption<TriState>[];
 }
 
-/** The "More filters" boolean filters, in display order. Option order mirrors the design. */
+/**
+ * The "More filters" boolean filters, in display order. `enabled` isn't here: the
+ * Enabled / Disabled status tabs set it.
+ */
 export const STATUS_FILTERS: readonly StatusFilterDef[] = [
-  {
-    key: 'enabled',
-    label: 'Account status',
-    options: [
-      { value: 'any', label: 'Any' },
-      { value: 'true', label: 'Enabled' },
-      { value: 'false', label: 'Disabled' },
-    ],
-  },
   {
     key: 'credentialsExpired',
     label: 'Credentials',
@@ -83,16 +77,16 @@ export function statusFilterLabel(key: StatusFilterKey, value: TriState) {
   return `${def.label}: ${def.options.find((o) => o.value === value)?.label ?? value}`;
 }
 
-export type StatusTabId = 'all' | 'active' | 'disabled' | 'password-expired' | 'email-unverified';
+export type StatusTabId = 'all' | 'enabled' | 'disabled' | 'password-expired' | 'email-unverified';
 
-/** Quick status tabs above the list; each is a preset of the status filters. */
+/** Status tabs above the list; each maps 1:1 to an API param preset. */
 export const STATUS_TABS: readonly {
   id: StatusTabId;
   label: string;
   preset: Partial<Record<StatusFilterKey, TriState>>;
 }[] = [
   { id: 'all', label: 'All', preset: {} },
-  { id: 'active', label: 'Active', preset: { enabled: 'true' } },
+  { id: 'enabled', label: 'Enabled', preset: { enabled: 'true' } },
   { id: 'disabled', label: 'Disabled', preset: { enabled: 'false' } },
   { id: 'password-expired', label: 'Password expired', preset: { credentialsExpired: 'true' } },
   { id: 'email-unverified', label: 'Email unverified', preset: { emailIdVerified: 'false' } },
@@ -119,8 +113,9 @@ export function applyStatusTab(filters: UsersFilters, tabId: StatusTabId): Users
   return { ...filters, ...statusFiltersOf(tab.preset) };
 }
 
-export function countStatusFilters(filters: UsersFilters) {
-  return STATUS_FILTER_KEYS.filter((k) => filters[k] !== 'any').length;
+/** Set filters among those shown in "More filters" (excludes the tab-driven `enabled`). */
+export function moreFiltersSet(filters: UsersFilters): StatusFilterKey[] {
+  return STATUS_FILTERS.map((f) => f.key).filter((k) => filters[k] !== 'any');
 }
 
 export function hasAnyFilter(filters: UsersFilters) {
@@ -128,7 +123,7 @@ export function hasAnyFilter(filters: UsersFilters) {
     filters.phrases.length > 0 ||
     filters.roles.length > 0 ||
     filters.permissions.length > 0 ||
-    countStatusFilters(filters) > 0
+    STATUS_FILTER_KEYS.some((k) => filters[k] !== 'any')
   );
 }
 

@@ -3,21 +3,13 @@
 import Link from 'next/link';
 import { Copy, KeyRound, Pencil } from 'lucide-react';
 import type { UserDetailVM } from '@repo/api';
-import { Button, toast } from '@repo/ui';
+import { Button } from '@repo/ui';
+import { copyText } from '@/lib/clipboard';
 import { UserActionsMenu, type UserRowHandlers } from '../UserActionsMenu';
 import { UserIdentity } from '../UserIdentity';
 import { UserStatusBadge } from '../UserStatusBadge';
 
 const shortId = (id: string) => (id.length > 14 ? `${id.slice(0, 8)}…${id.slice(-4)}` : id);
-
-async function copyId(id: string) {
-  try {
-    await navigator.clipboard.writeText(id);
-    toast.success('User ID copied');
-  } catch {
-    toast.error('Couldn’t copy the ID');
-  }
-}
 
 interface UserProfileHeaderProps {
   user: UserDetailVM;
@@ -43,7 +35,7 @@ export function UserProfileHeader({ user, handlers }: UserProfileHeaderProps) {
                   variant="ghost"
                   size="icon"
                   className="h-6 w-6 [&_svg]:size-3.5"
-                  onClick={() => copyId(user.id)}
+                  onClick={() => copyText(user.id, 'User ID copied')}
                   aria-label="Copy user ID"
                 >
                   <Copy />

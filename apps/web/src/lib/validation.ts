@@ -60,6 +60,15 @@ export const ROLE_NAME_ERROR = 'Use lowercase letters, numbers and dots, like au
 export const ROLE_NAME_TIP =
   'Lowercase letters, numbers and dots (e.g. auction.manager). Used by the system.';
 
+// ── Permission name ───────────────────────────────────────────────────────────
+/** `<resource>.<action>`, e.g. master.data.banks.export — same shape as role names. */
+export const PERMISSION_NAME_PATTERN = /^[a-z0-9]+(?:.[a-z0-9]+)+$/;
+export const PERMISSION_RESOURCE_PATTERN = /^[a-z0-9]+(?:.[a-z0-9]+)*$/;
+export const PERMISSION_ACTION_PATTERN = /^[a-z0-9]+$/;
+export const PERMISSION_RESOURCE_ERROR =
+  'Use lowercase letters, numbers and dots, like master.data.banks';
+export const PERMISSION_ACTION_ERROR = 'Use lowercase letters and numbers only, like export';
+
 // ── Permission label ──────────────────────────────────────────────────────────
 export const PERMISSION_LABEL_PATTERN = /^[a-zA-Z.\-&()]+$/;
 export const PERMISSION_LABEL_ERROR = 'Only letters, dot, dash, & and ( ) are allowed.';

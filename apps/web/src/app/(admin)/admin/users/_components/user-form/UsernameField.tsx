@@ -3,13 +3,13 @@
 import { Check, Loader2 } from 'lucide-react';
 import { FormField } from '@/components/common/admin/FormField';
 import { USERNAME_RULES } from '@/lib/validation';
-import type { UsernameAvailability } from '../../_hooks/useUsernameAvailability';
+import type { NameAvailability } from '@/hooks/admin';
 import type { UserFormState } from '../../_hooks/useUserForm';
 import { suggestUsernames } from '../../_lib/user-form';
 
 interface UsernameFieldProps {
   form: UserFormState;
-  availability: UsernameAvailability;
+  availability: NameAvailability;
 }
 
 /** Username input with live availability and name-based suggestions (create only). */

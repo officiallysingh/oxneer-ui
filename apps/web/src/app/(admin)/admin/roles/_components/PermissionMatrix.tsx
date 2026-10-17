@@ -9,7 +9,7 @@ import {
   rowPermissionIds,
   type PermissionGroups,
   type ResourceRow,
-} from '../_lib/permission-matrix';
+} from '@/lib/access/permission-matrix';
 
 interface PermissionMatrixProps {
   groups: PermissionGroups;

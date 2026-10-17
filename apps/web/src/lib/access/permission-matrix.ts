@@ -109,3 +109,50 @@ export function resourcesCovered(ids: Iterable<string>, groups: PermissionGroups
   }
   return [...seen];
 }
+
+// ── Permissions screen: every permission grouped by resource ─────────────────
+
+export interface ResourceGroup {
+  /** Name prefix, e.g. `master.data.banks`; '' for permissions whose name has no dot. */
+  key: string;
+  label: string;
+  permissions: PermissionVM[];
+}
+
+/** Resource prefix of a permission name: everything before the last dot ('' if none). */
+export function resourceKeyOf(name: string): string {
+  const dot = name.lastIndexOf('.');
+  return dot > 0 ? name.slice(0, dot) : '';
+}
+
+/** Canonical action of a name (`read` and `view` are both "view"), or null for custom actions. */
+export function actionOf(name: string): PermissionAction | null {
+  return parseName(name)?.action ?? null;
+}
+
+/** All permissions grouped by resource prefix (any action), sorted by group label then label. */
+export function groupByResource(permissions: PermissionVM[]): ResourceGroup[] {
+  const byKey = new Map<string, PermissionVM[]>();
+  for (const p of permissions) {
+    const key = resourceKeyOf(p.name);
+    byKey.set(key, [...(byKey.get(key) ?? []), p]);
+  }
+  return [...byKey.entries()]
+    .map(([key, perms]) => ({
+      key,
+      label: key ? resourceLabel(key, perms) : 'Other',
+      permissions: [...perms].sort((a, b) => a.label.localeCompare(b.label)),
+    }))
+    .sort((a, b) => (a.key === '' ? 1 : b.key === '' ? -1 : a.label.localeCompare(b.label)));
+}
+
+/**
+ * The name segment used for an action, following what the catalog already uses
+ * (e.g. `read` vs `view`); falls back to `read` for view and the action itself otherwise.
+ */
+export function actionSegment(action: PermissionAction, permissions: PermissionVM[]): string {
+  for (const p of permissions) {
+    if (actionOf(p.name) === action) return p.name.slice(p.name.lastIndexOf('.') + 1).toLowerCase();
+  }
+  return action === 'view' ? 'read' : action;
+}

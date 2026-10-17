@@ -17,7 +17,7 @@ import {
   DetailGrid,
   DetailItem,
 } from '../../_components/UserDetailParts';
-import { TabCount } from '../../_components/TabCount';
+import { TabCount } from '@/components/common/admin/TabCount';
 import { UsersBreadcrumb } from '../../_components/UsersBreadcrumb';
 import { AccountHealthPanel } from '../../_components/user-profile/AccountHealthPanel';
 import { ProfileCard } from '../../_components/user-profile/ProfileCard';

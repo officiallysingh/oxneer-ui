@@ -64,6 +64,8 @@ interface DataTableProps<TData> {
   emptyState?: React.ReactNode;
   /** When set, rows render as these cards below the `md` breakpoint instead of the table. */
   renderMobileCard?: (row: TData) => React.ReactNode;
+  /** Replaces the pagination bar below the `md` breakpoint (e.g. a sticky phone footer). */
+  mobileFooter?: React.ReactNode;
 }
 
 const INTERACTIVE_SELECTOR = 'button, a, input, select, textarea, label, [role="menuitem"]';
@@ -102,6 +104,7 @@ export function DataTable<TData>({
   loadingState,
   emptyState,
   renderMobileCard,
+  mobileFooter,
 }: DataTableProps<TData>) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -303,29 +306,35 @@ export function DataTable<TData>({
                       key={header.id}
                       className="px-4 py-3 text-left font-medium"
                       style={{ width: header.getSize() }}
+                      aria-sort={
+                        !header.column.getCanSort()
+                          ? undefined
+                          : header.column.getIsSorted() === 'asc'
+                            ? 'ascending'
+                            : header.column.getIsSorted() === 'desc'
+                              ? 'descending'
+                              : 'none'
+                      }
                     >
-                      {header.isPlaceholder ? null : (
-                        <div
-                          className={
-                            header.column.getCanSort()
-                              ? 'cursor-pointer select-none flex items-center gap-1 hover:text-foreground'
-                              : ''
-                          }
+                      {header.isPlaceholder ? null : header.column.getCanSort() ? (
+                        <button
+                          type="button"
                           onClick={header.column.getToggleSortingHandler()}
+                          className={`flex select-none items-center gap-1 uppercase tracking-wide hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm ${
+                            header.column.getIsSorted() ? 'text-foreground' : ''
+                          }`}
                         >
                           {flexRender(header.column.columnDef.header, header.getContext())}
-                          {header.column.getCanSort() && (
-                            <div className="flex flex-col">
-                              {header.column.getIsSorted() === 'asc' ? (
-                                <ChevronUp className="h-3 w-3" />
-                              ) : header.column.getIsSorted() === 'desc' ? (
-                                <ChevronDown className="h-3 w-3" />
-                              ) : (
-                                <ChevronsUpDown className="h-3 w-3 opacity-50" />
-                              )}
-                            </div>
+                          {header.column.getIsSorted() === 'asc' ? (
+                            <ChevronUp className="h-3 w-3" aria-hidden />
+                          ) : header.column.getIsSorted() === 'desc' ? (
+                            <ChevronDown className="h-3 w-3" aria-hidden />
+                          ) : (
+                            <ChevronsUpDown className="h-3 w-3 opacity-50" aria-hidden />
                           )}
-                        </div>
+                        </button>
+                      ) : (
+                        flexRender(header.column.columnDef.header, header.getContext())
                       )}
                     </th>
                   ))}
@@ -401,7 +410,9 @@ export function DataTable<TData>({
         </div>
       </div>
 
+      {mobileFooter && <div className="md:hidden">{mobileFooter}</div>}
       <PaginationBar
+        className={mobileFooter ? 'hidden md:flex' : ''}
         pageIndex={pagination.pageIndex}
         pageCount={manualPagination ? (pageCount ?? 0) : table.getPageCount()}
         pageSize={pagination.pageSize}

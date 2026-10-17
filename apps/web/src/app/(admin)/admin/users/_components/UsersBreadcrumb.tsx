@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ChevronRight } from 'lucide-react';
 
 /** "Users › {current}" trail for the user sub-pages. */
 export function UsersBreadcrumb({ current }: { current: string }) {
@@ -10,7 +11,9 @@ export function UsersBreadcrumb({ current }: { current: string }) {
             Users
           </Link>
         </li>
-        <li aria-hidden>›</li>
+        <li aria-hidden>
+          <ChevronRight className="h-3.5 w-3.5" />
+        </li>
         <li aria-current="page" className="truncate text-foreground">
           {current}
         </li>

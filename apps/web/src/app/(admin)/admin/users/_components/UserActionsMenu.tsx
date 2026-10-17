@@ -35,12 +35,21 @@ export interface UserRowHandlers {
   busyIds: ReadonlySet<string>;
 }
 
+const TRIGGER_CLASS = {
+  row: 'h-9 w-9 text-muted-foreground hover:text-foreground',
+  card: '-my-1.5 -mr-2 h-11 w-11 text-muted-foreground hover:text-foreground',
+  page: undefined,
+} as const;
+
 interface UserActionsMenuProps {
   user: UserDetailVM;
   /** `onView` is optional here: without it the "View details" item is hidden. */
   handlers: Omit<UserRowHandlers, 'onView'> & Partial<Pick<UserRowHandlers, 'onView'>>;
-  /** `page`: outlined trigger, and items the page already shows as buttons are hidden. */
-  variant?: 'row' | 'page';
+  /**
+   * `row`: compact ghost trigger. `card`: 44px touch target for phone cards.
+   * `page`: outlined trigger; items the page already shows as buttons are hidden.
+   */
+  variant?: 'row' | 'card' | 'page';
 }
 
 /** "⋮" menu with the per-user actions. */
@@ -56,7 +65,7 @@ export function UserActionsMenu({ user, handlers, variant = 'row' }: UserActions
         <Button
           variant={onPage ? 'outline' : 'ghost'}
           size="icon"
-          className={onPage ? undefined : 'h-9 w-9 text-muted-foreground hover:text-foreground'}
+          className={TRIGGER_CLASS[variant]}
           aria-label={`More actions for ${label}`}
           disabled={busy}
         >

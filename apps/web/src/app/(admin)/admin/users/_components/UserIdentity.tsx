@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import Link from 'next/link';
 import type { UserDetailVM } from '@repo/api';
 import { UserAvatar } from '@/components/common/admin/UserAvatar';
 import { fullName } from '../_lib/user-display';
@@ -19,10 +20,18 @@ interface UserIdentityProps {
   meta?: ReactNode;
   /** Renders the name as a heading (drawers, page headers). */
   as?: 'div' | 'h1' | 'h2';
+  /** Makes the name a link, e.g. to the full profile. */
+  href?: string;
 }
 
 /** Avatar + full name + @username. */
-export function UserIdentity({ user, size = 'sm', meta, as: NameTag = 'div' }: UserIdentityProps) {
+export function UserIdentity({
+  user,
+  size = 'sm',
+  meta,
+  as: NameTag = 'div',
+  href,
+}: UserIdentityProps) {
   const s = SIZES[size];
   return (
     <div className="flex min-w-0 items-center gap-2.5">
@@ -34,7 +43,15 @@ export function UserIdentity({ user, size = 'sm', meta, as: NameTag = 'div' }: U
         size={s.avatar}
       />
       <div className="min-w-0">
-        <NameTag className={`truncate text-foreground ${s.name}`}>{fullName(user)}</NameTag>
+        <NameTag className={`truncate text-foreground ${s.name}`}>
+          {href ? (
+            <Link href={href} className="hover:underline">
+              {fullName(user)}
+            </Link>
+          ) : (
+            fullName(user)
+          )}
+        </NameTag>
         <div className="flex flex-wrap items-center gap-2">
           {user.username && (
             <span className={`truncate text-muted-foreground ${s.meta}`}>@{user.username}</span>

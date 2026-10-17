@@ -1,20 +1,23 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Plus, RefreshCw, Search } from 'lucide-react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { Plus, RefreshCw } from 'lucide-react';
 import { adminApi, type RoleVM } from '@repo/api';
-import { Button, Input, toast } from '@repo/ui';
+import { Button, toast } from '@repo/ui';
 import { DataTable } from '@/components/common/data-table';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';
 import PageHeader from '@/components/common/admin/PageHeader';
+import { QuickSearchInput } from '@/components/common/admin/QuickSearchInput';
 import Tip from '@/components/common/admin/Tip';
+import { copyText } from '@/lib/clipboard';
 import { parseApiError } from '@/lib/api-errors';
 import { CanManage, buildRoleColumns } from './_components/roleColumns';
 import { DeleteRoleDialog } from './_components/DeleteRoleDialog';
 import { RoleActionsMenu, type RoleRowHandlers } from './_components/RoleActionsMenu';
 import { RoleEditorSheet } from './_components/RoleEditorSheet';
 import { RolesEmptyState, RolesListSkeleton } from './_components/RolesListStates';
-import { useRolesData } from './_hooks/useRolesData';
+import { useAccessCatalog } from '@/hooks/admin';
 import { plural, roleToForm, type RoleEditorTarget } from './_lib/role-form';
 
 type SortKey = 'label' | 'permissions' | 'name';
@@ -30,11 +33,31 @@ const SORTS: Record<SortKey, { label: string; compare: (a: RoleVM, b: RoleVM) =>
 };
 
 export default function RolesPage() {
-  const data = useRolesData();
+  const data = useAccessCatalog();
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<SortKey>('label');
   const [editor, setEditor] = useState<RoleEditorTarget | null>(null);
   const [deleting, setDeleting] = useState<RoleVM | null>(null);
+
+  // `?edit=<id>` (e.g. from the Permissions screen) opens that role once roles load.
+  const router = useRouter();
+  const pathname = usePathname();
+  const deepLinkId = useSearchParams().get('edit');
+  // Remembers a closed deep link so it doesn't reopen before the URL update lands.
+  const [dismissedLink, setDismissedLink] = useState<string | null>(null);
+  const deepLinkRole =
+    deepLinkId && deepLinkId !== dismissedLink
+      ? data.roles.find((r) => r.id === deepLinkId)
+      : undefined;
+  const editorTarget: RoleEditorTarget | null =
+    editor ?? (deepLinkRole ? { mode: 'edit', role: deepLinkRole } : null);
+  const closeEditor = () => {
+    setEditor(null);
+    if (deepLinkId) {
+      setDismissedLink(deepLinkId);
+      router.replace(pathname, { scroll: false });
+    }
+  };
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -57,14 +80,7 @@ export default function RolesPage() {
           name: '',
         },
       }),
-    onCopyName: async (role) => {
-      try {
-        await navigator.clipboard.writeText(role.name);
-        toast.success(`Copied ${role.name}`);
-      } catch {
-        toast.error('Couldn’t copy. Select the name and copy it manually.');
-      }
-    },
+    onCopyName: (role) => copyText(role.name),
     onDelete: setDeleting,
   };
 
@@ -111,20 +127,14 @@ export default function RolesPage() {
       />
 
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-0 max-w-[520px] flex-[1_1_360px]">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-            aria-hidden
-          />
-          <Input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by label, name or description"
-            aria-label="Search roles"
-            className="pl-9"
-          />
-        </div>
+        <QuickSearchInput
+          value={query}
+          onChange={setQuery}
+          placeholder="Search by label, name or description"
+          ariaLabel="Search roles"
+          shortcutKey="/"
+          className="max-w-[520px] flex-[1_1_360px]"
+        />
         <div className="flex-1" />
         <label className="flex items-center gap-2 text-[13px] text-muted-foreground">
           Sort
@@ -180,11 +190,11 @@ export default function RolesPage() {
       />
 
       <RoleEditorSheet
-        target={editor}
+        target={editorTarget}
         roles={data.roles}
         groups={data.groups}
         totalPermissions={data.permissions.length}
-        onClose={() => setEditor(null)}
+        onClose={closeEditor}
         onSaved={data.refresh}
         onOpenRole={(role) => setEditor({ mode: 'edit', role })}
       />

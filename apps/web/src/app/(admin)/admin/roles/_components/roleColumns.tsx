@@ -4,7 +4,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { Pencil } from 'lucide-react';
 import type { RoleVM } from '@repo/api';
 import { Badge, Button } from '@repo/ui';
-import { resourcesCovered, type PermissionGroups } from '../_lib/permission-matrix';
+import { resourcesCovered, type PermissionGroups } from '@/lib/access/permission-matrix';
 import { RoleActionsMenu, type RoleRowHandlers } from './RoleActionsMenu';
 
 const MAX_RESOURCES = 3;

@@ -2,7 +2,7 @@
 
 import { RemovableChip } from '@/components/common/admin/RemovableChip';
 import type { CheckListOption } from '@/components/common/admin/SearchableCheckList';
-import { STATUS_FILTER_KEYS, statusFilterLabel, type UsersFilters } from '../_lib/users-filters';
+import { moreFiltersSet, statusFilterLabel, type UsersFilters } from '../_lib/users-filters';
 
 interface ActiveFilterChipsProps {
   filters: UsersFilters;
@@ -40,7 +40,7 @@ export function ActiveFilterChips({
       label: `Permission: ${labelOf(permissionOptions, id)}`,
       remove: () => onChange({ permissions: filters.permissions.filter((p) => p !== id) }),
     })),
-    ...STATUS_FILTER_KEYS.filter((k) => filters[k] !== 'any').map((k) => ({
+    ...moreFiltersSet(filters).map((k) => ({
       key: k,
       label: statusFilterLabel(k, filters[k]),
       remove: () => onChange({ [k]: 'any' }),

@@ -10,10 +10,10 @@ import { ChangedDot } from '@/components/common/admin/ChangedDot';
 import { FormErrorSummary } from '@/components/common/admin/FormErrorSummary';
 import { SaveButton } from '@/components/common/admin/SaveButton';
 import { StickyActionBar } from '@/components/common/admin/StickyActionBar';
-import { useRolesAndPermissions } from '../../_hooks/useRolesAndPermissions';
+import { useAccessCatalog, useNameAvailability } from '@/hooks/admin';
+import { USERNAME_PATTERN } from '@/lib/validation';
 import { useUserActions } from '../../_hooks/useUserActions';
 import { useUserForm, type UserFormState } from '../../_hooks/useUserForm';
-import { useUsernameAvailability } from '../../_hooks/useUsernameAvailability';
 import { isSuperAdmin, plural } from '../../_lib/user-display';
 import {
   EMPTY_USER_FORM,
@@ -45,8 +45,12 @@ export function UserForm(props: UserFormProps) {
   const router = useRouter();
 
   const form = useUserForm(props.mode === 'edit' ? props.initialValues : EMPTY_USER_FORM, mode);
-  const access = useRolesAndPermissions();
-  const usernameAvailability = useUsernameAvailability(form.values.username, mode === 'create');
+  const access = useAccessCatalog();
+  const usernameAvailability = useNameAvailability(form.values.username, {
+    check: usersApi.checkUsernameExists,
+    pattern: USERNAME_PATTERN,
+    enabled: mode === 'create',
+  });
   const actions = useUserActions();
 
   const [saving, setSaving] = useState<'save' | 'another' | null>(null);

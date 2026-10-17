@@ -6,7 +6,8 @@ import { usersApi, type UserDetailVM } from '@repo/api';
 import { useFetchPaginatedList } from '@/hooks/admin';
 import { toApiFilter, type UsersFilters } from '../_lib/users-filters';
 
-export const PAGE_SIZE_OPTIONS = [16, 32, 64];
+const DEFAULT_PAGE_SIZE = 16;
+export const PAGE_SIZE_OPTIONS = [DEFAULT_PAGE_SIZE, 32, 64];
 
 /** Table column id → server sort property. */
 const SORT_FIELDS: Record<string, string> = {
@@ -23,7 +24,7 @@ function toApiSort(sorting: SortingState): string[] | undefined {
 /** Server-paginated, server-sorted users for the current filters. */
 export function useUsersList(filters: UsersFilters) {
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0]);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const query = useMemo(
     () => ({ ...toApiFilter(filters), sort: toApiSort(sorting), size: pageSize }),

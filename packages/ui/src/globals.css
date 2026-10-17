@@ -14,7 +14,8 @@
     --popover-foreground: 220 20% 10%;
 
     --primary: 42 78% 45%;
-    --primary-foreground: 0 0% 100%;
+    /* Navy on gold: white on gold was ~2.6:1 contrast */
+    --primary-foreground: 220 20% 10%;
 
     --secondary: 220 15% 92%;
     --secondary-foreground: 220 20% 20%;
@@ -23,7 +24,7 @@
     --muted-foreground: 220 10% 45%;
 
     --accent: 42 78% 45%;
-    --accent-foreground: 0 0% 100%;
+    --accent-foreground: 220 20% 10%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
@@ -137,6 +138,11 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.28);
+    color: hsl(var(--foreground));
   }
 
   h1,

@@ -19,8 +19,8 @@ import { FormField } from '@/components/common/admin/FormField';
 import { SaveButton } from '@/components/common/admin/SaveButton';
 import { parseApiError } from '@/lib/api-errors';
 import { ROLE_NAME_ERROR, ROLE_NAME_PATTERN } from '@/lib/validation';
-import { useRoleNameAvailability } from '../_hooks/useRoleNameAvailability';
-import { resourcesCovered, type PermissionGroups } from '../_lib/permission-matrix';
+import { useNameAvailability } from '@/hooks/admin';
+import { resourcesCovered, type PermissionGroups } from '@/lib/access/permission-matrix';
 import {
   EMPTY_ROLE_FORM,
   nameFromLabel,
@@ -90,7 +90,11 @@ function RoleEditorBody({
 
   const name = nameTouched ? values.name : nameFromLabel(values.label);
   const selected = useMemo(() => new Set(values.permissionIds), [values.permissionIds]);
-  const availability = useRoleNameAvailability(name, !editing);
+  const availability = useNameAvailability(name, {
+    check: adminApi.checkRoleNameExists,
+    pattern: ROLE_NAME_PATTERN,
+    enabled: !editing,
+  });
 
   const set = <K extends keyof RoleFormValues>(key: K, value: RoleFormValues[K]) => {
     setValues((prev) => ({ ...prev, [key]: value }));

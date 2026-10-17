@@ -6,32 +6,29 @@ export interface HealthCheck {
   ok: boolean;
 }
 
-/** Sign-in related checks shown in the "Account health" panel. */
+const yesNo = (v: boolean) => (v ? 'Yes' : 'No');
+
+/**
+ * Sign-in checks for the "Account health" panel, worded like the list badge and the
+ * Edit user switches.
+ */
 export function accountHealthChecks(u: UserDetailVM): HealthCheck[] {
   const checks: HealthCheck[] = [
-    { label: 'Sign-in', value: u.enabled ? 'Enabled' : 'Disabled', ok: u.enabled },
+    { label: 'Enabled', value: yesNo(u.enabled), ok: u.enabled },
+    { label: 'Locked', value: yesNo(!u.accountNonLocked), ok: u.accountNonLocked },
+    { label: 'Account expired', value: yesNo(!u.accountNonExpired), ok: u.accountNonExpired },
     {
-      label: 'Account lock',
-      value: u.accountNonLocked ? 'Not locked' : 'Locked',
-      ok: u.accountNonLocked,
-    },
-    {
-      label: 'Account expiry',
-      value: u.accountNonExpired ? 'Valid' : 'Expired',
-      ok: u.accountNonExpired,
-    },
-    {
-      label: 'Credentials',
-      value: u.credentialsNonExpired ? 'Valid' : 'Expired',
+      label: 'Password expired',
+      value: yesNo(!u.credentialsNonExpired),
       ok: u.credentialsNonExpired,
     },
   ];
   // passwordSet is optional in the API; only report it when known.
   if (u.passwordSet !== undefined) {
-    checks.push({ label: 'Password', value: u.passwordSet ? 'Set' : 'Not set', ok: u.passwordSet });
+    checks.push({ label: 'Password set', value: yesNo(u.passwordSet), ok: u.passwordSet });
   }
   checks.push({
-    label: 'Force password change',
+    label: 'Prompt password change',
     value: u.promptChangePassword ? 'On' : 'Off',
     ok: !u.promptChangePassword,
   });

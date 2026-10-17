@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import CreatableSelect from 'react-select/creatable';
-import type { MultiValue } from 'react-select';
+import type { MultiValue, SelectInstance } from 'react-select';
 import { Search } from 'lucide-react';
+import { useFocusShortcut } from '@/hooks/useFocusShortcut';
+import { ShortcutHint } from './ShortcutHint';
 
 interface PhrasesInputProps {
   value: string[];
@@ -16,6 +18,8 @@ interface PhrasesInputProps {
   /** Shows a leading search icon. */
   showSearchIcon?: boolean;
   ariaLabel?: string;
+  /** A key (e.g. "/") that focuses the input from anywhere on the page; shown as a hint. */
+  shortcutKey?: string;
 }
 
 interface Option {
@@ -31,8 +35,12 @@ export function PhrasesInput({
   maxLength,
   showSearchIcon = false,
   ariaLabel,
+  shortcutKey,
 }: PhrasesInputProps) {
   const [inputValue, setInputValue] = useState('');
+  const selectRef = useRef<SelectInstance<Option, true>>(null);
+
+  useFocusShortcut(shortcutKey, () => selectRef.current?.focus());
 
   const options: Option[] = value.map((p) => ({ label: p, value: p }));
   const atLimit = maxPhrases !== undefined && value.length >= maxPhrases;
@@ -59,6 +67,7 @@ export function PhrasesInput({
   };
 
   const hasCounter = maxPhrases !== undefined;
+  const trailingWidth = (hasCounter ? 2.5 : 0) + (shortcutKey ? 1.5 : 0);
 
   return (
     <div className="space-y-1">
@@ -70,6 +79,7 @@ export function PhrasesInput({
           />
         )}
         <CreatableSelect<Option, true>
+          ref={selectRef}
           isMulti
           menuIsOpen={false}
           aria-label={ariaLabel}
@@ -95,7 +105,7 @@ export function PhrasesInput({
               borderRadius: '0.375rem',
               minHeight: '2.5rem',
               paddingLeft: showSearchIcon ? '1.75rem' : undefined,
-              paddingRight: hasCounter ? '2.5rem' : undefined,
+              paddingRight: trailingWidth ? `${trailingWidth + 0.25}rem` : undefined,
               '&:hover': { borderColor: 'hsl(var(--primary) / 0.5)' },
             }),
             multiValue: (base) => ({
@@ -134,12 +144,14 @@ export function PhrasesInput({
             menu: () => ({ display: 'none' }),
           }}
         />
-        {hasCounter && (
-          <span
-            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground"
-            aria-live="polite"
-          >
-            {value.length}/{maxPhrases}
+        {(hasCounter || shortcutKey) && (
+          <span className="pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-2 text-xs text-muted-foreground">
+            {hasCounter && (
+              <span aria-live="polite">
+                {value.length}/{maxPhrases}
+              </span>
+            )}
+            {shortcutKey && <ShortcutHint shortcutKey={shortcutKey} />}
           </span>
         )}
       </div>

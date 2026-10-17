@@ -5,11 +5,15 @@ import { cn } from '@repo/ui';
 export interface SegmentOption<T extends string> {
   value: T;
   label: string;
+  disabled?: boolean;
+  /** Tooltip, e.g. why an option is disabled. */
+  title?: string;
 }
 
 interface SegmentedControlProps<T extends string> {
   options: readonly SegmentOption<T>[];
-  value: T;
+  /** null when nothing is chosen yet. */
+  value: T | null;
   onChange: (value: T) => void;
   label: string;
   className?: string;
@@ -40,10 +44,13 @@ export function SegmentedControl<T extends string>({
             type="button"
             role="radio"
             aria-checked={selected}
+            disabled={o.disabled}
+            title={o.title}
             onClick={() => onChange(o.value)}
             className={cn(
               'h-9 flex-1 whitespace-nowrap border-l border-input px-3 text-[13px] transition-colors first:border-l-0',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+              'disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-transparent',
               selected
                 ? 'bg-primary/15 font-semibold text-primary'
                 : 'text-foreground hover:bg-muted',

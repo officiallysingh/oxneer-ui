@@ -35,7 +35,7 @@ export function UserCard({ user, handlers, selected, onSelectedChange }: UserCar
           <UserIdentity user={user} size="md" />
         </button>
         <UserStatusBadge user={user} />
-        <UserActionsMenu user={user} handlers={handlers} />
+        <UserActionsMenu user={user} handlers={handlers} variant="card" />
       </div>
       <UserContact user={user} />
       <UserAccessTags user={user} />

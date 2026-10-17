@@ -17,7 +17,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@repo/ui';
-import { fullName, isSuperAdmin } from '../_lib/user-display';
+import { fullName } from '../_lib/user-display';
 import type { UserRowHandlers } from './UserActionsMenu';
 import { UserBankAccounts } from './UserBankAccounts';
 import { UserIdentity } from './UserIdentity';
@@ -33,7 +33,10 @@ interface UserDetailsSheetProps {
 
 const TAB_CONTENT = 'mt-0 flex flex-col gap-5 focus-visible:ring-offset-0';
 
-/** Right-hand drawer with a user's details in Overview / Access / Bank accounts tabs. */
+/**
+ * Right-hand drawer with a user's details in Overview / Access / Bank accounts tabs.
+ * Disable / delete live in the row menu and on the full profile, not here.
+ */
 export function UserDetailsSheet({ user, handlers, onClose }: UserDetailsSheetProps) {
   return (
     <Sheet open={!!user} onOpenChange={(open) => !open && onClose()}>
@@ -53,7 +56,12 @@ function UserDetails({ user, handlers }: { user: UserDetailVM; handlers: UserRow
       <SheetHeader className="space-y-0 px-6 py-5 pr-12 text-left">
         <SheetTitle className="sr-only">{fullName(user)}</SheetTitle>
         <SheetDescription className="sr-only">User details</SheetDescription>
-        <UserIdentity user={user} size="lg" meta={<UserStatusBadge user={user} />} />
+        <UserIdentity
+          user={user}
+          size="lg"
+          href={`/admin/users/${user.id}/view`}
+          meta={<UserStatusBadge user={user} />}
+        />
       </SheetHeader>
 
       <Tabs defaultValue="overview" className="flex min-h-0 flex-1 flex-col">
@@ -67,7 +75,7 @@ function UserDetails({ user, handlers }: { user: UserDetailVM; handlers: UserRow
 
         <div className="flex-1 overflow-y-auto px-6 pb-5 pt-2">
           <TabsContent value="overview" className={TAB_CONTENT}>
-            <OverviewTab user={user} handlers={handlers} busy={busy} />
+            <OverviewTab user={user} onManageAccess={() => handlers.onManageAccess(user)} />
           </TabsContent>
           <TabsContent value="access" className={TAB_CONTENT}>
             <AccessTab user={user} onManage={() => handlers.onManageAccess(user)} />
@@ -104,16 +112,7 @@ function UserDetails({ user, handlers }: { user: UserDetailVM; handlers: UserRow
   );
 }
 
-function OverviewTab({
-  user,
-  handlers,
-  busy,
-}: {
-  user: UserDetailVM;
-  handlers: UserRowHandlers;
-  busy: boolean;
-}) {
-  const superAdmin = isSuperAdmin(user);
+function OverviewTab({ user, onManageAccess }: { user: UserDetailVM; onManageAccess: () => void }) {
   return (
     <>
       <DrawerSection title="Contact">
@@ -124,41 +123,19 @@ function OverviewTab({
 
       <DrawerSection title="Account">
         <DetailGrid>
-          <DetailItem label="Sign-in">{user.enabled ? 'Enabled' : 'Disabled'}</DetailItem>
+          <DetailItem label="Enabled">{user.enabled ? 'Yes' : 'No'}</DetailItem>
+          <DetailItem label="Locked">{user.accountNonLocked ? 'No' : 'Yes'}</DetailItem>
+          {!user.accountNonExpired && <DetailItem label="Account expired">Yes</DetailItem>}
           <DetailItem label="Password">
             {user.credentialsNonExpired ? 'Valid' : 'Expired'}
             {user.promptChangePassword && (
               <span className="text-muted-foreground">· change at next sign-in</span>
             )}
           </DetailItem>
-          {!user.accountNonLocked && <DetailItem label="Lock">Locked</DetailItem>}
         </DetailGrid>
       </DrawerSection>
 
-      <div className="flex flex-col gap-2.5 rounded-lg border border-destructive/35 p-3.5">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-destructive">
-          Danger zone
-        </h3>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={busy}
-            onClick={() => handlers.onToggleEnabled(user)}
-          >
-            {user.enabled ? 'Disable account' : 'Enable account'}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={busy || superAdmin}
-            onClick={() => handlers.onDelete(user)}
-            className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
-          >
-            {superAdmin ? 'Superadmin can’t be deleted' : 'Delete user…'}
-          </Button>
-        </div>
-      </div>
+      <AccessTab user={user} onManage={onManageAccess} />
     </>
   );
 }

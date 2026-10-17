@@ -48,6 +48,10 @@ export function AccountHealthPanel({ user }: { user: UserDetailVM }) {
           </li>
         ))}
       </ul>
+      <p className="px-5 pb-4 text-[12.5px] text-muted-foreground">
+        The status badge shows the first check that fails, in this order: Disabled, Locked, Account
+        expired, Password expired.
+      </p>
     </aside>
   );
 }

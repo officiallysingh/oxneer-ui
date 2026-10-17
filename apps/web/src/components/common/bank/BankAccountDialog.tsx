@@ -170,7 +170,7 @@ export function BankAccountDialog({
           >
             {ifscValid && selectedBank && !pickBankManually && (
               <div className="flex items-center gap-2.5 rounded-md bg-muted/60 px-3 py-2.5">
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-background text-[10px] font-semibold">
+                <span className="grid h-8 w-10 shrink-0 place-items-center rounded-md bg-background text-[11px] font-semibold">
                   {bankShortName(selectedBank)}
                 </span>
                 <span className="min-w-0 flex-1 text-[13.5px] font-semibold">

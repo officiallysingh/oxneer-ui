@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run typecheck*)",
+      "Bash(npm run lint*)",
+      "Bash(npm run test*)",
+      "Bash(npm run format*)",
+      "Bash(npm run dev*)",
+      "Bash(npm run e2e*)",
+      "Bash(npx tsc *)",
+      "Bash(npx eslint *)",
+      "Bash(npx prettier *)",
+      "Bash(npx shadcn@latest add *)",
+      "PowerShell(npm run typecheck*)",
+      "PowerShell(npm run lint*)",
+      "PowerShell(npm run test*)",
+      "PowerShell(npm run format*)",
+      "PowerShell(npm run dev*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/format.js\"",
+            "timeout": 30,
+            "statusMessage": "Formatting with prettier"
+          }
+        ]
+      }
+    ]
+  }
+}

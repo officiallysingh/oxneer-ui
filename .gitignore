@@ -80,3 +80,5 @@ test-results/
 *.pem
 *.key
 oxneer/
+# Claude Code personal overrides
+.claude/settings.local.json

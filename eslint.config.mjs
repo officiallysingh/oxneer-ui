@@ -18,6 +18,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Agent tooling / hook scripts (CommonJS, run directly by node)
+    ".claude/**",
   ]),
 ]);
 

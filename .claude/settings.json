@@ -1,21 +1,27 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run typecheck*)",
-      "Bash(npm run lint*)",
-      "Bash(npm run test*)",
-      "Bash(npm run format*)",
-      "Bash(npm run dev*)",
-      "Bash(npm run e2e*)",
       "Bash(npx tsc *)",
       "Bash(npx eslint *)",
-      "Bash(npx prettier *)",
-      "Bash(npx shadcn@latest add *)",
-      "PowerShell(npm run typecheck*)",
-      "PowerShell(npm run lint*)",
-      "PowerShell(npm run test*)",
-      "PowerShell(npm run format*)",
-      "PowerShell(npm run dev*)"
+      "Read",
+      "Grep",
+      "Glob",
+      "Edit(/**)",
+      "Read(//c/Users/bally/AppData/Local/Temp/claude/**)",
+      "Edit(//c/Users/bally/AppData/Local/Temp/claude/**)",
+      "Bash(cat *)",
+      "Bash(grep *)",
+      "Bash(find *)",
+      "Bash(ls *)",
+      "Bash(wc *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(sed -n *)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(Get-Content *)"
     ]
   },
   "hooks": {

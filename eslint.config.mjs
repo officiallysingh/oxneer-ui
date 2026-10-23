@@ -6,8 +6,10 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   {
+    // App Router uses app/ not pages/; point rule to app dir or disable.
+    // Scoped to the web app so workspace packages can lint without resolving it.
+    files: ['apps/web/**/*.{ts,tsx}'],
     rules: {
-      // App Router uses app/ not pages/; point rule to app dir or disable.
       '@next/next/no-html-link-for-pages': ['error', 'apps/web/src/app'],
     },
   },

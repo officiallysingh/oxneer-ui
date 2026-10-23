@@ -1,420 +1,650 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { auctionsApi, AuctionCreationRQ, AuctionUnitType } from '@repo/api';
-import { ArrowLeft } from 'lucide-react';
-import { Button } from '@repo/ui';
-import PageHeader from '@/components/common/admin/PageHeader';
-import { parseApiError } from '@/lib/api-errors';
-import { SelectOption } from '../_components/AuctionShared';
-import { AuctionStepIndicator } from '@/components/common/wizard/AuctionStepIndicator';
-import { AuctionStep1Details, Step1State, initialStep1 } from '../_components/AuctionStep1Details';
-import { AuctionStep2Units, Step2State, initialStep2 } from '../_components/AuctionStep2Units';
 import {
-  AuctionStep3Policies,
-  Step3State,
-  initialStep3,
-} from '../_components/AuctionStep3Policies';
-import { buildPolicies, validatePolicies } from '../_components/AuctionStep3PolicyMapping';
-import { AuctionStep5Workflow } from '../_components/AuctionStep5Workflow';
-import { AuctionStep6Invitations } from '../_components/AuctionStep6Invitations';
-function deriveAuctionType(priceProgression: string, unitType: string): string {
-  const isAtomic = unitType === 'SINGLE_UNIT' || unitType === 'BUNDLE';
-  if (priceProgression === 'STEP_BASED' && isAtomic) {
-    return 'OFFER_BASE_STEP_PRICED_ATOMIC_UNIT_AUCTION';
+  auctionsApi,
+  type AuctionCreationRQ,
+  type AuctionUnitBody,
+  type PolicyItemRQ,
+} from '@repo/api';
+import { Button, toast } from '@repo/ui';
+import { parseApiError } from '@/lib/api-errors';
+import type { SelectOption } from '../_components/AuctionShared';
+import { POLICY_DEFAULTS } from '../_components/PolicyShared';
+import { AuctionWizardShell } from './_components/shell/AuctionWizardShell';
+import { Step1BasicsUnit } from './_components/steps/Step1BasicsUnit';
+import { Step2OfferRules } from './_components/steps/Step2OfferRules';
+import { Step3Schedule } from './_components/steps/Step3Schedule';
+import {
+  Step4Participation,
+  buildMinimumParticipantsPolicy,
+} from './_components/steps/Step4Participation';
+import { Step5Award } from './_components/steps/Step5Award';
+import { Step6Review } from './_components/steps/Step6Review';
+import { Step7Invite } from './_components/steps/Step7Invite';
+import type {
+  AwardState,
+  BasicsState,
+  InviteStats,
+  OfferState,
+  OfferVisibilityChoice,
+  ParticipantVisibilityChoice,
+  ParticipationState,
+  ScheduleState,
+  WizardState,
+} from './_components/shared/types';
+import { initialWizardState } from './_components/shared/types';
+import { endTimeFor, latestCloseFor } from './_components/shared/summary';
+import {
+  STEP_LABELS,
+  collectIssues,
+  validateBasics,
+  validateOffer,
+  validateParticipation,
+  validateSchedule,
+} from './_components/shared/validation';
+
+const AUCTION_TYPE = 'OFFER_BASE_STEP_PRICED_ATOMIC_UNIT_AUCTION';
+
+/** UI choices the design adds ahead of the backend enum. Unknown values fall
+ *  back to the closest enum the creation payload accepts. */
+function participantVisibilityValue(choice: ParticipantVisibilityChoice): string {
+  if (choice === 'REAL') return 'PUBLIC';
+  return 'ALIAS';
+}
+
+function offerVisibilityValue(choice: OfferVisibilityChoice): string {
+  if (choice === 'RANK') return 'RANK';
+  if (choice === 'NOTHING') return 'PRICE';
+  return 'FULL';
+}
+
+function freshState(): WizardState {
+  return {
+    ...initialWizardState,
+    basics: { ...initialWizardState.basics, items: [] },
+    offer: {
+      ...initialWizardState.offer,
+      windows: initialWizardState.offer.windows.map((window) => ({ ...window })),
+    },
+    schedule: { ...initialWizardState.schedule },
+    participation: { ...initialWizardState.participation },
+    award: { ...initialWizardState.award },
+  };
+}
+
+function buildUnit(basics: BasicsState): AuctionUnitBody | undefined {
+  const openingPrice = parseFloat(basics.openingPrice);
+  if (Number.isNaN(openingPrice)) return undefined;
+
+  if (basics.unitType === 'SINGLE_UNIT') {
+    const item = basics.items[0];
+    if (!item) return undefined;
+    return {
+      type: 'SINGLE_UNIT',
+      openingPrice,
+      item: {
+        id: item.id,
+        name: basics.unitName.trim() || item.name,
+        description: item.description,
+        quantity: parseInt(item.quantity, 10) || 1,
+      },
+    };
   }
-  return '';
+
+  if (!basics.items.length) return undefined;
+  return {
+    type: 'BUNDLE',
+    openingPrice,
+    items: basics.items.map((item) => ({
+      id: item.id,
+      quantity: parseInt(item.quantity, 10) || 1,
+    })),
+  };
+}
+
+function objectId(): string {
+  const chars = '0123456789abcdef';
+  return Array.from({ length: 24 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+}
+
+const WINDOW_POLICY_TYPE: Record<string, string> = {
+  STEP: 'STEP_BASED_OFFER_PRICE_POLICY',
+  PERCENT: 'FIXED_PERCENTAGE_BASED_OFFER_PRICE_POLICY',
+  RANGE: 'PERCENTAGE_RANGE_BASED_OFFER_PRICE_POLICY',
+};
+
+function buildPolicyPayload(
+  state: WizardState,
+  minimum: PolicyItemRQ | null,
+  policyTypeOrder: string[],
+): PolicyItemRQ[] {
+  // The Award step also captures tie-breaking, no-sale and result-confirmation
+  // choices. The creation API has no matching fields or documented policy types
+  // for those yet, so they stay in wizard state (and the review copy) and only
+  // the winner and winning-price policies are written here.
+  const policies: PolicyItemRQ[] = [];
+  const { offer, schedule, award } = state;
+
+  const minimumPolicy = minimum ?? buildMinimumParticipantsPolicy(state.participation);
+  if (minimumPolicy) {
+    policies.push({ ...minimumPolicy, id: objectId(), order: 1 });
+  }
+
+  if (schedule.softCloseEnabled) {
+    const extension = POLICY_DEFAULTS.EXTENSION_POLICY;
+    policies.push({
+      id: objectId(),
+      type: 'EXTENSION_POLICY',
+      name: extension?.name,
+      description: extension?.description,
+      reference: schedule.extensionReference,
+      duration: `PT${parseInt(schedule.extendMinutes, 10) || 0}M`,
+      limit: schedule.limitEnabled ? parseInt(schedule.extensionLimit, 10) || 0 : 0,
+    });
+  }
+
+  if (offer.windows.length) {
+    const progression = POLICY_DEFAULTS.PRICE_PROGRESSION_POLICY;
+    policies.push({
+      id: objectId(),
+      type: 'PRICE_PROGRESSION_POLICY',
+      name: progression?.name,
+      description: progression?.description,
+      policies: offer.windows.map((window, index) => {
+        const type = WINDOW_POLICY_TYPE[window.type] ?? WINDOW_POLICY_TYPE.STEP!;
+        const defaults = POLICY_DEFAULTS[type];
+        const item: PolicyItemRQ = {
+          id: objectId(),
+          type,
+          name: defaults?.name,
+          description: defaults?.description,
+          order: index + 1,
+          windowDuration: index === offer.windows.length - 1 ? 'PT0S' : window.duration || 'PT0S',
+          value: parseFloat(window.value) || 0,
+        };
+        if (window.type === 'STEP' && window.steps.length) item.steps = window.steps;
+        if (window.type === 'RANGE') {
+          (item as PolicyItemRQ & { maxValue?: number }).maxValue =
+            parseFloat(window.maxValue) || 0;
+        }
+        return item;
+      }),
+    });
+  }
+
+  const winner = POLICY_DEFAULTS[award.winnerType];
+  if (award.winnerType) {
+    policies.push({
+      id: objectId(),
+      type: award.winnerType,
+      name: winner?.name,
+      description: winner?.description,
+      kth: parseInt(award.winnerKth, 10) || 1,
+    });
+  }
+
+  const winnerPrice = POLICY_DEFAULTS[award.winnerPriceType];
+  if (award.winnerPriceType) {
+    policies.push({
+      id: objectId(),
+      type: award.winnerPriceType,
+      name: winnerPrice?.name,
+      description: winnerPrice?.description,
+      kth: parseInt(award.winnerPriceKth, 10) || 1,
+    });
+  }
+
+  const rank = (type: unknown) => {
+    const index = policyTypeOrder.indexOf(String(type));
+    return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+  };
+
+  return policies
+    .sort((a, b) => rank(a.type) - rank(b.type))
+    .map((item, index) => ({
+      ...item,
+      order: index + 1,
+      policies: item.policies?.map((child, childIndex) => ({
+        ...child,
+        order: childIndex + 1,
+      })),
+    }));
+}
+
+function MissingStep({ onBack }: { onBack: () => void }) {
+  return (
+    <div className="rounded-lg border border-border bg-card px-4 py-6 text-center">
+      <p className="text-sm font-semibold text-foreground">Finish Basics and unit first</p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        The auction has to exist before you can set up participation, award or invitations.
+      </p>
+      <Button type="button" variant="outline" size="sm" className="mt-3" onClick={onBack}>
+        Back to Basics and unit
+      </Button>
+    </div>
+  );
 }
 
 export default function NewAuctionPage() {
   const router = useRouter();
 
+  const [state, setState] = useState<WizardState>(freshState);
   const [step, setStep] = useState(1);
+  const [reached, setReached] = useState(1);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Step 1
-  const [step1, setStep1] = useState<Step1State>(initialStep1);
-  const [step1Errors, setStep1Errors] = useState<Record<string, string>>({});
-  const [step1GeneralError, setStep1GeneralError] = useState<string | null>(null);
-
-  // Step 2
-  const [step2, setStep2] = useState<Step2State>(initialStep2);
-  const [step2Errors, setStep2Errors] = useState<Record<string, string>>({});
-  const [step2GeneralError, setStep2GeneralError] = useState<string | null>(null);
-  const [savingStep2, setSavingStep2] = useState(false);
-
-  // Step 3
   const [createdAuctionId, setCreatedAuctionId] = useState<string | null>(null);
-  const [createdAuctionType, setCreatedAuctionType] = useState('');
+  const [savingStep1, setSavingStep1] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [published, setPublished] = useState(false);
+  const [publishedAt, setPublishedAt] = useState<string | null>(null);
 
-  // Step 3 – Policies
-  const [step3, setStep3] = useState<Step3State>(initialStep3);
-  const [step3Errors, setStep3Errors] = useState<Record<string, string>>({});
-  const [step3GeneralError, setStep3GeneralError] = useState<string | null>(null);
-  const [savingStep3, setSavingStep3] = useState(false);
-  // Model options
-  const [formats, setFormats] = useState<SelectOption[]>([]);
-  const [accessibilityTypes, setAccessibilityTypes] = useState<SelectOption[]>([]);
-  const [directionTypes, setDirectionTypes] = useState<SelectOption[]>([]);
-  const [dimensionTypes, setDimensionTypes] = useState<SelectOption[]>([]);
-  const [participantVisibilityTypes, setParticipantVisibilityTypes] = useState<SelectOption[]>([]);
-  const [offerVisibilityTypes, setOfferVisibilityTypes] = useState<SelectOption[]>([]);
   const [roundingModes, setRoundingModes] = useState<SelectOption[]>([]);
-  const [unitTypes, setUnitTypes] = useState<SelectOption[]>([]);
-  const [loadingOptions, setLoadingOptions] = useState(true);
-  const [loadingUnitTypes, setLoadingUnitTypes] = useState(true);
+  const [policyTypeOrder, setPolicyTypeOrder] = useState<string[]>([]);
+  const [inviteStats, setInviteStats] = useState<InviteStats | null>(null);
+
+  const [workflowCount, setWorkflowCount] = useState(0);
+  const [postWorkflowCount, setPostWorkflowCount] = useState(0);
+  const [minimumPolicy, setMinimumPolicy] = useState<PolicyItemRQ | null>(null);
 
   useEffect(() => {
-    Promise.allSettled([
-      auctionsApi.getFormats(),
-      auctionsApi.getAccessibilityTypes(),
-      auctionsApi.getDirectionTypes(),
-      auctionsApi.getDimensionTypes(),
-      auctionsApi.getParticipantVisibilityTypes(),
-      auctionsApi.getOfferVisibilityTypes(),
-      auctionsApi.getRoundingModeTypes(),
-    ]).then(([fmts, access, dirs, dims, partVis, offerVis, rounding]) => {
-      if (fmts.status === 'fulfilled') {
-        setFormats(fmts.value);
-        const simpleFmt = fmts.value.find((f) => f.label === 'Simple');
-        if (simpleFmt) setStep1((prev) => ({ ...prev, format: simpleFmt.value }));
-      }
-      if (access.status === 'fulfilled') setAccessibilityTypes(access.value);
-      if (dirs.status === 'fulfilled') setDirectionTypes(dirs.value);
-      if (dims.status === 'fulfilled') setDimensionTypes(dims.value);
-      if (partVis.status === 'fulfilled') setParticipantVisibilityTypes(partVis.value);
-      if (offerVis.status === 'fulfilled') setOfferVisibilityTypes(offerVis.value);
-      if (rounding.status === 'fulfilled') setRoundingModes(rounding.value);
-      setLoadingOptions(false);
-    });
+    auctionsApi
+      .getRoundingModeTypes()
+      .then(setRoundingModes)
+      .catch(() => setRoundingModes([]));
 
     auctionsApi
-      .getUnitTypes()
-      .then((types) => setUnitTypes(types))
-      .finally(() => setLoadingUnitTypes(false));
+      .getPolicyTypes(AUCTION_TYPE)
+      .then((types) => {
+        setPolicyTypeOrder(types.map((type) => type.value));
+      })
+      .catch(() => setPolicyTypeOrder([]));
   }, []);
 
-  // ── Step 1 submit ──────────────────────────────────────────────────────────
+  const issues = collectIssues(state);
 
-  const validateStep1 = (): Record<string, string> => {
-    const errs: Record<string, string> = {};
-    if (!step1.title.trim()) errs.title = 'Title is required.';
-    else if (step1.title.trim().length < 5) errs.title = 'Title must be at least 5 characters.';
-    else if (step1.title.trim().length > 100) errs.title = 'Title must be at most 100 characters.';
-    if (!step1.format) errs.format = 'Format is required.';
-    if (!step1.accessibility) errs.accessibility = 'Accessibility is required.';
-    if (!step1.direction) errs.direction = 'Direction is required.';
-    if (!step1.priceProgression) errs.priceProgression = 'Price progression is required.';
-    if (!step1.dimension) errs.dimension = 'Dimension is required.';
-    if (!step1.participantVisibility)
-      errs.participantVisibility = 'Participant visibility is required.';
-    if (!step1.offerVisibility) errs.offerVisibility = 'Offer visibility is required.';
-    if (!step1.currencyUnit.trim()) errs.currencyUnit = 'Currency unit is required.';
-    const prec = parseInt(step1.precision, 10);
-    if (isNaN(prec) || prec < 0 || prec > 3) errs.precision = 'Precision must be between 0 and 3.';
-    if (!step1.roundingMode) errs.roundingMode = 'Rounding mode is required.';
-    return errs;
+  const patchBasics = (patch: Partial<BasicsState>) => {
+    setErrors({});
+    setState((prev) => ({ ...prev, basics: { ...prev.basics, ...patch } }));
+  };
+  const patchOffer = (patch: Partial<OfferState>) => {
+    setErrors({});
+    setState((prev) => ({ ...prev, offer: { ...prev.offer, ...patch } }));
+  };
+  const patchSchedule = (patch: Partial<ScheduleState>) => {
+    setErrors({});
+    setState((prev) => ({ ...prev, schedule: { ...prev.schedule, ...patch } }));
+  };
+  const patchParticipation = (patch: Partial<ParticipationState>) => {
+    setErrors({});
+    setState((prev) => ({ ...prev, participation: { ...prev.participation, ...patch } }));
+  };
+  const patchAward = (patch: Partial<AwardState>) => {
+    setErrors({});
+    setState((prev) => ({ ...prev, award: { ...prev.award, ...patch } }));
   };
 
-  const handleStep1Submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setStep1GeneralError(null);
-    const errs = validateStep1();
-    if (Object.keys(errs).length) {
-      setStep1Errors(errs);
+  const handleWorkflowCountChange = useCallback((count: number) => setWorkflowCount(count), []);
+  const handlePostWorkflowCountChange = useCallback(
+    (count: number) => setPostWorkflowCount(count),
+    [],
+  );
+  const handleWorkflowPolicyChange = useCallback(
+    (policy: PolicyItemRQ | null) => setMinimumPolicy(policy),
+    [],
+  );
+  const handleInviteStatsChange = useCallback((stats: InviteStats) => setInviteStats(stats), []);
+
+  const goToStep = (target: number) => {
+    if (published && target !== 6 && target !== 7) {
+      toast.error('This auction is already published. Edit it from the auction page.');
       return;
     }
-    setStep1Errors({});
-    setStep(2);
-  };
-
-  // ── Step 2 submit ──────────────────────────────────────────────────────────
-
-  const validateStep2 = (): Record<string, string> => {
-    const errs: Record<string, string> = {};
-    if (!step2.unitCategory) errs.unitType = 'Unit type is required.';
-    if (!step2.openingPrice || isNaN(parseFloat(step2.openingPrice)))
-      errs.openingPrice = 'Opening price is required.';
-    if (step2.unitCategory === 'ATOMIC' && step2.items.length === 0)
-      errs.item = 'At least one listing is required.';
-    if (
-      (step2.unitCategory === 'MULTI_UNIT' || step2.unitCategory === 'LOT') &&
-      step2.multiItems.length === 0
-    )
-      errs.item = 'At least one listing is required.';
-    return errs;
-  };
-
-  const buildUnitBody = () => {
-    if (step2.unitCategory === 'ATOMIC') {
-      const isSingle = step2.unitType === 'SINGLE_UNIT';
-      if (isSingle) {
-        return {
-          type: 'SINGLE_UNIT' as AuctionUnitType,
-          openingPrice: parseFloat(step2.openingPrice),
-          item: {
-            id: step2.items[0] ?? '',
-            name: step2.itemName || step2.itemSummary?.name || '',
-            description: step2.itemSummary?.description || undefined,
-            quantity: parseInt(step2.itemQuantity || '1', 10),
-          },
-        };
-      }
-      return {
-        type: 'BUNDLE' as AuctionUnitType,
-        openingPrice: parseFloat(step2.openingPrice),
-        items: step2.items.map((id, i) => ({
-          id,
-          quantity: parseInt(step2.itemQuantities[i] || '1', 10),
-        })),
-      };
+    if (target >= 4 && !createdAuctionId) {
+      toast.error('Finish Basics and unit before opening this step.');
+      return;
     }
-    return {
-      type: step2.unitType as AuctionUnitType,
-      openingPrice: parseFloat(step2.openingPrice),
-      items: step2.multiItems.map((id) => ({ id, quantity: 1 })),
+    setErrors({});
+    setStep(target);
+    setReached((current) => Math.max(current, target));
+  };
+
+  const protocol = () => ({
+    accessibility: state.basics.accessibility,
+    direction: state.basics.direction,
+    dimension: 'ONE_DIMENSIONAL',
+    participantVisibility: participantVisibilityValue(state.offer.participantVisibility),
+    offerVisibility: offerVisibilityValue(state.offer.offerVisibility),
+  });
+
+  const monetaryOptions = () => ({
+    currencyUnit: state.basics.currencyUnit,
+    precision: parseInt(state.basics.precision, 10) || 0,
+    roundingMode: state.basics.roundingMode,
+  });
+
+  /** Creates the draft on first save and updates it afterwards. Every later step
+   *  writes against the same auction id. */
+  const persistBasics = async (): Promise<string> => {
+    const unit = buildUnit(state.basics);
+    const title = state.basics.title.trim();
+    const description = state.basics.description.trim() || undefined;
+    const referenceId = state.basics.referenceId.trim() || undefined;
+
+    if (createdAuctionId) {
+      await auctionsApi.updateAuction(createdAuctionId, {
+        title,
+        description,
+        referenceId,
+        accessibility: state.basics.accessibility,
+        direction: state.basics.direction,
+        participantVisibility: protocol().participantVisibility,
+        offerVisibility: protocol().offerVisibility,
+        monetaryOptions: monetaryOptions(),
+        unit,
+      });
+      return createdAuctionId;
+    }
+
+    const payload: AuctionCreationRQ = {
+      type: AUCTION_TYPE,
+      format: 'SIMPLE',
+      title,
+      description,
+      referenceId,
+      protocol: protocol(),
+      monetaryOptions: monetaryOptions(),
+      unit,
     };
+    const id = await auctionsApi.createAuction(payload);
+    setCreatedAuctionId(id);
+    return id;
   };
 
-  const handleStep2Submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setStep2GeneralError(null);
-    const errs = validateStep2();
-    if (Object.keys(errs).length) {
-      setStep2Errors(errs);
+  const handleStep1Next = async () => {
+    const nextErrors = validateBasics(state.basics);
+    if (Object.keys(nextErrors).length) {
+      setErrors(nextErrors);
+      toast.error('Some details still need attention.');
       return;
     }
-    setStep2Errors({});
-    setSavingStep2(true);
+    setErrors({});
+    setSavingStep1(true);
     try {
-      const effectiveUnitType = step2.unitType || step2.unitCategory;
-      const auctionType = deriveAuctionType(step1.priceProgression, effectiveUnitType);
-      if (!auctionType) {
-        setStep2GeneralError(
-          'This price progression and unit type combination is not yet supported.',
+      await persistBasics();
+      goToStep(2);
+    } catch (err) {
+      const parsed = parseApiError(err);
+      setErrors({
+        ...parsed.fieldErrors,
+        general: parsed.general ?? 'Could not save the auction.',
+      });
+      toast.error(parsed.general ?? 'Could not save the auction.');
+    } finally {
+      setSavingStep1(false);
+    }
+  };
+
+  const handleStep2Next = () => {
+    const nextErrors = validateOffer(state.offer);
+    if (Object.keys(nextErrors).length) {
+      setErrors(nextErrors);
+      toast.error('Some offer rules still need attention.');
+      return;
+    }
+    goToStep(3);
+  };
+
+  const handleStep3Next = () => {
+    const nextErrors = validateSchedule(state.schedule);
+    if (Object.keys(nextErrors).length) {
+      setErrors(nextErrors);
+      toast.error('Some schedule details still need attention.');
+      return;
+    }
+    goToStep(4);
+  };
+
+  const handleStep4Next = () => {
+    const nextErrors = validateParticipation(state.participation);
+    if (Object.keys(nextErrors).length) {
+      setErrors(nextErrors);
+      toast.error('Some participation details still need attention.');
+      return;
+    }
+    goToStep(5);
+  };
+
+  const handleSaveDraft = async () => {
+    if (!state.basics.title.trim()) {
+      toast.error('Add a title before saving a draft.');
+      return;
+    }
+    const basicsErrors = validateBasics(state.basics);
+    if (!createdAuctionId && (basicsErrors.items || basicsErrors.openingPrice)) {
+      toast.error('Add a listing and an opening price before saving a draft.');
+      return;
+    }
+    setSavingDraft(true);
+    try {
+      const id = await persistBasics();
+      // Workflow changes are saved by their own dialogs, but the offer rules,
+      // extension, minimum-participants and award settings live in policies.
+      if (!validateOffer(state.offer).windows) {
+        await auctionsApi.setAuctionPolicies(
+          id,
+          buildPolicyPayload(state, minimumPolicy, policyTypeOrder),
         );
-        setSavingStep2(false);
-        return;
       }
-      const unitBody = buildUnitBody();
-      let auctionId = createdAuctionId;
-      if (!auctionId) {
-        const payload: AuctionCreationRQ = {
-          type: auctionType,
-          format: step1.format,
-          title: step1.title.trim(),
-          description: step1.description.trim() || undefined,
-          referenceId: step1.referenceId.trim() || undefined,
-          protocol: {
-            accessibility: step1.accessibility,
-            direction: step1.direction,
-            dimension: step1.dimension,
-            participantVisibility: step1.participantVisibility,
-            offerVisibility: step1.offerVisibility,
-          },
-          monetaryOptions: {
-            currencyUnit: step1.currencyUnit.trim().toUpperCase(),
-            precision: parseInt(step1.precision, 10),
-            roundingMode: step1.roundingMode,
-          },
-          tags: step2.tags.length ? step2.tags : undefined,
-          subCategories: step2.subCategories.length ? step2.subCategories : undefined,
-          unit: unitBody,
-        };
-        auctionId = await auctionsApi.createAuction(payload);
-        setCreatedAuctionId(auctionId);
-        setCreatedAuctionType(auctionType);
-      } else {
-        await auctionsApi.updateAuction(auctionId, {
-          tags: step2.tags.length ? step2.tags : undefined,
-          subCategories: step2.subCategories.length ? step2.subCategories : undefined,
-          unit: unitBody,
-        });
-      }
-      setStep(3);
+      toast.success('Draft saved. You can finish setting it up later.');
     } catch (err) {
       const parsed = parseApiError(err);
-      const step1FieldNames = new Set([
-        'title',
-        'format',
-        'accessibility',
-        'direction',
-        'dimension',
-        'participantVisibility',
-        'offerVisibility',
-        'currencyUnit',
-        'precision',
-        'roundingMode',
-      ]);
-      const s1Errs: Record<string, string> = {};
-      const s2Errs: Record<string, string> = {};
-      for (const [k, v] of Object.entries(parsed.fieldErrors)) {
-        if (step1FieldNames.has(k)) s1Errs[k] = v;
-        else s2Errs[k] = v;
-      }
-      if (Object.keys(s1Errs).length) {
-        setStep1Errors(s1Errs);
-        setStep1GeneralError('Please correct the highlighted fields.');
-        setStep(1);
-      } else if (Object.keys(s2Errs).length) {
-        setStep2Errors(s2Errs);
-      } else {
-        setStep2GeneralError(parsed.general ?? 'Failed to create auction.');
-      }
+      setErrors({ general: parsed.general ?? 'Could not save the draft.' });
+      toast.error(parsed.general ?? 'Could not save the draft.');
     } finally {
-      setSavingStep2(false);
+      setSavingDraft(false);
     }
   };
 
-  // ── Step 3 submit ──────────────────────────────────────────────────────────
-
-  const handleStep3Submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setStep3GeneralError(null);
-    const errs = validatePolicies(step3);
-    if (Object.keys(errs).length) {
-      setStep3Errors(errs);
+  const handlePublish = async () => {
+    const blocking = issues.filter((issue) => issue.severity === 'must-fix');
+    if (blocking.length > 0) {
+      const first = blocking[0]!;
+      setStep(first.goto);
+      setErrors({ general: first.message });
+      toast.error(first.message);
       return;
     }
-    setStep3Errors({});
+    if (reached < 5) {
+      const next = [1, 2, 3, 4, 5].find((target) => target > reached) ?? 5;
+      setStep(next);
+      setErrors({});
+      toast.error(`Open ${STEP_LABELS[next]} before publishing.`);
+      return;
+    }
     if (!createdAuctionId) {
-      setStep3GeneralError('Auction ID is missing. Please go back and try again.');
+      toast.error('Finish Basics and unit before publishing.');
       return;
     }
-    setSavingStep3(true);
+
+    setPublishing(true);
+    setErrors({});
     try {
-      const policyTypeOrder = (await auctionsApi.getPolicyTypes(createdAuctionType)).map(
-        (item) => item.value,
-      );
-      const policies = buildPolicies(step3, policyTypeOrder);
-      if (policies.length > 0) {
-        await auctionsApi.setAuctionPolicies(createdAuctionId, policies);
-      }
-      setStep(4);
+      await persistBasics();
+
+      const policies = buildPolicyPayload(state, minimumPolicy, policyTypeOrder);
+      await auctionsApi.setAuctionPolicies(createdAuctionId, policies);
+
+      const start = new Date(state.schedule.startTime);
+      const closing = endTimeFor(state.schedule);
+      const end = new Date(closing);
+      await auctionsApi.scheduleAuction(createdAuctionId, {
+        startTime: start.toISOString(),
+        endTime: end.toISOString(),
+      });
+      await auctionsApi.publishAuction(createdAuctionId);
+
+      setPublished(true);
+      setPublishedAt(new Date().toISOString());
+      setStep(7);
+      setReached(7);
+      toast.success('Auction published.');
     } catch (err) {
       const parsed = parseApiError(err);
-      if (Object.keys(parsed.fieldErrors).length) setStep3Errors(parsed.fieldErrors);
-      else setStep3GeneralError(parsed.general ?? 'Failed to save policies.');
+      setErrors({ general: parsed.general ?? 'Could not publish the auction.' });
+      toast.error(parsed.general ?? 'Could not publish the auction.');
     } finally {
-      setSavingStep3(false);
+      setPublishing(false);
     }
   };
 
-  const handleSkip = () => router.push('/admin/auctions');
+  const handleFinish = () => {
+    if (createdAuctionId) router.push(`/admin/auctions/${createdAuctionId}/view`);
+    else router.push('/admin/auctions');
+  };
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="New auction"
-        description="Create a new auction"
-        actions={
-          <Button variant="outline" size="sm" onClick={() => router.push('/admin/auctions')}>
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back
-          </Button>
-        }
-      />
-
-      <AuctionStepIndicator current={step} onStepClick={(s) => s < step && setStep(s)} />
-
+    <AuctionWizardShell
+      state={state}
+      current={step}
+      reached={reached}
+      workflowCount={workflowCount}
+      postWorkflowCount={postWorkflowCount}
+      issues={issues}
+      savingDraft={savingDraft}
+      published={published}
+      publishedAt={publishedAt}
+      inviteStats={inviteStats}
+      onStepClick={goToStep}
+      onSaveDraft={() => void handleSaveDraft()}
+      onBackToAuctions={() => router.push('/admin/auctions')}
+      onInvite={() => goToStep(7)}
+    >
       {step === 1 && (
-        <AuctionStep1Details
-          form={step1}
-          onChange={(u) => {
-            setStep1((prev) => ({ ...prev, ...u }));
-            const changed = Object.keys(u) as (keyof Step1State)[];
-            if (changed.some((f) => step1Errors[f])) {
-              setStep1Errors((prev) => {
-                const next = { ...prev };
-                changed.forEach((f) => delete next[f]);
-                return next;
-              });
-            }
-          }}
-          fieldErrors={step1Errors}
-          generalError={step1GeneralError}
-          formats={formats}
-          accessibilityTypes={accessibilityTypes}
-          directionTypes={directionTypes}
-          dimensionTypes={dimensionTypes}
-          participantVisibilityTypes={participantVisibilityTypes}
-          offerVisibilityTypes={offerVisibilityTypes}
-          roundingModes={roundingModes}
-          loadingOptions={loadingOptions}
-          onSubmit={handleStep1Submit}
-          onCancel={() => router.push('/admin/auctions')}
+        <Step1BasicsUnit
+          form={state.basics}
+          onChange={patchBasics}
+          errors={errors}
+          saving={savingStep1}
+          onNext={() => void handleStep1Next()}
         />
       )}
 
       {step === 2 && (
-        <AuctionStep2Units
-          form={step2}
-          onChange={(u) => {
-            setStep2((prev) => ({ ...prev, ...u }));
-            const changed = Object.keys(u);
-            if (changed.some((f) => step2Errors[f])) {
-              setStep2Errors((prev) => {
-                const next = { ...prev };
-                changed.forEach((f) => delete next[f]);
-                return next;
-              });
-            }
-          }}
-          fieldErrors={step2Errors}
-          generalError={step2GeneralError}
-          saving={savingStep2}
-          unitTypes={unitTypes}
-          loadingUnitTypes={loadingUnitTypes}
-          precision={parseInt(step1.precision, 10) || 0}
-          onSubmit={handleStep2Submit}
-          onBack={() => setStep(1)}
-          onSkip={JSON.stringify(step2) === JSON.stringify(initialStep2) ? handleSkip : undefined}
-          submitLabel="Save & Continue"
-          submitWithArrow
+        <Step2OfferRules
+          form={state.offer}
+          onChange={patchOffer}
+          schedule={state.schedule}
+          direction={state.basics.direction}
+          openingPrice={state.basics.openingPrice}
+          currencyUnit={state.basics.currencyUnit}
+          roundingModes={roundingModes}
+          roundingMode={state.basics.roundingMode}
+          onRoundingModeChange={(value) => patchBasics({ roundingMode: value })}
+          errors={errors}
+          saving={false}
+          onBack={() => goToStep(1)}
+          onNext={handleStep2Next}
         />
       )}
 
       {step === 3 && (
-        <AuctionStep3Policies
-          auctionId={createdAuctionId ?? undefined}
-          form={step3}
-          onChange={(u) => setStep3((prev) => ({ ...prev, ...u }))}
-          auctionType={createdAuctionType}
-          direction={step1.direction}
-          fieldErrors={step3Errors}
-          generalError={step3GeneralError}
-          saving={savingStep3}
-          onSubmit={handleStep3Submit}
-          onBack={() => setStep(2)}
-          onSkip={JSON.stringify(step3) === JSON.stringify(initialStep3) ? handleSkip : undefined}
+        <Step3Schedule
+          form={state.schedule}
+          onChange={patchSchedule}
+          clockMechanism={state.offer.mechanism === 'CLOCK'}
+          errors={errors}
+          saving={false}
+          onBack={() => goToStep(2)}
+          onNext={handleStep3Next}
         />
       )}
 
-      {step === 4 && createdAuctionId && (
-        <AuctionStep5Workflow
-          auctionId={createdAuctionId}
-          onBack={() => setStep(3)}
-          onNext={() => setStep(5)}
-          onFinish={() => router.push('/admin/auctions')}
-        />
-      )}
+      {step === 4 &&
+        (createdAuctionId ? (
+          <Step4Participation
+            auctionId={createdAuctionId}
+            form={state.participation}
+            onChange={patchParticipation}
+            isPrivate={state.basics.accessibility === 'PRIVATE'}
+            startTime={state.schedule.startTime}
+            errors={errors}
+            saving={false}
+            onBack={() => goToStep(3)}
+            onNext={handleStep4Next}
+            onWorkflowCountChange={handleWorkflowCountChange}
+            onWorkflowPolicyChange={handleWorkflowPolicyChange}
+          />
+        ) : (
+          <MissingStep onBack={() => goToStep(1)} />
+        ))}
 
-      {step === 5 && createdAuctionId && (
-        <AuctionStep5Workflow
-          auctionId={createdAuctionId}
-          onBack={() => setStep(4)}
-          onFinish={() => setStep(6)}
-          showScheduleOnly
-        />
-      )}
+      {step === 5 &&
+        (createdAuctionId ? (
+          <Step5Award
+            auctionId={createdAuctionId}
+            form={state.award}
+            onChange={patchAward}
+            direction={state.basics.direction}
+            mechanism={state.offer.mechanism}
+            offerVisibility={state.offer.offerVisibility}
+            reserveEnabled={state.basics.reserveEnabled}
+            openingPrice={state.basics.openingPrice}
+            currencyUnit={state.basics.currencyUnit}
+            endTime={endTimeFor(state.schedule)}
+            latestClose={latestCloseFor(state.schedule)}
+            saving={false}
+            onBack={() => goToStep(4)}
+            onNext={() => goToStep(6)}
+            onGoToBasics={() => goToStep(1)}
+            onPostWorkflowCountChange={handlePostWorkflowCountChange}
+          />
+        ) : (
+          <MissingStep onBack={() => goToStep(1)} />
+        ))}
 
-      {step === 6 && createdAuctionId && (
-        <AuctionStep6Invitations
-          auctionId={createdAuctionId}
-          onBack={() => setStep(5)}
-          onFinish={() => router.push('/admin/auctions')}
-        />
-      )}
-    </div>
+      {step === 6 &&
+        (createdAuctionId ? (
+          <Step6Review
+            auctionId={createdAuctionId}
+            state={state}
+            workflowCount={workflowCount}
+            postWorkflowCount={postWorkflowCount}
+            issues={issues}
+            reached={reached}
+            publishing={publishing}
+            published={published}
+            publishedAt={publishedAt}
+            error={errors.general ?? null}
+            onEdit={goToStep}
+            onBack={() => goToStep(5)}
+            onPublish={() => void handlePublish()}
+            onInvite={() => goToStep(7)}
+          />
+        ) : (
+          <MissingStep onBack={() => goToStep(1)} />
+        ))}
+
+      {step === 7 &&
+        (createdAuctionId ? (
+          <Step7Invite
+            auctionId={createdAuctionId}
+            isPublic={state.basics.accessibility === 'PUBLIC'}
+            published={published}
+            readyToPublish={!issues.some((issue) => issue.severity === 'must-fix')}
+            startTime={state.schedule.startTime}
+            participation={state.participation}
+            onChangeAccess={() => goToStep(1)}
+            onBack={() => goToStep(6)}
+            onFinish={handleFinish}
+            onStatsChange={handleInviteStatsChange}
+          />
+        ) : (
+          <MissingStep onBack={() => goToStep(1)} />
+        ))}
+    </AuctionWizardShell>
   );
 }

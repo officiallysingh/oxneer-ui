@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { usePageErrorBanner } from '@/components/common/admin/PageErrorBanner';
 
@@ -9,18 +9,21 @@ interface ErrorAlertProps {
 }
 
 const ErrorAlert = ({ message }: ErrorAlertProps) => {
-  const markerRef = useRef<HTMLSpanElement>(null);
   const banner = usePageErrorBanner();
-  const [inline, setInline] = useState<boolean | null>(null);
+  const [insideDialog, setInsideDialog] = useState(false);
 
-  useLayoutEffect(() => {
-    const node = markerRef.current;
-    const inDialog = !!node?.closest('[role="dialog"], [role="alertdialog"]');
-    setInline(inDialog || !banner);
-  }, [banner]);
+  // Dialogs show the error inline; everything else reports to the page banner.
+  // The DOM check runs from the ref callback rather than an effect so that the
+  // initial measurement does not write state synchronously inside an effect.
+  const markerRef = useCallback((node: HTMLSpanElement | null) => {
+    if (!node) return;
+    setInsideDialog(!!node.closest('[role="dialog"], [role="alertdialog"]'));
+  }, []);
+
+  const inline = insideDialog || !banner;
 
   useEffect(() => {
-    if (inline !== false || !banner) return;
+    if (inline || !banner) return;
     const id = banner.report(message);
     return () => banner.clear(id);
   }, [inline, banner, message]);

@@ -145,7 +145,7 @@ export function buildAuctionColumns({
                   variant="ghost"
                   size="sm"
                   className="h-8 w-8 p-0 text-muted-foreground hover:text-warning hover:bg-warning/10"
-                  onClick={() => router.push(`/admin/auctions/${row.original.id}/edit?step=5`)}
+                  onClick={() => router.push(`/admin/auctions/${row.original.id}/edit?step=3`)}
                 >
                   <CalendarClock className="h-3.5 w-3.5" />
                 </Button>

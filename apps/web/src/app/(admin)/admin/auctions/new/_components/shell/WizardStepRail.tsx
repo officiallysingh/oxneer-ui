@@ -39,6 +39,7 @@ function stepState({
   reached,
   isPublic,
   published,
+  editMode,
   issueCount,
   finishCount,
   inviteStats,
@@ -48,6 +49,7 @@ function stepState({
   reached: number;
   isPublic: boolean;
   published: boolean;
+  editMode?: boolean;
   issueCount: number;
   finishCount: number;
   inviteStats?: InviteStats | null;
@@ -62,7 +64,13 @@ function stepState({
     }
     return { status: 'invite' };
   }
-  if (published) return { status: step === 6 ? 'published' : 'locked' };
+  if (published) {
+    // Published auctions stay editable through the same rail; only Review keeps
+    // its published state. Without this, every earlier step would read "Locked"
+    // even though the shell is in edit mode.
+    if (!editMode) return { status: step === 6 ? 'published' : 'locked' };
+    if (step === 6) return { status: 'published' };
+  }
   if (step === 6) {
     if (current === 6) {
       return finishCount > 0 ? { status: 'finish', count: finishCount } : { status: 'editing' };
@@ -123,6 +131,7 @@ export function WizardStepRail({
   issues,
   published,
   isPublic,
+  editMode,
   inviteStats,
   onStepClick,
 }: {
@@ -131,6 +140,7 @@ export function WizardStepRail({
   issues: ReviewIssue[];
   published: boolean;
   isPublic: boolean;
+  editMode?: boolean;
   inviteStats?: InviteStats | null;
   onStepClick: (step: number) => void;
 }) {
@@ -145,6 +155,7 @@ export function WizardStepRail({
       reached,
       isPublic,
       published,
+      editMode,
       issueCount: issues.filter((issue) => issue.step === step && issue.severity === 'must-fix')
         .length,
       finishCount,

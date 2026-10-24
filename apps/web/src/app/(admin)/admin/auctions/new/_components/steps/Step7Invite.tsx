@@ -6,8 +6,8 @@ import { Button, toast } from '@repo/ui';
 import { auctionsApi, type AuctionWorkflowStep } from '@repo/api';
 import { parseApiError } from '@/lib/api-errors';
 import { DismissibleError } from '../../../_components/AuctionShared';
+import { useInviteAuction, type InviteParticipation } from '../../../_components/InviteContext';
 import { formatDateTime } from '../shared/summary';
-import type { ParticipationState } from '../shared/types';
 import { isPostStep } from '../shared/workflow';
 import { InvitedList } from '../invite/InvitedList';
 import { InvitePanel } from '../invite/InvitePanel';
@@ -19,7 +19,7 @@ import {
 } from '../invite/invite';
 import { useParticipants } from '../invite/useParticipants';
 
-function checkAtFor(startTime: string, participation: ParticipationState): string {
+function checkAtFor(startTime: string, participation: InviteParticipation): string {
   if (!startTime) return '';
   const date = new Date(startTime);
   if (Number.isNaN(date.getTime())) return '';
@@ -62,28 +62,18 @@ function StateCard({
  *  once the auction is published. The screen therefore has three states:
  *  not needed (public), locked (draft private) and the invitation workspace. */
 export function Step7Invite({
-  auctionId,
-  isPublic,
-  published,
-  readyToPublish,
-  startTime,
-  participation,
   onChangeAccess,
   onBack,
   onFinish,
   onStatsChange,
 }: {
-  auctionId: string;
-  isPublic: boolean;
-  published: boolean;
-  readyToPublish: boolean;
-  startTime: string;
-  participation: ParticipationState;
   onChangeAccess: () => void;
   onBack: () => void;
   onFinish: () => void;
   onStatsChange?: (stats: { invited: number; ready: number; review: number }) => void;
 }) {
+  const { auctionId, isPublic, published, readyToPublish, startTime, participation } =
+    useInviteAuction();
   const [workflow, setWorkflow] = useState<AuctionWorkflowStep[]>([]);
   const [workflowError, setWorkflowError] = useState<string | null>(null);
   const [decisions, setDecisions] = useState<Record<string, InviteDecision>>({});
@@ -228,9 +218,11 @@ export function Step7Invite({
           </p>
           <p className="flex items-start gap-1.5">
             <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-info" aria-hidden />
-            {readyToPublish
-              ? 'Everything is ready, so you can publish now.'
-              : 'Finish the remaining steps and clear any issues in Review, then publish.'}
+            {readyToPublish === undefined
+              ? 'Publishing opens invitations, so you can invite people straight after.'
+              : readyToPublish
+                ? 'Everything is ready, so you can publish now.'
+                : 'Finish the remaining steps and clear any issues in Review, then publish.'}
           </p>
         </StateCard>
         {footer}

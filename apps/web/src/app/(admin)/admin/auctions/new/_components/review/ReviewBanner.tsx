@@ -26,7 +26,7 @@ export function ReviewBanner({
       <div className="flex flex-wrap items-center gap-3 rounded-lg border border-success/30 bg-success/10 px-3 py-2.5">
         <Check className="h-4 w-4 shrink-0 text-success" aria-hidden />
         <p className="min-w-0 flex-1 text-[11px] leading-snug text-foreground">
-          Published {publishedAt ? formatDateTime(publishedAt) : ''}. The rules are locked as
+          Published{publishedAt ? ` ${formatDateTime(publishedAt)}` : ''}. The rules are locked as
           version 1. Next, invite the people who can take part.
         </p>
         <Button type="button" size="sm" className="h-7 px-2.5 text-xs" onClick={onInvite}>

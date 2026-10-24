@@ -61,6 +61,7 @@ export function AuctionWizardShell({
   published,
   publishedAt,
   inviteStats,
+  editMode = false,
   onStepClick,
   onSaveDraft,
   onBackToAuctions,
@@ -77,6 +78,9 @@ export function AuctionWizardShell({
   published: boolean;
   publishedAt: string | null;
   inviteStats?: InviteStats | null;
+  /** The same shell powers editing, where saving is explicit and available even
+   *  after the auction has been published. */
+  editMode?: boolean;
   onStepClick: (step: number) => void;
   onSaveDraft: () => void;
   onBackToAuctions: () => void;
@@ -86,7 +90,7 @@ export function AuctionWizardShell({
   const rootRef = useRef<HTMLDivElement>(null);
   const isPublic = state.basics.accessibility === 'PUBLIC';
   const copy = STEP_COPY[current] ?? STEP_COPY[1]!;
-  const title = state.basics.title.trim() || 'New auction';
+  const title = state.basics.title.trim() || (editMode ? 'Edit auction' : 'New auction');
 
   const mustFix = issues.filter((issue) => issue.severity === 'must-fix');
   const checks = issues.filter((issue) => issue.severity === 'check');
@@ -123,7 +127,7 @@ export function AuctionWizardShell({
               Auctions
             </button>
             <span className="px-1.5">/</span>
-            <span>New auction</span>
+            <span>{editMode ? 'Edit auction' : 'New auction'}</span>
           </nav>
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <h1 className="truncate font-display text-lg font-semibold text-foreground">{title}</h1>
@@ -138,7 +142,7 @@ export function AuctionWizardShell({
             )}
           </div>
         </div>
-        {!published && (
+        {(!published || editMode) && (
           <Button
             type="button"
             variant="outline"
@@ -152,7 +156,7 @@ export function AuctionWizardShell({
             ) : (
               <Save className="h-3.5 w-3.5" />
             )}
-            Save draft
+            {editMode ? 'Save changes' : 'Save draft'}
           </Button>
         )}
       </header>
@@ -165,6 +169,7 @@ export function AuctionWizardShell({
             issues={issues}
             published={published}
             isPublic={isPublic}
+            editMode={editMode}
             inviteStats={inviteStats}
             onStepClick={onStepClick}
           />

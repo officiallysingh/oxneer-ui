@@ -70,6 +70,7 @@ function SetupStep() {
           mechanism={offer.mechanism}
           offerVisibility={offer.offerVisibility}
           reserveEnabled={basics.reserveEnabled}
+          reserveAmount={basics.reserveAmount}
           openingPrice={basics.openingPrice}
           currencyUnit={basics.currencyUnit}
           endTime={endTimeFor(schedule)}

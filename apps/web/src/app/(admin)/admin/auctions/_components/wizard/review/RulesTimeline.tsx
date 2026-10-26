@@ -1,189 +1,451 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { Check, Clock, Loader2 } from 'lucide-react';
+import {
+  CalendarClock,
+  ClipboardList,
+  CreditCard,
+  FileText,
+  Flag,
+  Gavel,
+  Info,
+  Landmark,
+  Loader2,
+  Lock,
+  SquarePen,
+  Zap,
+  type LucideIcon,
+} from 'lucide-react';
 import { cn } from '@repo/ui';
 import type { AuctionWorkflowStep } from '@repo/api';
 import { paymentStepData, resolveStr } from '../../../_components/PolicyShared';
 import type { PriceWindow, WizardState } from '../../../_lib/wizard/types';
-import { PolicyBadge } from '../ui/wizard-ui';
 import {
-  formatDateTime,
-  formatDuration,
+  endTimeFor,
   formatShortDate,
   formatTime,
   latestCloseFor,
-  endTimeFor,
-  offsetLabelParts,
   parseDuration,
-  softCloseLabel,
-  tiesLabel,
-  winnerBase,
-  winnerLabel,
   windowSummary,
 } from '../../../_lib/wizard/summary';
+import { offsetMinutes } from '../../../_lib/wizard/workflow';
 import {
-  WORKFLOW_TYPE_DESCRIPTION,
-  deadlineFor,
-  headValue,
-  offsetMinutes,
-  postDeadlineFor,
-  stepFields,
-  stepTitle,
-} from '../../../_lib/wizard/workflow';
+  buildTimeline,
+  type TimelineIcon,
+  type TimelineItem,
+  type TimelinePhase,
+} from './timeline';
 
-function PhaseCard({
-  phase,
-  icon,
-  meta,
-  right,
-  children,
+const ITEM_ICON: Record<TimelineIcon, LucideIcon> = {
+  terms: FileText,
+  form: ClipboardList,
+  custom: SquarePen,
+  bank: Landmark,
+  payment: CreditCard,
+  policy: Zap,
+  sealed: Lock,
+};
+
+const PHASE_STYLE: Record<TimelinePhase['id'], { box: string; icon: string; Icon: LucideIcon }> = {
+  pre: { box: 'border-info/25 bg-info/5', icon: 'text-info', Icon: CalendarClock },
+  during: { box: 'border-primary/30 bg-primary/10', icon: 'text-primary', Icon: Gavel },
+  post: { box: 'border-success/25 bg-success/5', icon: 'text-success', Icon: Flag },
+};
+
+/** Proportional strip showing how the price windows divide the auction time. */
+function WindowTrack({
+  windows,
+  symbol,
+  start,
+  closing,
+  latestClose,
+  softClose,
 }: {
-  phase: string;
-  icon: ReactNode;
-  meta: string;
-  right?: ReactNode;
-  children: ReactNode;
+  windows: PriceWindow[];
+  symbol: string;
+  start: string;
+  closing: string;
+  latestClose: string;
+  softClose: boolean;
+}) {
+  if (windows.length === 0) return null;
+  const startMs = Date.parse(start);
+  const closeMs = Date.parse(closing);
+  const latestMs = Date.parse(latestClose);
+  const timed = Number.isFinite(startMs) && Number.isFinite(closeMs) && closeMs > startMs;
+  const total = timed ? (closeMs - startMs) / 60_000 : 120;
+
+  const minutesOf = (window: PriceWindow) => {
+    const { hours, minutes } = parseDuration(window.duration);
+    return hours * 60 + minutes;
+  };
+  // Each window starts where the ones before it end; the last runs to the close.
+  const starts = windows.map((_, index) =>
+    windows.slice(0, index).reduce((acc, window) => acc + minutesOf(window), 0),
+  );
+  const segments = windows.map((window, index) => {
+    const isLast = index === windows.length - 1;
+    const from = starts[index]!;
+    const length = isLast ? Math.max(total - from, total * 0.06) : Math.max(minutesOf(window), 1);
+    return {
+      key: window.id || `w-${index}`,
+      label: `${index + 1} · ${windowSummary(window, symbol)}`,
+      from,
+      length,
+    };
+  });
+  const extension =
+    softClose && timed && Number.isFinite(latestMs) && latestMs > closeMs
+      ? Math.max((latestMs - closeMs) / 60_000, total * 0.12)
+      : softClose
+        ? total * 0.25
+        : 0;
+  const sum = segments.reduce((acc, segment) => acc + segment.length, 0) + extension;
+  const at = (minutes: number) =>
+    timed ? formatTime(new Date(startMs + minutes * 60_000).toISOString()) : `+${minutes} min`;
+  const tones = ['bg-primary/45', 'bg-primary/70', 'bg-primary'];
+  const label = segments.map((segment) => `Window ${segment.label}`).join(', ');
+
+  return (
+    <div className="mt-3">
+      <div
+        role="img"
+        aria-label={label + (extension ? ', continuing through any extension' : '')}
+        className="flex h-[34px] overflow-hidden rounded-md border border-input"
+      >
+        {segments.map((segment, index) => (
+          <div
+            key={segment.key}
+            style={{ flexGrow: segment.length }}
+            className={cn(
+              'flex min-w-0 basis-0 items-center overflow-hidden whitespace-nowrap border-r border-card px-2 text-[11px] font-bold tabular-nums text-primary-foreground',
+              tones[index % tones.length],
+            )}
+          >
+            <span className="truncate">{segment.label}</span>
+          </div>
+        ))}
+        {extension > 0 && (
+          <div
+            style={{ flexGrow: extension }}
+            className="flex min-w-0 basis-0 items-center overflow-hidden whitespace-nowrap bg-primary/20 px-2 text-[11px] font-bold text-foreground"
+          >
+            <span className="truncate">{windows.length} continues</span>
+          </div>
+        )}
+      </div>
+      <div className="relative mt-1 h-4 text-[10px] tabular-nums opacity-75">
+        <span className="absolute left-0">{at(0)}</span>
+        {segments.slice(1).map((segment) => (
+          <span
+            key={segment.key}
+            className="absolute -translate-x-1/2"
+            style={{ left: `${(segment.from / sum) * 100}%` }}
+          >
+            {at(segment.from)}
+          </span>
+        ))}
+        <span className="absolute right-0">
+          {timed ? formatTime(new Date(closeMs).toISOString()) : 'Close'}
+          {extension > 0 && Number.isFinite(latestMs) && latestMs > closeMs
+            ? ` → ${formatTime(new Date(latestMs).toISOString())}`
+            : ''}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/** The time tag at the top of each card. Its left end tapers into a curve that
+ *  cups the item's dot on the rail. */
+function TimeTag({ item }: { item: TimelineItem }) {
+  return (
+    <div
+      className={cn(
+        'relative -ml-[19px] flex h-[54px] max-w-full shrink-0 flex-col justify-center whitespace-nowrap border-2 border-l-0 pl-2 pr-4',
+        item.policy ? 'border-policy bg-policy-raise' : 'border-foreground bg-secondary',
+      )}
+    >
+      <svg
+        className="absolute -left-[28px] -top-[2px] h-[54px] w-[28px] overflow-visible"
+        viewBox="0 0 28 54"
+        aria-hidden
+      >
+        <path
+          className={item.policy ? 'fill-policy-raise' : 'fill-secondary'}
+          d="M28 0L1.87 9A24 24 0 0 1 1.87 45L28 54Z"
+        />
+        <path
+          className={cn('fill-none', item.policy ? 'stroke-policy' : 'stroke-foreground')}
+          strokeWidth={2}
+          strokeLinejoin="round"
+          d="M28 1L1.87 9A24 24 0 0 1 1.87 45L28 53"
+        />
+      </svg>
+      <b
+        className={cn(
+          'text-[13px] font-semibold tabular-nums',
+          item.policy ? 'text-policy-foreground' : 'text-foreground/85',
+        )}
+      >
+        {item.timeMain}
+      </b>
+      <span
+        className={cn(
+          'text-[11px]',
+          item.policy ? 'text-policy-foreground/70' : 'text-muted-foreground',
+        )}
+      >
+        {item.timeSub}
+      </span>
+    </div>
+  );
+}
+
+function Tag({
+  children,
+  tone,
+  onPolicy,
+}: {
+  children: string;
+  tone: 'step' | 'policy' | 'default' | 'optional' | 'dark' | 'ok';
+  onPolicy: boolean;
 }) {
   return (
-    <section className="overflow-hidden rounded-md border border-border">
-      <header className="flex flex-wrap items-center gap-2 bg-info/5 px-3 py-2">
-        <span className="flex h-5 w-5 items-center justify-center rounded-full border border-info/30 bg-info/10 text-info">
-          {icon}
+    <span
+      className={cn(
+        'inline-flex h-5 items-center whitespace-nowrap rounded-full border px-2 text-[10px] font-semibold',
+        tone === 'policy' &&
+          'border-transparent bg-[image:var(--gradient-gold)] text-primary-foreground',
+        tone !== 'policy' &&
+          onPolicy &&
+          'border-transparent bg-policy-foreground/10 text-policy-foreground/90',
+        !onPolicy && tone === 'step' && 'border-foreground bg-card text-foreground',
+        !onPolicy &&
+          tone === 'default' &&
+          'border-transparent bg-secondary text-secondary-foreground',
+        !onPolicy && tone === 'optional' && 'border-input bg-card text-muted-foreground',
+        !onPolicy && tone === 'dark' && 'border-transparent bg-foreground text-background',
+        !onPolicy && tone === 'ok' && 'border-success/30 bg-success/10 text-success',
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+function ItemCard({ item, track }: { item: TimelineItem; track: ReactNode }) {
+  const muted = item.policy ? 'text-policy-foreground/75' : 'text-muted-foreground';
+  return (
+    <article
+      className={cn(
+        'relative rounded-md border px-[18px] pb-4 pt-3.5',
+        item.policy
+          ? 'border-policy bg-policy text-policy-foreground'
+          : 'border-border bg-card text-card-foreground shadow-sm',
+      )}
+    >
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5">
+        <TimeTag item={item} />
+        <div className="flex min-w-0 flex-[1_1_240px] flex-wrap items-center gap-x-2.5 gap-y-1.5">
+          {item.n !== undefined && (
+            <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-foreground text-[11px] font-bold text-background">
+              {item.n}
+            </span>
+          )}
+          <h4 className="text-sm font-semibold">{item.name}</h4>
+          <Tag tone={item.policy ? 'policy' : 'step'} onPolicy={item.policy}>
+            {item.tag}
+          </Tag>
+          {item.req && (
+            <Tag tone={item.req.tone} onPolicy={item.policy}>
+              {item.req.label}
+            </Tag>
+          )}
+        </div>
+      </div>
+
+      <p
+        className={cn(
+          'mt-2 text-xs leading-relaxed',
+          item.policy ? 'text-policy-foreground/80' : 'text-foreground/80',
+        )}
+      >
+        {item.desc}
+      </p>
+
+      {item.chips && (
+        <div className="mt-2.5 flex flex-wrap gap-1.5">
+          {item.chips.map((chip) => (
+            <span
+              key={chip}
+              className="inline-flex h-6 items-center rounded-full border border-dashed border-muted-foreground/50 bg-muted/35 px-2.5 text-[11px]"
+            >
+              {chip}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {item.heads && (
+        <div className="mt-2.5 divide-y divide-border overflow-hidden rounded-md border border-border">
+          {item.heads.map((head, index) => (
+            <div
+              key={`${head.name}-${index}`}
+              className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 bg-muted/35 px-3 py-2 text-xs sm:grid-cols-[minmax(0,1fr)_auto_auto]"
+            >
+              <span className="min-w-0">
+                <b className="font-semibold">{head.name}</b>
+                <span className={muted}> · {head.sub}</span>
+              </span>
+              <Tag tone={head.refundable ? 'ok' : 'default'} onPolicy={item.policy}>
+                {head.refundable ? 'Refundable' : 'Not refundable'}
+              </Tag>
+              <span className="tabular-nums sm:text-right">{head.amount}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {item.track && track}
+
+      {item.terms && (
+        <details className="mt-2.5">
+          <summary className="flex min-h-8 w-fit cursor-pointer items-center rounded-sm text-xs font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            Read the terms
+          </summary>
+          <ol className="mt-2 list-decimal space-y-1 rounded-md bg-muted/45 py-2.5 pl-8 pr-3 text-xs leading-relaxed">
+            {item.terms.map((line, index) => (
+              <li key={index}>{line}</li>
+            ))}
+          </ol>
+        </details>
+      )}
+
+      {item.details && (
+        <details className="mt-2.5">
+          <summary className="flex min-h-8 w-fit cursor-pointer items-center rounded-sm text-xs font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            {item.details.title}
+          </summary>
+          <dl
+            className={cn(
+              'mt-1.5 grid grid-cols-[minmax(0,140px)_minmax(0,1fr)] gap-x-4 gap-y-1.5 rounded-md border border-dashed px-3 py-2.5 text-xs',
+              item.policy ? 'border-policy-foreground/25' : 'border-input',
+            )}
+          >
+            {item.details.rows.map((row) => (
+              <div key={row.k} className="contents">
+                <dt className={muted}>{row.k}</dt>
+                <dd className="break-words font-mono text-[11px]">{row.v}</dd>
+              </div>
+            ))}
+          </dl>
+        </details>
+      )}
+
+      {item.note && (
+        <div
+          className={cn(
+            'mt-3 flex items-start gap-2 rounded-md px-3 py-2.5 text-xs leading-snug',
+            item.policy
+              ? 'bg-policy-foreground/10 text-policy-foreground/90'
+              : item.note.tone === 'success'
+                ? 'bg-success/10 text-success'
+                : 'bg-muted/60 text-foreground/80',
+          )}
+        >
+          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+          <span>{item.note.text}</span>
+        </div>
+      )}
+    </article>
+  );
+}
+
+function PhaseBlock({ phase, track }: { phase: TimelinePhase; track: ReactNode }) {
+  const style = PHASE_STYLE[phase.id];
+  const items = phase.groups.flatMap((group) => group.items);
+  const position = (item: TimelineItem) => items.indexOf(item);
+
+  return (
+    <section
+      aria-label={phase.title}
+      className={cn('rounded-lg border px-3 pb-1.5 pt-4 sm:px-5', style.box)}
+    >
+      <div className="mb-4 flex flex-wrap items-center gap-x-3.5 gap-y-2.5">
+        <span
+          className={cn(
+            'flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-card/85',
+            style.icon,
+          )}
+        >
+          <style.Icon className="h-[18px] w-[18px]" aria-hidden />
         </span>
         <div className="min-w-0">
-          <p className="text-xs font-semibold text-foreground">{phase}</p>
-          <p className="text-[10px] text-muted-foreground">{meta}</p>
+          <h4 className="text-[15px] font-semibold text-foreground">{phase.title}</h4>
+          <p className="mt-px text-xs text-muted-foreground">{phase.sub}</p>
         </div>
-        {right && <div className="ml-auto text-[10px] text-muted-foreground">{right}</div>}
-      </header>
-      <div className="space-y-2 bg-background p-2.5">{children}</div>
-    </section>
-  );
-}
-
-function WorkflowCard({
-  step,
-  index,
-  start,
-  bidWord,
-  post,
-}: {
-  step: AuctionWorkflowStep;
-  index: number;
-  start: string;
-  bidWord: string;
-  post?: boolean;
-}) {
-  const type = resolveStr(step.type);
-  const fields = stepFields(step);
-  const data = paymentStepData(step);
-  return (
-    <article className="rounded-md border border-border bg-card px-3 py-2.5">
-      <div className="flex flex-wrap items-start gap-2">
-        <div className="w-28 shrink-0 text-[10px] leading-snug text-muted-foreground">
-          {post ? postDeadlineFor(step) : deadlineFor(step, start)}
-        </div>
-        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-muted text-[9px] font-semibold text-muted-foreground">
-          {index}
+        <span className="ml-auto inline-flex min-h-[30px] items-center rounded-full bg-card/85 px-3 text-xs font-medium tabular-nums text-foreground">
+          {phase.range}
         </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-xs font-semibold text-foreground">{stepTitle(step)}</span>
-            <span className="rounded-full border border-border px-1.5 py-0.5 text-[9px] text-muted-foreground">
-              Workflow step
-            </span>
-            <span className="rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-medium text-foreground">
-              Required
-            </span>
-          </div>
-          <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
-            {step.description ||
-              WORKFLOW_TYPE_DESCRIPTION[type] ||
-              'Participants complete this step.'}
-          </p>
-          {type === 'TNC_FORM_STEP' &&
-            (step.tncText ? (
-              <div className="mt-1.5 space-y-0.5 rounded border border-border/60 bg-muted/20 px-2 py-1.5">
-                <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Terms
-                </p>
-                {step.tncText
-                  .split(/\n+/)
-                  .filter(Boolean)
-                  .slice(0, 3)
-                  .map((line, lineIndex) => (
-                    <p key={lineIndex} className="text-[10px] leading-snug text-muted-foreground">
-                      {line}
-                    </p>
-                  ))}
-              </div>
-            ) : (
-              <p className="mt-1.5 text-[10px] text-info">Terms document attached.</p>
-            ))}
-          {type === 'PARTICIPATION_FORM_STEP' && step.manualApproval && (
-            <p className="mt-1.5 text-[10px] text-warning">
-              You approve each participant after they submit.
-            </p>
-          )}
-          {fields.length > 0 && (
-            <div className="mt-1.5 flex flex-wrap gap-1">
-              {fields.map((field) => (
-                <span
-                  key={field}
-                  className="rounded-full border border-border px-1.5 py-0.5 text-[9px] text-muted-foreground"
-                >
-                  {field}
-                </span>
-              ))}
-            </div>
-          )}
-          {type === 'PAYMENT_STEP' && data.heads.length > 0 && (
-            <div className="mt-1.5 divide-y divide-border/60 rounded border border-border/60">
-              {data.heads.map((head, headIndex) => (
-                <div
-                  key={`${head.name}-${headIndex}`}
-                  className="flex flex-wrap items-center gap-2 px-2 py-1 text-[10px]"
-                >
-                  <span className="font-medium text-foreground">{head.name}</span>
-                  <span className="text-muted-foreground">{head.description}</span>
-                  <span className="ml-auto text-muted-foreground">
-                    {head.refundable ? 'Refundable' : 'Not refundable'}
-                  </span>
-                  <span className="tabular-nums text-foreground">
-                    {headValue(head, bidWord === 'ask' ? 'winning ask' : 'winning price')}
-                  </span>
+      </div>
+
+      <div className="pb-3.5">
+        {phase.groups.map((group) => (
+          <div key={group.key} role="group" aria-label={group.label} className="relative">
+            {group.same && (
+              <span
+                aria-hidden
+                className="absolute -left-2.5 bottom-5 top-4 w-14 rounded-[28px] border-[1.5px] border-dashed border-foreground/45 bg-card/50"
+              />
+            )}
+            {group.items.map((item) => {
+              const index = position(item);
+              const Icon = ITEM_ICON[item.icon];
+              return (
+                <div key={item.key} className="grid grid-cols-[36px_minmax(0,1fr)] gap-x-6">
+                  <div className="relative" aria-hidden>
+                    {items.length > 1 && (
+                      <span
+                        className={cn(
+                          'absolute left-1/2 -ml-px w-0.5 bg-foreground/15',
+                          index === 0
+                            ? 'bottom-0 top-[42px]'
+                            : index === items.length - 1
+                              ? 'top-0 h-[42px]'
+                              : 'inset-y-0',
+                        )}
+                      />
+                    )}
+                    {item.span && (
+                      <span
+                        className={cn(
+                          'absolute left-1/2 top-[42px] -ml-1 w-2 rounded bg-foreground/30',
+                          item.span === 'long' ? '-bottom-[60px]' : 'bottom-3',
+                        )}
+                      />
+                    )}
+                    <span
+                      className={cn(
+                        'absolute left-1/2 top-6 z-[1] -ml-[18px] flex h-9 w-9 items-center justify-center border-2',
+                        item.policy
+                          ? 'rounded-md border-policy bg-policy text-primary'
+                          : 'rounded-full border-foreground bg-card text-foreground',
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </span>
+                  </div>
+                  <div className="min-w-0 pb-4">
+                    <ItemCard item={item} track={track} />
+                  </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              );
+            })}
+          </div>
+        ))}
       </div>
-    </article>
-  );
-}
-
-function PolicySummaryCard({
-  title,
-  timing,
-  children,
-}: {
-  title: string;
-  timing: string;
-  children: ReactNode;
-}) {
-  return (
-    <article className="rounded-md border border-border bg-card px-3 py-2">
-      <div className="flex flex-wrap items-center gap-1.5">
-        <span className="flex h-5 w-5 items-center justify-center rounded bg-primary/10 text-primary">
-          <Check className="h-3 w-3" aria-hidden />
-        </span>
-        <span className="text-xs font-semibold text-foreground">{title}</span>
-        <PolicyBadge />
-        <span className="ml-auto text-[10px] text-muted-foreground">{timing}</span>
-      </div>
-      <p className="mt-1 pl-7 text-[11px] leading-snug text-muted-foreground">{children}</p>
-    </article>
+    </section>
   );
 }
 
@@ -208,110 +470,8 @@ function opensIn(start: string): string {
   return `Opens in ${hours} h ${minutes} min`;
 }
 
-interface TimelineSegment {
-  key: string;
-  label: string;
-  start: number;
-  end: number;
-  extension: boolean;
-}
-
-/** Proportional bar showing how each price window divides the auction time. */
-function WindowTimeline({
-  windows,
-  symbol,
-  start,
-  closing,
-  latestClose,
-  softClose,
-}: {
-  windows: PriceWindow[];
-  symbol: string;
-  start: string;
-  closing: string;
-  latestClose: string;
-  softClose: boolean;
-}) {
-  if (windows.length === 0) return null;
-
-  const startMs = Date.parse(start);
-  const closeMs = Date.parse(closing);
-  const latestMs = Date.parse(latestClose);
-  const timed = Number.isFinite(startMs) && Number.isFinite(closeMs) && closeMs > startMs;
-
-  const spans = windows.map((window) => {
-    const duration = parseDuration(window.duration);
-    return (duration.hours * 60 + duration.minutes) * 60_000;
-  });
-  const cumulative = spans.map((_, index) =>
-    spans.slice(0, index).reduce((total, span) => total + span, 0),
-  );
-
-  const segments: TimelineSegment[] = windows.map((window, index) => {
-    const isLast = index === windows.length - 1;
-    const startAt = timed ? Math.min(startMs + (cumulative[index] ?? 0), closeMs) : index;
-    const end = timed
-      ? isLast
-        ? closeMs
-        : Math.min(startAt + Math.max(spans[index] ?? 1, 1), closeMs)
-      : index + 1;
-    return {
-      key: window.id || `window-${index}`,
-      label: `${index + 1} · ${windowSummary(window, symbol)}`,
-      start: startAt,
-      end,
-      extension: false,
-    };
-  });
-
-  if (softClose && timed && Number.isFinite(latestMs) && latestMs > closeMs) {
-    segments.push({
-      key: 'extensions',
-      label: 'Extensions',
-      start: closeMs,
-      end: latestMs,
-      extension: true,
-    });
-  }
-
-  return (
-    <div className="mt-1.5">
-      <div className="flex overflow-hidden rounded-md border border-border">
-        {segments.map((segment) => (
-          <div
-            key={segment.key}
-            title={segment.label}
-            style={{ flexGrow: Math.max(segment.end - segment.start, 1) }}
-            className={cn(
-              'flex min-w-0 items-center justify-center border-r border-background/25 px-1 py-1 text-[9px] font-medium last:border-r-0',
-              segment.extension
-                ? 'bg-warning/25 text-foreground'
-                : 'bg-primary text-primary-foreground',
-            )}
-          >
-            <span className="truncate">{segment.label}</span>
-          </div>
-        ))}
-      </div>
-      {timed && (
-        <div className="mt-0.5 flex text-[9px] text-muted-foreground">
-          <span className="shrink-0">{formatTime(new Date(startMs).toISOString())}</span>
-          {segments.map((segment) => (
-            <span
-              key={segment.key}
-              style={{ flexGrow: Math.max(segment.end - segment.start, 1) }}
-              className="min-w-0 text-right"
-            >
-              {formatTime(new Date(segment.end).toISOString())}
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/** Three-phase timeline (pre, during, post) plus the key dates sidebar. */
+/** Three-phase rules timeline (pre, during, post) on a vertical rail, plus the
+ *  key moments and legend. */
 export function RulesTimeline({
   state,
   preSteps,
@@ -336,229 +496,46 @@ export function RulesTimeline({
   const start = schedule.startTime;
   const closing = endTimeFor(schedule);
   const latestClose = latestCloseFor(schedule);
-  const bidWord = basics.direction === 'FORWARD' ? 'bid' : 'ask';
-  const bidderWord = basics.direction === 'FORWARD' ? 'bidder' : 'supplier';
-  const lastWindow = offer.windows[offer.windows.length - 1];
+  const sealed = offer.mechanism === 'SEALED';
+  const softClose = schedule.softCloseEnabled && offer.mechanism === 'OPEN';
+  const phases = buildTimeline(state, preSteps, postSteps);
 
   const paymentStep = postSteps.find((step) => resolveStr(step.type) === 'PAYMENT_STEP');
-  const paymentOffset = paymentStep
-    ? (paymentStep.offset ?? paymentStepData(paymentStep).offset)
-    : undefined;
+  const paymentOffset = paymentStep ? paymentStepData(paymentStep).offset : undefined;
 
-  const progressionText =
-    offer.mechanism === 'SEALED'
-      ? 'no price progression'
-      : `${offer.windows.length} window${offer.windows.length === 1 ? '' : 's'}`;
+  const policyCount = (participation.minimumEnabled ? 1 : 0) + (sealed ? 0 : softClose ? 2 : 1) + 3;
+  const stepCount = workflowCount + postWorkflowCount;
 
-  const policyCount =
-    1 + (offer.mechanism !== 'SEALED' ? 1 : 0) + (schedule.softCloseEnabled ? 1 : 0) + 3;
-  const phaseCount = 3;
+  const track = (
+    <WindowTrack
+      windows={offer.windows}
+      symbol={symbol}
+      start={start}
+      closing={closing}
+      latestClose={latestClose}
+      softClose={softClose}
+    />
+  );
 
   return (
     <>
       <header className="flex flex-wrap items-baseline gap-x-2 gap-y-1 border-b border-border bg-muted/20 px-4 py-2.5">
         <h3 className="text-sm font-semibold text-foreground">Auction rules timeline</h3>
-        <p className="ml-auto text-[10px] text-muted-foreground">
-          {policyCount} policies · {workflowCount + postWorkflowCount} workflow steps · across{' '}
-          {phaseCount} phases
+        <p className="ml-auto text-[11px] text-muted-foreground">
+          {policyCount} {policyCount === 1 ? 'policy' : 'policies'} · {stepCount} workflow step
+          {stepCount === 1 ? '' : 's'} · across 3 phases
         </p>
       </header>
 
-      <div className="grid gap-3 p-3 lg:grid-cols-[minmax(0,1fr)_200px]">
-        <div className="space-y-2">
+      <div className="grid gap-4 p-3 sm:p-4 xl:grid-cols-[minmax(0,1fr)_240px]">
+        <div className="min-w-0 space-y-3">
           {loadingSteps ? (
             <div className="flex items-center justify-center gap-2 py-8 text-xs text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
               Loading timeline…
             </div>
           ) : (
-            <>
-              <PhaseCard
-                phase="Pre auction"
-                icon={<Clock className="h-3 w-3" aria-hidden />}
-                meta={`${preSteps.length} workflow step${preSteps.length === 1 ? '' : 's'} · ${
-                  participation.minimumEnabled ? 1 : 0
-                } policy`}
-                right={start ? `until ${formatDateTime(start)}` : 'until the start'}
-              >
-                {preSteps.length === 0 ? (
-                  <p className="px-1 py-2 text-[11px] text-muted-foreground">
-                    No steps before the auction.
-                  </p>
-                ) : (
-                  preSteps.map((step, index) => (
-                    <WorkflowCard
-                      key={step.id}
-                      step={step}
-                      index={index + 1}
-                      start={start}
-                      bidWord={bidWord}
-                    />
-                  ))
-                )}
-                {participation.minimumEnabled && (
-                  <article className="rounded-md bg-foreground px-3 py-2 text-background">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="flex h-5 w-5 items-center justify-center rounded bg-primary text-primary-foreground">
-                        <Check className="h-3 w-3" aria-hidden />
-                      </span>
-                      <span className="text-xs font-semibold">Minimum participants</span>
-                      <PolicyBadge />
-                      <span className="ml-auto text-[10px] text-background/60">
-                        {offsetLabelParts(
-                          `PT${(parseInt(participation.checkDays, 10) || 0) * 24 + (parseInt(participation.checkHours, 10) || 0)}H${
-                            parseInt(participation.checkMinutes, 10) || 0
-                          }M`,
-                          'start',
-                        ) || 'at the start'}
-                      </span>
-                    </div>
-                    <p className="mt-1 pl-7 text-[10px] leading-snug text-background/70">
-                      Fewer than {participation.minimumCount} ready and the auction is cancelled
-                      automatically.
-                    </p>
-                  </article>
-                )}
-              </PhaseCard>
-
-              <PhaseCard
-                phase="During auction"
-                icon={<Clock className="h-3 w-3" aria-hidden />}
-                meta={
-                  offer.mechanism === 'SEALED'
-                    ? `No policies · sealed ${bidWord}s, no workflow steps`
-                    : `${schedule.softCloseEnabled ? 2 : 1} policies · participants just place ${bidWord}s, no workflow steps`
-                }
-                right={
-                  start && closing
-                    ? `${formatDateTime(start)} → ${formatTime(closing)}`
-                    : 'start → close'
-                }
-              >
-                {offer.mechanism === 'SEALED' ? (
-                  <article className="rounded-md border border-border bg-card px-3 py-2">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-xs font-semibold text-foreground">Sealed bids</span>
-                      <span className="rounded-full bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground">
-                        Opened at the close
-                      </span>
-                    </div>
-                    <p className="mt-1 text-[11px] text-muted-foreground">
-                      Each {bidderWord} submits a hidden {bidWord}. They can revise it until the
-                      deadline. Nobody sees any {bidWord} until the opening.
-                    </p>
-                  </article>
-                ) : (
-                  <>
-                    <article className="rounded-md border border-border bg-card px-3 py-2">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="text-xs font-semibold text-foreground">
-                          Price progression
-                        </span>
-                        <PolicyBadge />
-                        <span className="ml-auto text-[10px] text-muted-foreground">
-                          {progressionText}
-                        </span>
-                      </div>
-                      <WindowTimeline
-                        windows={offer.windows}
-                        symbol={symbol}
-                        start={start}
-                        closing={closing}
-                        latestClose={latestClose}
-                        softClose={schedule.softCloseEnabled}
-                      />
-                      <p className="mt-1.5 text-[10px] font-medium text-muted-foreground">
-                        Window details
-                      </p>
-                      <ul className="mt-0.5 space-y-0.5 pl-1 text-[10px] text-muted-foreground">
-                        {offer.windows.map((window, index) => (
-                          <li key={window.id}>
-                            <span className="font-medium text-foreground">Window {index + 1}</span>{' '}
-                            · {windowSummary(window, symbol)} · {formatDuration(window.duration)}
-                          </li>
-                        ))}
-                      </ul>
-                    </article>
-                    {schedule.softCloseEnabled && (
-                      <article className="rounded-md border border-border bg-card px-3 py-2">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <span className="text-xs font-semibold text-foreground">Soft close</span>
-                          <PolicyBadge />
-                          <span className="ml-auto text-[10px] text-muted-foreground">
-                            {softCloseLabel(schedule)}
-                          </span>
-                        </div>
-                        <p className="mt-1 text-[10px] leading-snug text-muted-foreground">
-                          A {bidWord} in the last {schedule.extendMinutes} min adds{' '}
-                          {schedule.extendMinutes} min to the close
-                          {schedule.limitEnabled ? `, up to ${schedule.extensionLimit} times` : ''}.
-                          Latest possible close: {formatTime(latestClose)}.
-                        </p>
-                        {lastWindow && (
-                          <p className="mt-1.5 rounded border border-info/20 bg-info/5 px-2 py-1 text-[10px] leading-snug text-muted-foreground">
-                            Overlaps with Price progression. Window {offer.windows.length} (
-                            {windowSummary(lastWindow, symbol)}) stays in force during every
-                            extension.
-                          </p>
-                        )}
-                      </article>
-                    )}
-                  </>
-                )}
-              </PhaseCard>
-
-              <PhaseCard
-                phase="Post auction"
-                icon={<Clock className="h-3 w-3" aria-hidden />}
-                meta={`3 policies · ${postSteps.length} workflow step${
-                  postSteps.length === 1 ? '' : 's'
-                }`}
-                right={
-                  closing
-                    ? `from close · ${formatTime(closing)}${
-                        latestClose !== closing ? ` (${formatTime(latestClose)} at latest)` : ''
-                      }`
-                    : 'from the close'
-                }
-              >
-                <PolicySummaryCard
-                  title="Who wins"
-                  timing={offer.mechanism === 'CLOCK' ? 'When the clock stops' : 'At close'}
-                >
-                  {offer.mechanism === 'CLOCK'
-                    ? 'The last bidder left in wins.'
-                    : `${winnerBase(state)}.`}
-                </PolicySummaryCard>
-                <PolicySummaryCard title="Ties" timing="Right after Who wins">
-                  If the winning {bidWord}s tie, {tiesLabel(state).toLowerCase()}.
-                </PolicySummaryCard>
-                <PolicySummaryCard title="Winning price" timing="Once the winner is known">
-                  {offer.mechanism === 'CLOCK'
-                    ? 'The winner owes the clock price when the last rival drops out.'
-                    : `The winner owes ${
-                        winnerLabel(state).split(' · ')[1] === 'own price'
-                          ? `their own winning ${bidWord}`
-                          : `the ${state.award.winnerPriceKth === '2' ? '2nd' : '3rd'}-${bidWord}`
-                      }.`}
-                </PolicySummaryCard>
-                {postSteps.map((step, index) => (
-                  <WorkflowCard
-                    key={step.id}
-                    step={step}
-                    index={index + 1}
-                    start={start}
-                    bidWord={bidWord}
-                    post
-                  />
-                ))}
-                {postSteps.length === 0 && (
-                  <p className="px-1 py-1 text-[11px] text-muted-foreground">
-                    No steps after the auction yet.
-                  </p>
-                )}
-              </PhaseCard>
-            </>
+            phases.map((phase) => <PhaseBlock key={phase.id} phase={phase} track={track} />)
           )}
 
           {stepsError && (
@@ -568,17 +545,17 @@ export function RulesTimeline({
           )}
         </div>
 
-        <aside className="space-y-2">
-          <div className="rounded-md bg-foreground p-3 text-background">
-            <span className="inline-flex rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-semibold text-primary-foreground">
+        <aside aria-label="Key moments and legend" className="space-y-3">
+          <div className="rounded-md bg-policy p-4 text-policy-foreground">
+            <span className="inline-flex rounded-full bg-[image:var(--gradient-gold)] px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
               {published ? 'Published' : 'Upcoming'}
             </span>
-            <p className="mt-1.5 text-xs font-semibold">{opensIn(start)}</p>
-            <dl className="mt-2 space-y-1.5 text-[10px]">
+            <p className="mt-2 font-display text-base font-semibold">{opensIn(start)}</p>
+            <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 border-t border-policy-foreground/15 pt-3 text-xs">
               {participation.minimumEnabled && (
-                <div className="flex items-start justify-between gap-2">
-                  <dt className="text-background/60">Minimum check</dt>
-                  <dd className="text-right text-background/90">
+                <>
+                  <dt className="text-policy-foreground/70">Minimum check</dt>
+                  <dd className="text-right tabular-nums">
                     {start
                       ? milestone(
                           start,
@@ -590,54 +567,53 @@ export function RulesTimeline({
                         )
                       : 'Set the start'}
                   </dd>
-                </div>
+                </>
               )}
-              <div className="flex items-start justify-between gap-2">
-                <dt className="text-background/60">Bidding</dt>
-                <dd className="text-right text-background/90">
-                  {start ? milestone(start) : 'Set the start'} →{' '}
-                  {closing ? formatTime(closing) : 'close'}
-                </dd>
-              </div>
-              <div className="flex items-start justify-between gap-2">
-                <dt className="text-background/60">Latest close</dt>
-                <dd className="text-right text-background/90">
-                  {latestClose ? milestone(latestClose) : 'Set the start'}
-                </dd>
-              </div>
-              <div className="flex items-start justify-between gap-2">
-                <dt className="text-background/60">Winner pays by</dt>
-                <dd className="text-right text-background/90">
-                  {closing
-                    ? paymentOffset
-                      ? milestone(new Date(closing).toISOString(), offsetMinutes(paymentOffset))
-                      : `${formatShortDate(closing)} + payment window`
-                    : 'Set the start'}
-                </dd>
-              </div>
+              <dt className="text-policy-foreground/70">Bidding</dt>
+              <dd className="text-right tabular-nums">
+                {start ? milestone(start) : 'Set the start'} →{' '}
+                {closing ? formatTime(closing) : 'close'}
+              </dd>
+              <dt className="text-policy-foreground/70">Latest close</dt>
+              <dd className="text-right tabular-nums">
+                {latestClose ? milestone(latestClose) : 'Set the start'}
+              </dd>
+              <dt className="text-policy-foreground/70">Winner pays by</dt>
+              <dd className="text-right tabular-nums">
+                {closing
+                  ? paymentOffset
+                    ? milestone(new Date(closing).toISOString(), offsetMinutes(paymentOffset))
+                    : `${formatShortDate(closing)} + payment window`
+                  : 'Set the start'}
+              </dd>
             </dl>
           </div>
 
-          <div className="rounded-md border border-border bg-card p-3 text-[10px] text-muted-foreground">
-            <p className="text-[11px] font-semibold text-foreground">Reading the timeline</p>
-            <ul className="mt-1.5 space-y-1">
-              <li className="flex items-center gap-1.5">
-                <span className="h-3 w-4 rounded-sm border border-border bg-card" aria-hidden />
-                White card · workflow step
-              </li>
-              <li className="flex items-center gap-1.5">
-                <span className="h-3 w-4 rounded-sm bg-foreground" aria-hidden />
-                Dark card · policy
-              </li>
-              <li className="flex items-center gap-1.5">
+          <div className="rounded-md border border-border bg-card p-4 text-xs text-muted-foreground">
+            <h4 className="text-[13px] font-semibold text-foreground">Reading the timeline</h4>
+            <ul className="mt-2.5 space-y-2.5">
+              <li className="flex items-center gap-3">
                 <span
-                  className="h-3 w-4 rounded-sm border border-dashed border-border"
+                  className="h-5 w-7 shrink-0 rounded-sm border-2 border-foreground bg-card"
                   aria-hidden
                 />
-                Same moment
+                White card · workflow step (a participant does it)
               </li>
-              <li className="flex items-center gap-1.5">
-                <span className="h-3 w-0.5 bg-muted-foreground/40" aria-hidden />
+              <li className="flex items-center gap-3">
+                <span className="h-5 w-7 shrink-0 rounded-sm bg-policy" aria-hidden />
+                Dark card · policy (applied automatically)
+              </li>
+              <li className="flex items-center gap-3">
+                <span
+                  className="h-5 w-7 shrink-0 rounded-full border-[1.5px] border-dashed border-foreground/45"
+                  aria-hidden
+                />
+                Rows inside a dashed capsule happen at the same moment
+              </li>
+              <li className="flex items-center gap-3">
+                <span className="flex h-5 w-7 shrink-0 justify-center" aria-hidden>
+                  <span className="w-2 rounded bg-foreground/30" />
+                </span>
                 Runs over a span of time
               </li>
             </ul>

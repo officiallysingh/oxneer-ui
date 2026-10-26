@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import type { AwardState } from '../../../_lib/wizard/types';
 import { OptionRow, inputClass } from '../ui/wizard-ui';
 
@@ -9,27 +10,40 @@ export function AwardSettings({
   form,
   onChange,
   reserveEnabled,
-  mechanism,
+  direction,
 }: {
   form: AwardState;
   onChange: (patch: Partial<AwardState>) => void;
   reserveEnabled: boolean;
-  mechanism: 'OPEN' | 'CLOCK' | 'SEALED';
+  direction: 'FORWARD' | 'REVERSE';
 }) {
+  const forward = direction === 'FORWARD';
+
+  // Accepting a bid past the reserve only makes sense while there is a reserve.
+  useEffect(() => {
+    if (!reserveEnabled && form.noSale === 'ACCEPT_BEST') onChange({ noSale: 'UNSOLD' });
+  }, [reserveEnabled, form.noSale, onChange]);
+
   return (
     <>
       <section className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="grid gap-4 px-4 py-4 md:grid-cols-[168px_minmax(0,1fr)]">
           <div>
-            <p className="text-xs font-semibold text-foreground">If nothing sells</p>
+            <p className="text-xs font-semibold text-foreground">
+              {forward ? 'If nothing sells' : 'If nothing is awarded'}
+            </p>
             <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
-              When no bid meets the reserve, or nobody bids.
+              {forward
+                ? 'When no bid meets the reserve, or nobody bids.'
+                : 'When no ask meets the reserve, or nobody takes part.'}
             </p>
           </div>
           <div className="space-y-2">
             <OptionRow
-              title="Mark the unit unsold"
-              description="The stock goes back to the listing."
+              title={forward ? 'Mark the unit unsold' : 'Award nothing'}
+              description={
+                forward ? 'The stock goes back to the listing.' : 'You can run a new auction later.'
+              }
               selected={form.noSale === 'UNSOLD'}
               onClick={() => onChange({ noSale: 'UNSOLD' })}
             />
@@ -39,9 +53,13 @@ export function AwardSettings({
               selected={form.noSale === 'REAUCTION'}
               onClick={() => onChange({ noSale: 'REAUCTION' })}
             />
-            {(reserveEnabled || mechanism === 'SEALED' || mechanism === 'CLOCK') && (
+            {reserveEnabled && (
               <OptionRow
-                title="Let me accept the best bid below the reserve"
+                title={
+                  forward
+                    ? 'Let me accept the best bid below the reserve'
+                    : 'Let me accept the best ask above the reserve'
+                }
                 description="You decide after the close."
                 selected={form.noSale === 'ACCEPT_BEST'}
                 onClick={() => onChange({ noSale: 'ACCEPT_BEST' })}

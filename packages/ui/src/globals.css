@@ -51,6 +51,11 @@
     --info: 217 85% 50%;
     --info-foreground: 0 0% 100%;
 
+    /* Policy cards stay dark in both themes; raise is the time tag on them. */
+    --policy: 220 20% 10%;
+    --policy-foreground: 40 25% 97%;
+    --policy-raise: 220 18% 19%;
+
     --gradient-gold: linear-gradient(135deg, hsl(42, 78%, 45%), hsl(42, 80%, 58%));
     --gradient-card: linear-gradient(180deg, hsl(0, 0%, 100%), hsl(40, 25%, 97%));
     --shadow-gold: 0 4px 30px -4px hsl(42 78% 45% / 0.2);
@@ -113,6 +118,10 @@
     --warning-foreground: 220 20% 7%;
     --info: 213 90% 62%;
     --info-foreground: 220 20% 7%;
+
+    --policy: 220 22% 15%;
+    --policy-foreground: 40 20% 92%;
+    --policy-raise: 220 18% 23%;
 
     --gradient-gold: linear-gradient(135deg, hsl(42, 78%, 55%), hsl(42, 80%, 68%));
     --gradient-card: linear-gradient(180deg, hsl(220, 18%, 12%), hsl(220, 18%, 8%));

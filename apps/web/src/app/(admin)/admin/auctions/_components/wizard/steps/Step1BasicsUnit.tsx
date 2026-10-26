@@ -63,6 +63,8 @@ export function Step1BasicsUnit({
   const symbol = currencySymbol(form.currencyUnit);
   const openingLabel = isForward ? 'Opening price' : 'Starting price';
   const reserveLabel = isForward ? 'Reserve price' : 'Maximum price';
+  const who = isForward ? 'bidders' : 'suppliers';
+  const Who = isForward ? 'Bidders' : 'Suppliers';
 
   const totalQuantity = useMemo(
     () => form.items.reduce((sum, item) => sum + (parseInt(item.quantity, 10) || 1), 0),
@@ -484,7 +486,13 @@ export function Step1BasicsUnit({
                   }`}
                 />
               </button>
-              {isForward ? 'Reserve price on' : 'Maximum price on'}
+              {form.reserveEnabled
+                ? isForward
+                  ? 'Reserve price on'
+                  : 'Maximum price on'
+                : isForward
+                  ? 'No reserve price'
+                  : 'No maximum price'}
             </label>
             {form.reserveEnabled && (
               <>
@@ -499,10 +507,10 @@ export function Step1BasicsUnit({
                     {form.reserveAmount
                       ? `${formatMoney(form.reserveAmount, form.currencyUnit)}, ${
                           form.reserveVisibility === 'HIDDEN'
-                            ? 'bidders do not see it'
+                            ? `${who} do not see it`
                             : form.reserveVisibility === 'SHOWN'
-                              ? 'bidders see the amount'
-                              : 'bidders see only whether it is met'
+                              ? `${who} see the amount`
+                              : `${who} see only whether it is met`
                         }`
                       : 'Add the amount you want to protect.'}
                   </p>
@@ -513,13 +521,9 @@ export function Step1BasicsUnit({
                   </p>
                   <div className="overflow-hidden rounded-md border border-border">
                     {[
-                      ['HIDDEN', 'Hidden', 'Bidders do not see it.'],
-                      ['SHOWN', 'Shown', 'Bidders see the amount.'],
-                      [
-                        'MET_ONLY',
-                        'Only "reserve met"',
-                        'Bidders see whether it has been reached.',
-                      ],
+                      ['HIDDEN', 'Hidden', `${Who} do not see it.`],
+                      ['SHOWN', 'Shown', `${Who} see the amount.`],
+                      ['MET_ONLY', 'Only "reserve met"', `${Who} see whether it has been reached.`],
                     ].map(([value, title, description]) => (
                       <button
                         key={value}

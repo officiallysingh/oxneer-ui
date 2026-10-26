@@ -33,7 +33,7 @@ export function PolicyCard({
         onClick={onToggle}
         aria-expanded={open}
         className={cn(
-          'flex w-full items-center gap-2.5 bg-foreground px-3 py-2.5 text-left text-background',
+          'flex w-full items-center gap-2.5 bg-policy px-3 py-2.5 text-left text-policy-foreground',
           open && 'border-b border-border',
         )}
       >
@@ -44,17 +44,17 @@ export function PolicyCard({
           <span className="flex flex-wrap items-center gap-1.5">
             <span className="text-xs font-semibold">{title}</span>
             <PolicyBadge />
-            <span className="rounded-full border border-background/30 px-1.5 py-0.5 text-[9px] font-medium text-background/80">
+            <span className="rounded-full border border-policy-foreground/30 px-1.5 py-0.5 text-[9px] font-medium text-policy-foreground/80">
               Post auction
             </span>
-            {timing && <span className="text-[10px] text-background/60">{timing}</span>}
+            {timing && <span className="text-[10px] text-policy-foreground/60">{timing}</span>}
           </span>
-          <span className="mt-0.5 block text-[11px] text-background/65">{subtitle}</span>
+          <span className="mt-0.5 block text-[11px] text-policy-foreground/65">{subtitle}</span>
         </span>
         {right}
         <ChevronDown
           className={cn(
-            'h-3.5 w-3.5 shrink-0 text-background/70 transition-transform',
+            'h-3.5 w-3.5 shrink-0 text-policy-foreground/70 transition-transform',
             open && 'rotate-180',
           )}
           aria-hidden

@@ -208,7 +208,7 @@ export function Step4Participation({
                   <Field label="At least">
                     <input
                       type="number"
-                      min={1}
+                      min={2}
                       value={form.minimumCount}
                       onChange={(e) => onChange({ minimumCount: e.target.value })}
                       className={`${inputClass} h-9 w-20`}
@@ -250,6 +250,11 @@ export function Step4Participation({
                     </div>
                   </Field>
                 </div>
+                {!((parseInt(form.minimumCount, 10) || 0) >= 2) && (
+                  <p role="alert" className="text-[11px] text-destructive">
+                    An auction needs at least 2 participants.
+                  </p>
+                )}
                 {checkAt && (
                   <p className="rounded bg-muted/60 px-2.5 py-1.5 text-[11px] text-muted-foreground">
                     <span className="font-semibold uppercase tracking-wider text-foreground">
@@ -270,7 +275,7 @@ export function Step4Participation({
 
             <WizardRow label="If it isn't met" description="Fixed outcome.">
               <div className="space-y-2">
-                <div className="rounded-md bg-foreground px-3 py-2 text-[11px] leading-snug text-background">
+                <div className="rounded-md bg-policy px-3 py-2 text-[11px] leading-snug text-policy-foreground">
                   If fewer than {form.minimumCount || 0} participants are ready at{' '}
                   {checkAt || 'the check time'}, the auction is cancelled automatically.
                 </div>

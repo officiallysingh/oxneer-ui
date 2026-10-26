@@ -31,6 +31,7 @@ All colors are HSL channel CSS variables, used as `hsl(var(--x))` and exposed as
 | `success`                    | emerald `160 60% 35%`         | `45%`                 | Active, verified, completed                                  |
 | `warning`                    | `32 95% 44%`                  | `38 92% 55%`          | Locked, expiring, needs attention                            |
 | `info`                       | `217 85% 50%`                 | `213 90% 62%`         | Neutral informational state, scheduled                       |
+| `policy` / `policy-raise`    | `220 20% 10%` / `220 18% 19%` | `220 22% 15%` / `23%` | Dark policy cards (stay dark in both themes) and their tags  |
 | `sidebar-*`                  |                               |                       | Admin sidebar only                                           |
 
 Brand aliases (`gold`, `gold-light`, `gold-dark`, `navy`, `cream`, `emerald`, `ruby`) exist as CSS vars. Prefer the semantic token (`primary`, `success`, `destructive`) in components. Use brand aliases only for marketing or hero surfaces.

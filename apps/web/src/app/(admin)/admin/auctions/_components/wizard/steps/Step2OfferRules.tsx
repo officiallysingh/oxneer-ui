@@ -324,7 +324,8 @@ function PriceWindowEditor({
                 </div>
                 <p className="mt-1 text-[10px] leading-snug text-muted-foreground">
                   Add each number of steps one bid may move the price, one at a time. A bid of 3
-                  steps moves the price by {formatMoney(parseAmount(window.value) * 3, 'INR')}.
+                  steps moves the price by{' '}
+                  {formatMoney(parseAmount(window.value) * 3, 'INR').replace('₹', symbol)}.
                 </p>
               </Field>
             </div>
@@ -425,6 +426,7 @@ export function Step2OfferRules({
     { INR: '₹', USD: '$', EUR: '€', GBP: '£', AED: 'د.إ', SGD: 'S$' }[currencyUnit] ?? currencyUnit;
   const bidWord = direction === 'FORWARD' ? 'bid' : 'ask';
   const bidderWord = direction === 'FORWARD' ? 'Bidders' : 'Suppliers';
+  const openWord = direction === 'FORWARD' ? 'opening' : 'starting';
 
   const updateWindow = (id: string, patch: Partial<PriceWindow>) =>
     onChange({
@@ -648,8 +650,9 @@ export function Step2OfferRules({
                 }`}
               />
             </button>
-            The first {bidWord} may equal the {direction === 'FORWARD' ? 'opening' : 'starting'}{' '}
-            price
+            {form.firstBidMayEqual
+              ? `The first ${bidWord} may equal the ${openWord} price`
+              : `The first ${bidWord} must beat the ${openWord} price by one step`}
           </label>
         </WizardRow>
 
@@ -745,6 +748,12 @@ export function Step2OfferRules({
               onClick={() => onChange({ offerVisibility: 'NOTHING' })}
             />
           </ChoiceList>
+          {form.offerVisibility === 'RANK' && (
+            <MutedNote>
+              {bidderWord} can’t see the best price, so each new {bidWord} only has to beat their
+              own last {bidWord}. The platform works out the ranks, and ties can happen.
+            </MutedNote>
+          )}
           {form.offerVisibility === 'NOTHING' && (
             <MutedNote>
               With nothing visible, {bidderWord.toLowerCase()} cannot react to each other. A sealed

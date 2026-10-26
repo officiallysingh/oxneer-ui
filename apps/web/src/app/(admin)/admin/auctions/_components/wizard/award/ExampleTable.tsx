@@ -107,7 +107,9 @@ export function ExampleTable({
               ))}
             </tbody>
           </table>
-          <p className="bg-foreground px-3 py-2 text-[11px] leading-snug text-background">{note}</p>
+          <p className="bg-policy px-3 py-2 text-[11px] leading-snug text-policy-foreground">
+            {note}
+          </p>
         </div>
       </div>
     </div>

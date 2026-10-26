@@ -153,15 +153,22 @@ export function winnerLabel(state: WizardState): string {
 }
 
 export function tiesLabel(state: WizardState): string {
+  const forward = state.basics.direction === 'FORWARD';
   if (state.award.ties === 'RANDOM') return 'Picked at random';
-  if (state.award.ties === 'REBID') return 'Tied bidders bid again';
-  return 'Earliest bid wins';
+  if (state.award.ties === 'REBID')
+    return forward ? 'Tied bidders bid again' : 'Tied suppliers ask again';
+  return forward ? 'Earliest bid wins' : 'Earliest ask wins';
 }
 
 export function noSaleLabel(state: WizardState): string {
+  const forward = state.basics.direction === 'FORWARD';
   if (state.award.noSale === 'REAUCTION') return 'Re-auction it';
-  if (state.award.noSale === 'ACCEPT_BEST') return 'Accept the best bid below the reserve';
-  return 'Mark the unit unsold';
+  if (state.award.noSale === 'ACCEPT_BEST' && state.basics.reserveEnabled) {
+    return forward
+      ? 'Accept the best bid below the reserve'
+      : 'Accept the best ask above the reserve';
+  }
+  return forward ? 'Mark the unit unsold' : 'Award nothing';
 }
 
 export function confirmationLabel(state: WizardState): string {

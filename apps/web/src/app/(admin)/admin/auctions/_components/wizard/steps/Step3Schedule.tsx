@@ -13,7 +13,12 @@ import {
   WizardSection,
   inputClass,
 } from '../ui/wizard-ui';
-import { endTimeFor, formatDateTime, formatTime } from '../../../_lib/wizard/summary';
+import {
+  endTimeFor,
+  formatDateTime,
+  formatTime,
+  latestCloseFor,
+} from '../../../_lib/wizard/summary';
 
 function relative(value: string): string {
   if (!value) return '';
@@ -27,6 +32,22 @@ function relative(value: string): string {
   if (days > 0) return `in ${days} d ${hours} h`;
   if (hours > 0) return `in ${hours} h ${minutes % 60} min`;
   return `in ${minutes} min`;
+}
+
+/** What a late bid does: measured from the scheduled close or from the latest
+ *  bid, then capped or not. */
+function softCloseSentence(form: ScheduleState): string {
+  const minutes = parseInt(form.extendMinutes, 10) || 0;
+  if (!minutes) return 'Set the minutes a late bid adds.';
+  const rule =
+    form.extensionReference === 'FROM_AUCTION_END_TIME'
+      ? `A bid in the last ${minutes} min adds ${minutes} min to the close`
+      : `The close is always ${minutes} min after the latest bid`;
+  if (!form.limitEnabled) return `${rule}, with no limit.`;
+  const latest = latestCloseFor(form);
+  return `${rule}, up to ${form.extensionLimit || 0} times.${
+    latest ? ` Latest possible close: ${formatTime(latest)}.` : ''
+  }`;
 }
 
 export function Step3Schedule({
@@ -272,12 +293,8 @@ export function Step3Schedule({
 
               <WizardRow label="Result" description="What participants experience.">
                 <div className="space-y-2">
-                  <div className="rounded-md bg-foreground px-3 py-2 text-[11px] leading-snug text-background">
-                    {form.limitEnabled
-                      ? `A bid in the last ${form.extendMinutes || 0} min adds ${
-                          form.extendMinutes || 0
-                        } min to the close, up to ${form.extensionLimit || 0} times.`
-                      : `The close is always ${form.extendMinutes || 0} min after the latest bid, with no limit.`}
+                  <div className="rounded-md bg-policy px-3 py-2 text-[11px] leading-snug text-policy-foreground">
+                    {softCloseSentence(form)}
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="flex h-5 flex-1 overflow-hidden rounded bg-muted text-[10px] text-muted-foreground">

@@ -66,6 +66,11 @@ const uiConfig: Partial<Config> = {
           DEFAULT: 'hsl(var(--info))',
           foreground: 'hsl(var(--info-foreground))',
         },
+        policy: {
+          DEFAULT: 'hsl(var(--policy))',
+          foreground: 'hsl(var(--policy-foreground))',
+          raise: 'hsl(var(--policy-raise))',
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',

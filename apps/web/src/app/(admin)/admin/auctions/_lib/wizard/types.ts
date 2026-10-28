@@ -4,7 +4,8 @@ export type AuctionMechanism = 'OPEN' | 'CLOCK' | 'SEALED';
 export type OfferVisibilityChoice = 'FULL' | 'RANK' | 'NOTHING';
 export type ParticipantVisibilityChoice = 'ALIAS' | 'REAL' | 'HIDDEN';
 export type ReserveVisibility = 'HIDDEN' | 'SHOWN' | 'MET_ONLY';
-export type PriceMoveType = 'STEP' | 'PERCENT' | 'RANGE';
+/** CLOCK windows belong to a clock auction: the platform moves the price on a timer. */
+export type PriceMoveType = 'STEP' | 'PERCENT' | 'RANGE' | 'CLOCK';
 
 export interface SelectedListing {
   id: string;
@@ -47,7 +48,8 @@ export interface PriceWindow {
   maxValue: string;
   /** Jump multipliers allowed for step-based windows. */
   steps: number[];
-  /** Clock-only values. */
+  /** Clock-only values: the price moves by `value` every `clockEveryMinutes`,
+   *  and stops at `clockStopAt`. */
   clockEveryMinutes: string;
   clockStopAt: string;
 }
@@ -55,6 +57,8 @@ export interface PriceWindow {
 export interface OfferState {
   mechanism: AuctionMechanism;
   windows: PriceWindow[];
+  /** Windows used when the mechanism is CLOCK. */
+  clockWindows: PriceWindow[];
   firstBidMayEqual: boolean;
   offerVisibility: OfferVisibilityChoice;
   participantVisibility: ParticipantVisibilityChoice;
@@ -120,6 +124,29 @@ export interface InviteStats {
   ready: number;
   review: number;
 }
+
+export const DEFAULT_CLOCK_WINDOWS: PriceWindow[] = [
+  {
+    id: 'clock-1',
+    type: 'CLOCK',
+    duration: 'PT1H',
+    value: '1000',
+    maxValue: '',
+    steps: [],
+    clockEveryMinutes: '2',
+    clockStopAt: '',
+  },
+  {
+    id: 'clock-2',
+    type: 'CLOCK',
+    duration: 'PT0S',
+    value: '500',
+    maxValue: '',
+    steps: [],
+    clockEveryMinutes: '1',
+    clockStopAt: '',
+  },
+];
 
 export const DEFAULT_WINDOWS: PriceWindow[] = [
   {
@@ -202,6 +229,7 @@ export const initialWizardState: WizardState = {
   offer: {
     mechanism: 'OPEN',
     windows: DEFAULT_WINDOWS,
+    clockWindows: DEFAULT_CLOCK_WINDOWS,
     firstBidMayEqual: true,
     offerVisibility: 'FULL',
     participantVisibility: 'ALIAS',
@@ -254,6 +282,7 @@ export function createInitialWizardState(): WizardState {
         ...window,
         steps: [...window.steps],
       })),
+      clockWindows: initialWizardState.offer.clockWindows.map((window) => ({ ...window })),
     },
     schedule: { ...initialWizardState.schedule, startTime: start, endTime: end },
     participation: { ...initialWizardState.participation },

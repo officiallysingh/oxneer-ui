@@ -2,7 +2,7 @@
 
 import { InviteAuctionProvider, useAuctionWizard } from '../../_context';
 import { isSetupStep } from '../../_lib/wizard/steps';
-import { endTimeFor, latestCloseFor } from '../../_lib/wizard/summary';
+import { endTimeFor, latestCloseFor, windowSummary } from '../../_lib/wizard/summary';
 import { AuctionWizardShell } from './shell/AuctionWizardShell';
 import { StepFooter } from './shell/StepFooter';
 import { StepNotices } from './shell/StepNotices';
@@ -45,7 +45,17 @@ function SetupStep() {
         <Step3Schedule
           form={schedule}
           onChange={wizard.patchSchedule}
-          clockMechanism={offer.mechanism === 'CLOCK'}
+          mechanism={offer.mechanism}
+          direction={basics.direction}
+          timeZone={basics.timeZone}
+          lastWindowLabel={
+            offer.windows.length
+              ? `${offer.windows.length} (${windowSummary(
+                  offer.windows[offer.windows.length - 1]!,
+                  basics.currencyUnit === 'INR' ? '₹' : basics.currencyUnit,
+                )})`
+              : undefined
+          }
           errors={errors}
         />
       );
@@ -57,6 +67,9 @@ function SetupStep() {
           onChange={wizard.patchParticipation}
           isPrivate={wizard.isPrivate}
           startTime={schedule.startTime}
+          direction={basics.direction}
+          currencyUnit={basics.currencyUnit}
+          openingPrice={basics.openingPrice}
           onWorkflowCountChange={wizard.setWorkflowCount}
         />
       ) : null;
@@ -73,6 +86,7 @@ function SetupStep() {
           reserveAmount={basics.reserveAmount}
           openingPrice={basics.openingPrice}
           currencyUnit={basics.currencyUnit}
+          startTime={schedule.startTime}
           endTime={endTimeFor(schedule)}
           latestClose={latestCloseFor(schedule)}
           onGoToBasics={() => wizard.goToStep(1)}

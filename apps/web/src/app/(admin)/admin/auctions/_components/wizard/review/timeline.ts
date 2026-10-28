@@ -10,12 +10,8 @@ import {
   parseDuration,
   windowSummary,
 } from '../../../_lib/wizard/summary';
-import {
-  WORKFLOW_TYPE_DESCRIPTION,
-  offsetMinutes,
-  stepFields,
-  stepTitle,
-} from '../../../_lib/wizard/workflow';
+import { WORKFLOW_TYPE_DESCRIPTION, stepFields, stepTitle } from '../../../_lib/wizard/workflow';
+import { dhm, effectiveDeadlines, postStepDue, preStepDue } from '../../../_lib/wizard/deadlines';
 
 export type TimelineIcon = 'terms' | 'form' | 'custom' | 'bank' | 'payment' | 'policy' | 'sealed';
 
@@ -61,20 +57,7 @@ export interface TimelinePhase {
 
 const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
 
-/** 1 d 2 h 30 min */
-export function dhm(total: number): string {
-  const days = Math.floor(total / 1440);
-  const hours = Math.floor((total % 1440) / 60);
-  const minutes = total % 60;
-  const parts = [
-    days ? `${days} d` : '',
-    hours ? `${hours} h` : '',
-    minutes ? `${minutes} min` : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
-  return parts || '0 min';
-}
+export { dhm };
 
 function validDate(value: string): Date | null {
   if (!value) return null;
@@ -93,14 +76,6 @@ const ICON_BY_TYPE: Record<string, TimelineIcon> = {
   BANK_DETAIL_FORM_STEP: 'bank',
   PAYMENT_STEP: 'payment',
 };
-
-/** Only the participation form and payments carry a deadline of their own. */
-function ownOffset(step: AuctionWorkflowStep): number | null {
-  const type = resolveStr(step.type);
-  if (type === 'PARTICIPATION_FORM_STEP') return offsetMinutes(step.preStartDeadlineDuration);
-  if (type === 'PAYMENT_STEP') return offsetMinutes(paymentStepData(step).offset);
-  return null;
-}
 
 /** Groups consecutive items that happen at the same moment. */
 function finishPhase(items: TimelineItem[], relabel: boolean): TimelineGroup[] {
@@ -150,12 +125,8 @@ export function buildTimeline(
     date ? formatTime(date.toISOString()) : fallback;
 
   // ---------- pre auction
-  const own = preSteps.map(ownOffset);
-  const effective = preSteps.map((_, index) => {
-    if (own[index] !== null) return { offset: own[index]!, ref: null as number | null };
-    const next = own.findIndex((offset, j) => j > index && offset !== null);
-    return next >= 0 ? { offset: own[next]!, ref: next } : { offset: 0, ref: null };
-  });
+  const effective = effectiveDeadlines(preSteps);
+  const closingRaw = endTimeFor(schedule);
 
   const stepItem = (step: AuctionWorkflowStep, index: number, pre: boolean): TimelineItem => {
     const type = resolveStr(step.type);
@@ -171,37 +142,23 @@ export function buildTimeline(
       n: index + 1,
       name: stepTitle(step),
       tag: 'Workflow step',
-      req: { label: 'Required', tone: 'default' },
+      req:
+        step.mandatory === false
+          ? { label: 'Optional', tone: 'optional' }
+          : { label: 'Required', tone: 'default' },
       desc:
         step.description || WORKFLOW_TYPE_DESCRIPTION[type] || 'Participants complete this step.',
     };
 
-    if (pre) {
-      const { offset, ref } = effective[index]!;
-      const at = start ? formatDateTime(shift(start, -offset)) : '';
-      if (own[index] !== null) {
-        item.timeMain = at || (offset ? `${dhm(offset)} before start` : 'By the start');
-        item.timeSub = start
-          ? offset
-            ? `${dhm(offset)} before start`
-            : 'by the start'
-          : 'set the start to see the date';
-        item.moment = offset;
-      } else {
-        item.timeMain = at || (offset ? `${dhm(offset)} before start` : 'By the start');
-        item.timeSub = `${type === 'TNC_FORM_STEP' ? 'first step' : 'no deadline of its own'} · ${
-          ref !== null ? `before step ${ref + 1} is due` : 'by the start'
-        }`;
-      }
-    } else if (type === 'PAYMENT_STEP') {
-      const offset = offsetMinutes(data.offset);
-      item.timeMain = `close → ${closing ? formatDateTime(shift(closing, offset)) : `+${dhm(offset)}`}`;
-      item.timeSub = `opens at the close · ${dhm(offset)} to pay`;
-      item.span = 'short';
-    } else {
-      item.timeMain = 'After the close';
-      item.timeSub = 'winner only · no deadline of its own';
-    }
+    const deadline = effective[index];
+    const due =
+      pre && deadline
+        ? preStepDue(step, deadline, schedule.startTime)
+        : postStepDue(step, closingRaw);
+    item.timeMain = due.main;
+    item.timeSub = due.sub;
+    if (pre && deadline?.own) item.moment = deadline.offset;
+    if (!pre && type === 'PAYMENT_STEP') item.span = 'short';
 
     if (type === 'TNC_FORM_STEP') {
       item.desc = `${step.description || 'Agreement to take part in the auction.'} Participants tick to accept; it can’t be changed afterwards.`;
@@ -300,7 +257,7 @@ export function buildTimeline(
   }
 
   // ---------- during auction
-  const windows = offer.windows;
+  const windows = clock ? offer.clockWindows : offer.windows;
   const lastWindow = windows[windows.length - 1];
   const extendMinutes = parseInt(schedule.extendMinutes, 10) || 0;
   const startHm = hm(start, 'Start');
@@ -344,8 +301,19 @@ export function buildTimeline(
         rows: windows.map((window, index) => {
           const isLast = index === windows.length - 1;
           const { hours, minutes } = parseDuration(window.duration);
-          const length = isLast ? 'until the close' : dhm(hours * 60 + minutes);
-          return { k: `Window ${index + 1}`, v: `${windowSummary(window, symbol)} · ${length}` };
+          const length = isLast
+            ? clock
+              ? 'until the clock stops'
+              : 'until the close'
+            : dhm(hours * 60 + minutes);
+          const stop =
+            window.type === 'CLOCK'
+              ? ` · stops at ${formatMoney(parseFloat(window.clockStopAt) || 0, currency)}`
+              : '';
+          return {
+            k: `Window ${index + 1}`,
+            v: `${windowSummary(window, symbol)}${stop} · ${length}`,
+          };
         }),
       },
       span: softClose ? 'long' : undefined,

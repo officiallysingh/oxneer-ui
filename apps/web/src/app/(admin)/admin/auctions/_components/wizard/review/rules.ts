@@ -90,9 +90,9 @@ export function buildRules(
       title: 'Offer rules',
       lines: [
         `Clock: the platform moves the price on a timer. Bidders who don’t confirm within ${offer.clockResponseSeconds} seconds drop out.`,
-        ...offer.windows.map(
+        ...offer.clockWindows.map(
           (window, index) =>
-            `Window ${index + 1} (${index === 0 ? 'the whole auction' : 'from ' + formatDuration(window.duration)}): ${windowSummary(window, symbol)}.`,
+            `Window ${index + 1}${index === offer.clockWindows.length - 1 ? ' (until the clock stops)' : ` · ${formatDuration(window.duration)}`}: ${basics.direction === 'FORWARD' ? 'up' : 'down'} ${windowSummary(window, symbol)}, stopping at ${symbol}${Number(window.clockStopAt || 0).toLocaleString('en-IN')}.`,
         ),
         `Participants see: ${
           offer.offerVisibility === 'RANK'
@@ -115,7 +115,7 @@ export function buildRules(
         `The first ${bidWord} ${offer.firstBidMayEqual ? 'may equal' : 'must beat'} the ${
           basics.direction === 'FORWARD' ? 'opening' : 'starting'
         } price.`,
-        `A ${bidWord} ${offer.withdrawal === 'ALLOWED' ? 'can be withdrawn until 10 minutes before the close' : 'can’t be withdrawn'}.`,
+        `A ${bidWord} ${offer.withdrawal === 'ALLOWED' ? `can be withdrawn until ${offer.withdrawalMinutes || 0} minutes before the close` : 'can’t be withdrawn'}.`,
         `While bidding is open, ${bidderWord}s see: ${
           offer.offerVisibility === 'RANK'
             ? 'their own rank only'

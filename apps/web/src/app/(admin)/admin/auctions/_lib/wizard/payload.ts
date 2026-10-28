@@ -6,6 +6,7 @@ import type {
   OfferVisibilityChoice,
   ParticipantVisibilityChoice,
   ParticipationState,
+  PriceWindow,
   WizardState,
 } from './types';
 
@@ -91,11 +92,63 @@ const WINDOW_POLICY_TYPE: Record<string, string> = {
   RANGE: 'PERCENTAGE_RANGE_BASED_OFFER_PRICE_POLICY',
 };
 
+const TIE_POLICY_TYPE: Record<string, string> = {
+  EARLIEST: 'EARLIEST_OFFER_TIE_BREAKING_POLICY',
+  RANDOM: 'RANDOM_TIE_BREAKING_POLICY',
+  REBID: 'COMPETE_IN_ANOTHER_ROUND_TIE_BREAKING_POLICY',
+};
+
+const TIE_POLICY_TEXT: Record<string, { name: string; description: string }> = {
+  EARLIEST_OFFER_TIE_BREAKING_POLICY: {
+    name: 'Earliest offer tie breaking',
+    description: 'If the winning offers tie, the earliest offer wins',
+  },
+  RANDOM_TIE_BREAKING_POLICY: {
+    name: 'Random tie breaking',
+    description: 'If the winning offers tie, one is picked at random',
+  },
+  COMPETE_IN_ANOTHER_ROUND_TIE_BREAKING_POLICY: {
+    name: 'Compete in another round',
+    description: 'If the winning offers tie, the tied participants bid again',
+  },
+};
+
+function priceWindowPolicy(window: PriceWindow, index: number, last: boolean): PolicyItemRQ {
+  const windowDuration = last ? 'PT0S' : window.duration || 'PT0S';
+  if (window.type === 'CLOCK') {
+    const defaults = POLICY_DEFAULTS.CLOCK_BASED_PRICE_CHANGE_POLICY;
+    return {
+      id: objectId(),
+      type: 'CLOCK_BASED_PRICE_CHANGE_POLICY',
+      name: defaults?.name,
+      description: defaults?.description,
+      order: index + 1,
+      windowDuration,
+      basis: 'AMOUNT_BASED',
+      value: parseFloat(window.value) || 0,
+      duration: `PT${parseInt(window.clockEveryMinutes, 10) || 1}M`,
+      thresholdPrice: parseFloat(window.clockStopAt) || 0,
+    };
+  }
+  const type = WINDOW_POLICY_TYPE[window.type] ?? WINDOW_POLICY_TYPE.STEP!;
+  const defaults = POLICY_DEFAULTS[type];
+  const item: PolicyItemRQ = {
+    id: objectId(),
+    type,
+    name: defaults?.name,
+    description: defaults?.description,
+    order: index + 1,
+    windowDuration,
+    value: parseFloat(window.value) || 0,
+  };
+  if (window.type === 'STEP' && window.steps.length) item.steps = window.steps;
+  if (window.type === 'RANGE') item.maxValue = parseFloat(window.maxValue) || 0;
+  return item;
+}
+
 export function buildPolicyPayload(state: WizardState, policyTypeOrder: string[]): PolicyItemRQ[] {
-  // The Award step also captures tie-breaking, no-sale and result-confirmation
-  // choices. The creation API has no matching fields or documented policy types
-  // for those yet, so they stay in wizard state (and the review copy) and only
-  // the winner and winning-price policies are written here.
+  // No-sale handling and result confirmation have no backend fields yet, so
+  // they stay in wizard state (and the review copy).
   const policies: PolicyItemRQ[] = [];
   const { offer, schedule, award } = state;
 
@@ -104,7 +157,9 @@ export function buildPolicyPayload(state: WizardState, policyTypeOrder: string[]
     policies.push({ ...minimumPolicy, id: objectId(), order: 1 });
   }
 
-  if (schedule.softCloseEnabled) {
+  // Soft close only applies to open bidding: nobody can react to a late sealed
+  // bid, and a clock auction ends when the last rival drops out.
+  if (schedule.softCloseEnabled && offer.mechanism === 'OPEN') {
     const extension = POLICY_DEFAULTS.EXTENSION_POLICY;
     policies.push({
       id: objectId(),
@@ -117,35 +172,25 @@ export function buildPolicyPayload(state: WizardState, policyTypeOrder: string[]
     });
   }
 
-  // Clock and sealed auctions keep the price policy they were created with.
-  // The simple editor cannot represent their progression rules, so it must not
-  // rewrite them as step or percentage windows.
-  if (offer.mechanism === 'OPEN' && offer.windows.length) {
+  // Open bidding uses step/percentage windows and a clock auction uses clock
+  // windows. Sealed has no price progression, and the backend has no sealed
+  // representation yet, so an existing progression is left untouched.
+  const windows =
+    offer.mechanism === 'OPEN'
+      ? offer.windows
+      : offer.mechanism === 'CLOCK'
+        ? offer.clockWindows
+        : [];
+  if (windows.length) {
     const progression = POLICY_DEFAULTS.PRICE_PROGRESSION_POLICY;
     policies.push({
       id: objectId(),
       type: 'PRICE_PROGRESSION_POLICY',
       name: progression?.name,
       description: progression?.description,
-      policies: offer.windows.map((window, index) => {
-        const type = WINDOW_POLICY_TYPE[window.type] ?? WINDOW_POLICY_TYPE.STEP!;
-        const defaults = POLICY_DEFAULTS[type];
-        const item: PolicyItemRQ = {
-          id: objectId(),
-          type,
-          name: defaults?.name,
-          description: defaults?.description,
-          order: index + 1,
-          windowDuration: index === offer.windows.length - 1 ? 'PT0S' : window.duration || 'PT0S',
-          value: parseFloat(window.value) || 0,
-        };
-        if (window.type === 'STEP' && window.steps.length) item.steps = window.steps;
-        if (window.type === 'RANGE') {
-          (item as PolicyItemRQ & { maxValue?: number }).maxValue =
-            parseFloat(window.maxValue) || 0;
-        }
-        return item;
-      }),
+      policies: windows.map((window, index) =>
+        priceWindowPolicy(window, index, index === windows.length - 1),
+      ),
     });
   }
 
@@ -169,6 +214,11 @@ export function buildPolicyPayload(state: WizardState, policyTypeOrder: string[]
       description: winnerPrice?.description,
       kth: parseInt(award.winnerPriceKth, 10) || 1,
     });
+  }
+
+  const tieType = TIE_POLICY_TYPE[award.ties];
+  if (tieType) {
+    policies.push({ id: objectId(), type: tieType, ...TIE_POLICY_TEXT[tieType] });
   }
 
   const rank = (type: unknown) => {
@@ -197,7 +247,8 @@ export function isManagedPolicy(policy: PolicyItemRQ): boolean {
     type === 'EXTENSION_POLICY' ||
     type === 'PRICE_PROGRESSION_POLICY' ||
     type.includes('WINNER_DETERMINATION') ||
-    type.includes('WINNER_PRICE_DETERMINATION')
+    type.includes('WINNER_PRICE_DETERMINATION') ||
+    type.includes('TIE_BREAKING')
   );
 }
 
@@ -209,8 +260,8 @@ export function mergePolicyPayload(existing: PolicyItemRQ[], next: PolicyItemRQ[
   );
   const preserved = existing.filter((policy) => {
     if (!isManagedPolicy(policy)) return true;
-    // A clock or sealed auction keeps its original progression wrapper because
-    // the simple editor deliberately does not rebuild it.
+    // A sealed auction keeps its original progression wrapper because the
+    // simple editor has nothing to rebuild it from.
     return resolveStr(policy.type) === 'PRICE_PROGRESSION_POLICY' && !nextHasProgression;
   });
 

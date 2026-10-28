@@ -48,9 +48,32 @@ const windowMinutes = (duration: string) => {
   return hours * 60 + minutes;
 };
 
+function validateClockWindows(offer: OfferState): Record<string, string> {
+  const errors: Record<string, string> = {};
+  if (!offer.clockWindows.length) {
+    errors.windows = 'Add at least one clock window.';
+    return errors;
+  }
+  for (const [index, window] of offer.clockWindows.entries()) {
+    const label = `Window ${index + 1}`;
+    if (!(parseFloat(window.value) > 0)) {
+      errors.windows = `${label}: the price needs to move by more than zero.`;
+    } else if (!(parseInt(window.clockEveryMinutes, 10) >= 1)) {
+      errors.windows = `${label}: the clock needs to tick at least every minute.`;
+    } else if (!(parseFloat(window.clockStopAt) > 0)) {
+      errors.windows = `${label}: set where the clock stops.`;
+    } else if (index < offer.clockWindows.length - 1 && windowMinutes(window.duration) <= 0) {
+      errors.windows = `${label}: give it a length, or remove the windows after it.`;
+    }
+    if (errors.windows) break;
+  }
+  return errors;
+}
+
 export function validateOffer(offer: OfferState): Record<string, string> {
   const errors: Record<string, string> = {};
-  // Clock and sealed auctions don't use the open-bidding price windows.
+  if (offer.mechanism === 'CLOCK') return validateClockWindows(offer);
+  // Sealed auctions have no price progression.
   if (offer.mechanism !== 'OPEN') return errors;
   if (!offer.windows.length) {
     errors.windows = 'Add at least one price window.';
@@ -80,7 +103,13 @@ export function validateOffer(offer: OfferState): Record<string, string> {
 
 export function validateSchedule(
   schedule: ScheduleState,
-  { allowPastStart = false }: { allowPastStart?: boolean } = {},
+  {
+    allowPastStart = false,
+    softClose = true,
+  }: {
+    allowPastStart?: boolean;
+    /** False for clock and sealed auctions. */ softClose?: boolean;
+  } = {},
 ): Record<string, string> {
   const errors: Record<string, string> = {};
   const start = schedule.startTime ? new Date(schedule.startTime) : null;
@@ -98,7 +127,7 @@ export function validateSchedule(
     errors.endTime = 'Bidding must close after it opens.';
   }
 
-  if (schedule.softCloseEnabled) {
+  if (softClose && schedule.softCloseEnabled) {
     if (!(parseInt(schedule.extendMinutes, 10) > 0)) {
       errors.general = 'Soft close needs an extension of at least one minute.';
     } else if (schedule.limitEnabled && !(parseInt(schedule.extensionLimit, 10) > 0)) {
@@ -146,7 +175,10 @@ export function validateStep(
     case 2:
       return validateOffer(state.offer);
     case 3:
-      return validateSchedule(state.schedule, { allowPastStart: options.published });
+      return validateSchedule(state.schedule, {
+        allowPastStart: options.published,
+        softClose: state.offer.mechanism === 'OPEN',
+      });
     case 4:
       return validateParticipation(state.participation);
     case 5: {
@@ -224,6 +256,15 @@ export function collectIssues(
 
   const offer = validateOffer(state.offer);
   if (offer.windows) add(2, 'must-fix', `Price progression: ${offer.windows}`);
+  if (state.offer.mechanism === 'SEALED') {
+    // The API has no way to store a sealed auction yet (no policy type and no
+    // protocol field), so publishing one would quietly run it as open bidding.
+    add(
+      2,
+      'must-fix',
+      'Sealed auctions can’t be published yet: the server doesn’t support them. Choose Open or Clock.',
+    );
+  }
   if (state.offer.mechanism === 'OPEN' && state.offer.windows.length > 1) {
     const used = state.offer.windows
       .slice(0, -1)
@@ -246,7 +287,10 @@ export function collectIssues(
     );
   }
 
-  const schedule = validateSchedule(state.schedule, { allowPastStart: published });
+  const schedule = validateSchedule(state.schedule, {
+    allowPastStart: published,
+    softClose: state.offer.mechanism === 'OPEN',
+  });
   if (schedule.startTime) add(3, 'must-fix', 'Set a start time in the future.');
   if (schedule.endTime) add(3, 'must-fix', schedule.endTime);
   if (schedule.general) add(3, 'must-fix', schedule.general);

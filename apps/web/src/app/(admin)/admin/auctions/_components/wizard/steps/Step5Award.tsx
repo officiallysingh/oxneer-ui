@@ -1,17 +1,19 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Banknote, Flag, Info, Scale, Trophy } from 'lucide-react';
 import { Button } from '@repo/ui';
-import type { PolicyHeadRQ } from '@repo/api';
+import { useWorkflow } from '../../../_hooks/useWorkflow';
+import { paymentStepData, resolveStr } from '../../../_components/PolicyShared';
 import type { AwardState, OfferVisibilityChoice } from '../../../_lib/wizard/types';
 import { MutedBadge, OptionRow } from '../ui/wizard-ui';
+import { PolicyRow } from '../ui/PolicyRow';
 import { formatMoney, formatTime } from '../../../_lib/wizard/summary';
 import { awardNeedsReserve } from '../../../_lib/wizard/validation';
 import { paymentTotalNote } from '../../../_lib/wizard/workflow';
-import { PolicyCard } from '../award/PolicyCard';
 import { ExampleTable, buildExample } from '../award/ExampleTable';
 import { AwardSettings } from '../award/AwardSettings';
-import { PostAuctionSteps } from '../award/PostAuctionSteps';
+import { StepList } from '../workflow/StepList';
 
 export function Step5Award({
   auctionId,
@@ -24,6 +26,7 @@ export function Step5Award({
   reserveAmount,
   openingPrice,
   currencyUnit,
+  startTime,
   endTime,
   latestClose,
   onGoToBasics,
@@ -39,13 +42,26 @@ export function Step5Award({
   reserveAmount: string;
   openingPrice: string;
   currencyUnit: string;
+  startTime: string;
   endTime: string;
   latestClose: string;
   onGoToBasics: () => void;
   onPostWorkflowCountChange: (count: number) => void;
 }) {
-  const [expanded, setExpanded] = useState<'winner' | 'ties' | 'price' | null>('winner');
-  const [paymentHeads, setPaymentHeads] = useState<PolicyHeadRQ[]>([]);
+  const [expanded, setExpanded] = useState<'winner' | 'ties' | 'price' | null>(null);
+  const workflow = useWorkflow(auctionId);
+  const postPayment = workflow.post.find((step) => resolveStr(step.type) === 'PAYMENT_STEP');
+  const paymentHeads = useMemo(
+    () => (postPayment ? paymentStepData(postPayment).heads : []),
+    [postPayment],
+  );
+  const hasPostBank = workflow.post.some(
+    (step) => resolveStr(step.type) === 'BANK_DETAIL_FORM_STEP',
+  );
+
+  useEffect(() => {
+    if (!workflow.loading) onPostWorkflowCountChange(workflow.post.length);
+  }, [workflow.loading, workflow.post.length, onPostWorkflowCountChange]);
 
   const latestCloseLabel = latestClose || endTime;
   const closeLabel = latestCloseLabel
@@ -140,346 +156,300 @@ export function Step5Award({
         ? `Tied ${who} ${bidWord} again`
         : `Earliest ${bidWord} wins`;
 
-  const handleWorkflowChange = useCallback(
-    (count: number, heads: PolicyHeadRQ[]) => {
-      setPaymentHeads(heads);
-      onPostWorkflowCountChange(count);
-    },
-    [onPostWorkflowCountChange],
-  );
+  const toggle = (key: 'winner' | 'ties' | 'price') =>
+    setExpanded((current) => (current === key ? null : key));
+  const closeShort =
+    mechanism === 'CLOCK'
+      ? 'when the clock stops'
+      : endTime
+        ? `${formatTime(endTime)}${latestCloseLabel !== endTime ? ', or later if extended' : ''}`
+        : 'when bidding ends';
+  const priceLink =
+    mechanism === 'CLOCK'
+      ? 'The clock price'
+      : priceKth === 1
+        ? `The winner’s own ${bidWord}`
+        : `The ${ordinal(priceKth)}-${bestWord} ${bidWord}`;
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-start">
-        <div className="space-y-3">
-          <PolicyCard
-            title="Who wins"
-            subtitle={
-              mechanism === 'CLOCK'
-                ? `Last ${one} left in`
-                : kth === 1
-                  ? `The ${bestWord} ${bidWord}`
-                  : `The ${ordinal(kth)}-${bestWord} ${bidWord}`
-            }
-            timing="Runs first at the close"
-            right={
-              <span className="hidden text-right sm:block">
-                <span className="block text-[10px] font-semibold text-policy-foreground">
-                  At close
-                </span>
-                <span className="block text-[10px] text-policy-foreground/60">{closeLabel}</span>
-              </span>
-            }
-            open={expanded === 'winner'}
-            onToggle={() => setExpanded(expanded === 'winner' ? null : 'winner')}
-          >
-            <div className="grid gap-4 px-4 py-4 md:grid-cols-[168px_minmax(0,1fr)]">
-              <div>
-                <p className="text-xs font-semibold text-foreground">The winner is</p>
-                <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
-                  {mechanism === 'CLOCK'
-                    ? `In a clock auction the last ${one} left in wins.`
-                    : forward
-                      ? 'Forward auction: higher bids are better.'
-                      : 'Reverse auction: lower asks are better.'}
-                </p>
-              </div>
-              <div className="space-y-2">
-                {mechanism === 'CLOCK' ? (
-                  <>
-                    <OptionRow
-                      title={`The last ${one} left in`}
-                      description="Everyone else has dropped out."
-                      selected
-                      onClick={() => onChange({ winnerKth: '1' })}
-                    />
-                    <OptionRow
-                      title={`The 2nd-${bestWord} ${bidWord}`}
-                      description="Rare. Used in some sealed-bid formats."
-                      selected={false}
-                      disabled
-                      badge={<MutedBadge>Not for clock</MutedBadge>}
-                      onClick={() => undefined}
-                    />
-                    <OptionRow
-                      title={`The 3rd-${bestWord} ${bidWord}`}
-                      description="Rare."
-                      selected={false}
-                      disabled
-                      badge={<MutedBadge>Not for clock</MutedBadge>}
-                      onClick={() => undefined}
-                    />
-                  </>
-                ) : (
-                  <>
-                    <OptionRow
-                      title={`The ${bestWord} ${bidWord}`}
-                      description="Standard. The best offer wins."
-                      selected={form.winnerKth === '1'}
-                      onClick={() => onChange({ winnerKth: '1' })}
-                    />
-                    <OptionRow
-                      title={`The 2nd-${bestWord} ${bidWord}`}
-                      description="Rare. Used in some sealed-bid formats."
-                      selected={form.winnerKth === '2'}
-                      onClick={() => onChange({ winnerKth: '2' })}
-                    />
-                    <OptionRow
-                      title={`The 3rd-${bestWord} ${bidWord}`}
-                      description="Rare."
-                      selected={form.winnerKth === '3'}
-                      onClick={() => onChange({ winnerKth: '3' })}
-                    />
-                  </>
-                )}
-              </div>
+      <div className="space-y-3">
+        <PolicyRow
+          title="Who wins"
+          icon={Trophy}
+          phase="Post auction"
+          summary={[
+            {
+              text:
+                mechanism === 'CLOCK'
+                  ? `The last ${one} left in`
+                  : kth === 1
+                    ? `The ${bestWord} ${bidWord}`
+                    : `The ${ordinal(kth)}-${bestWord} ${bidWord}`,
+            },
+          ]}
+          due={{ main: 'At close', sub: closeShort }}
+          open={expanded === 'winner'}
+          onToggle={() => toggle('winner')}
+        >
+          <div className="grid gap-4 px-4 py-4 md:grid-cols-[168px_minmax(0,1fr)]">
+            <div>
+              <p className="text-xs font-semibold text-foreground">The winner is</p>
+              <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+                {mechanism === 'CLOCK'
+                  ? `In a clock auction the last ${one} left in wins.`
+                  : forward
+                    ? 'Forward auction: higher bids are better.'
+                    : 'Reverse auction: lower asks are better.'}
+              </p>
             </div>
-            {mechanism !== 'CLOCK' && (
-              <ExampleTable
-                rows={winnerExample.rows}
-                note={
-                  meetsReserve
-                    ? winnerExample.note
-                    : `${winnerExample.note} But that misses the reserve of ${formatMoney(
-                        reserve,
-                        currencyUnit,
-                      )}, so ${noSaleOutcome}.`
-                }
-                direction={direction}
-                currency={currencyUnit}
-              />
-            )}
-          </PolicyCard>
-
-          <PolicyCard
-            title="Ties"
-            subtitle={tieSummary}
-            timing="Runs right after Who wins"
-            right={
-              <span className="hidden text-right sm:block">
-                <span className="block text-[10px] font-semibold text-policy-foreground">
-                  At close
-                </span>
-                <span className="block text-[10px] text-policy-foreground/60">
-                  right after Who wins
-                </span>
-              </span>
-            }
-            open={expanded === 'ties'}
-            onToggle={() => setExpanded(expanded === 'ties' ? null : 'ties')}
-          >
-            <div className="grid gap-4 px-4 py-4 md:grid-cols-[168px_minmax(0,1fr)]">
-              <div>
-                <p className="text-xs font-semibold text-foreground">
-                  If the winning {bidWord}s tie
-                </p>
-                <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
-                  Pick how to break it.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <OptionRow
-                  title={`The earliest ${bidWord} wins`}
-                  description="Rewards whoever committed first. Most common."
-                  selected={form.ties === 'EARLIEST'}
-                  onClick={() => onChange({ ties: 'EARLIEST' })}
-                />
-                <OptionRow
-                  title="Pick one at random"
-                  description={`Every tied ${one} has the same chance.`}
-                  selected={form.ties === 'RANDOM'}
-                  onClick={() => onChange({ ties: 'RANDOM' })}
-                />
-                <OptionRow
-                  title={`Tied ${who} ${bidWord} again`}
-                  description="A short extra round just for them."
-                  selected={form.ties === 'REBID'}
-                  disabled
-                  badge={<MutedBadge>Needs MULTI_ROUND</MutedBadge>}
-                  onClick={() => undefined}
-                />
-                <p className="flex items-start gap-2 rounded-md border border-info/30 bg-info/10 px-3 py-2 text-[11px] leading-snug text-foreground">
-                  <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-info" aria-hidden />
-                  {mechanism === 'CLOCK'
-                    ? `In a clock auction this decides the winner if the last ${who} drop out on the same tick.`
-                    : showTie
-                      ? mechanism === 'SEALED'
-                        ? `Ties are possible here, because sealed ${bidWord}s are hidden from each other.`
-                        : `Ties are possible here, because ${who} can’t see the best price.`
-                      : `Every ${bidWord} must beat the best price on show, so two ${bidWord}s can’t be equal. This rule only matters if you change what ${who} see.`}
-                </p>
-              </div>
+            <div className="space-y-2">
+              {mechanism === 'CLOCK' ? (
+                <>
+                  <OptionRow
+                    title={`The last ${one} left in`}
+                    description="Everyone else has dropped out."
+                    selected
+                    onClick={() => onChange({ winnerKth: '1' })}
+                  />
+                  <OptionRow
+                    title={`The 2nd-${bestWord} ${bidWord}`}
+                    description="Rare. Used in some sealed-bid formats."
+                    selected={false}
+                    disabled
+                    badge={<MutedBadge>Not for clock</MutedBadge>}
+                    onClick={() => undefined}
+                  />
+                  <OptionRow
+                    title={`The 3rd-${bestWord} ${bidWord}`}
+                    description="Rare."
+                    selected={false}
+                    disabled
+                    badge={<MutedBadge>Not for clock</MutedBadge>}
+                    onClick={() => undefined}
+                  />
+                </>
+              ) : (
+                <>
+                  <OptionRow
+                    title={`The ${bestWord} ${bidWord}`}
+                    description="Standard. The best offer wins."
+                    selected={form.winnerKth === '1'}
+                    onClick={() => onChange({ winnerKth: '1' })}
+                  />
+                  <OptionRow
+                    title={`The 2nd-${bestWord} ${bidWord}`}
+                    description="Rare. Used in some sealed-bid formats."
+                    selected={form.winnerKth === '2'}
+                    onClick={() => onChange({ winnerKth: '2' })}
+                  />
+                  <OptionRow
+                    title={`The 3rd-${bestWord} ${bidWord}`}
+                    description="Rare."
+                    selected={form.winnerKth === '3'}
+                    onClick={() => onChange({ winnerKth: '3' })}
+                  />
+                </>
+              )}
             </div>
-            {showTie && (
-              <ExampleTable
-                rows={tieExample.rows}
-                note={
-                  form.ties === 'RANDOM'
-                    ? `${One} B or C is picked at random, each with a 50% chance.`
-                    : `${One} B ${forward ? 'bid' : 'asked'} ${formatMoney(
-                        tieExample.rows[1]!.bid,
-                        currencyUnit,
-                      )} at ${tieExample.rows[1]!.placed}, before C, so B wins the tie.`
-                }
-                direction={direction}
-                currency={currencyUnit}
-              />
-            )}
-          </PolicyCard>
-
-          <PolicyCard
-            title="Winning price"
-            subtitle={
-              mechanism === 'CLOCK'
-                ? 'The clock price'
-                : priceKth === 1
-                  ? `Their own winning ${bidWord}`
-                  : `The ${ordinal(priceKth)}-${bestWord} ${bidWord}`
-            }
-            timing="Runs after Who wins"
-            right={
-              <span className="hidden text-right sm:block">
-                <span className="block text-[10px] font-semibold text-policy-foreground">
-                  At close
-                </span>
-                <span className="block text-[10px] text-policy-foreground/60">
-                  once the winner is known
-                </span>
-              </span>
-            }
-            open={expanded === 'price'}
-            onToggle={() => setExpanded(expanded === 'price' ? null : 'price')}
-          >
-            <div className="grid gap-4 px-4 py-4 md:grid-cols-[168px_minmax(0,1fr)]">
-              <div>
-                <p className="text-xs font-semibold text-foreground">
-                  {forward ? 'The winner owes' : 'The winner is paid'}
-                </p>
-                <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
-                  This becomes the winning price.
-                </p>
-              </div>
-              <div className="space-y-2">
-                {mechanism === 'CLOCK' ? (
-                  <>
-                    <OptionRow
-                      title="The clock price"
-                      description="Where the clock stands when the last rival drops out."
-                      selected
-                      onClick={() => onChange({ winnerPriceKth: '1' })}
-                    />
-                    <OptionRow
-                      title={`The 2nd-${bestWord} ${bidWord}`}
-                      description={secondPriceHint}
-                      selected={false}
-                      disabled
-                      badge={<MutedBadge>Not for clock</MutedBadge>}
-                      onClick={() => undefined}
-                    />
-                    <OptionRow
-                      title={`The 3rd-${bestWord} ${bidWord}`}
-                      description="Rare. Needs a reserve."
-                      selected={false}
-                      disabled
-                      badge={<MutedBadge>Not for clock</MutedBadge>}
-                      onClick={() => undefined}
-                    />
-                  </>
-                ) : (
-                  <>
-                    <OptionRow
-                      title={`Their own winning ${bidWord}`}
-                      description={
-                        forward
-                          ? 'First price. What they bid is what they pay.'
-                          : 'First price. What they ask is what they’re paid.'
-                      }
-                      selected={form.winnerPriceKth === '1'}
-                      onClick={() => onChange({ winnerPriceKth: '1' })}
-                    />
-                    <OptionRow
-                      title={`The 2nd-${bestWord} ${bidWord}`}
-                      description={secondPriceHint}
-                      selected={form.winnerPriceKth === '2'}
-                      onClick={() => onChange({ winnerPriceKth: '2' })}
-                    />
-                    <OptionRow
-                      title={`The 3rd-${bestWord} ${bidWord}`}
-                      description="Rare. Needs a reserve."
-                      selected={form.winnerPriceKth === '3'}
-                      onClick={() => onChange({ winnerPriceKth: '3' })}
-                    />
-                  </>
-                )}
-                {reserveIssue && (
-                  <div className="flex flex-wrap items-center gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-[11px] text-foreground">
-                    <span className="flex-1">
-                      This rule needs a reserve price. Without one, a weak runner-up would set a
-                      very low price.
-                    </span>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-6 px-2 text-[11px]"
-                      onClick={onGoToBasics}
-                    >
-                      Set a reserve
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-            {mechanism !== 'CLOCK' && (
-              <ExampleTable
-                rows={priceExample.rows}
-                note={`${One} ${String.fromCharCode(
-                  65 + Math.max(0, kth - 1),
-                )} wins and ${owes} ${formatMoney(owed, currencyUnit)} — ${
-                  priceKth === 1
-                    ? `their own ${bidWord}.`
-                    : `the ${ordinal(Math.min(4, kth + priceKth - 1))}-${bestWord} ${bidWord}${
-                        owed !== rawOwed
-                          ? forward
-                            ? ', raised to the reserve'
-                            : ', capped at the reserve'
-                          : ''
-                      }.`
-                }${forward ? paymentSuffix : ''}`}
-                direction={direction}
-                currency={currencyUnit}
-              />
-            )}
-          </PolicyCard>
-        </div>
-
-        <aside className="space-y-3">
-          <div className="rounded-lg border border-border bg-card px-3 py-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              At the close
-            </p>
-            <ol className="mt-2 space-y-2 text-[11px]">
-              {[
-                {
-                  title: 'Who wins',
-                  detail: mechanism === 'CLOCK' ? 'When the clock stops' : closeLabel,
-                },
-                { title: 'Ties', detail: 'Right after who wins' },
-                { title: 'Winning price', detail: 'Once the winner is known' },
-              ].map((item, index) => (
-                <li key={item.title} className="flex items-start gap-2">
-                  <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-muted text-[9px] font-semibold text-muted-foreground">
-                    {index + 1}
-                  </span>
-                  <span>
-                    <span className="block font-semibold text-foreground">{item.title}</span>
-                    <span className="block text-[10px] text-muted-foreground">{item.detail}</span>
-                  </span>
-                </li>
-              ))}
-            </ol>
           </div>
-        </aside>
+          {mechanism !== 'CLOCK' && (
+            <ExampleTable
+              rows={winnerExample.rows}
+              note={
+                meetsReserve
+                  ? winnerExample.note
+                  : `${winnerExample.note} But that misses the reserve of ${formatMoney(
+                      reserve,
+                      currencyUnit,
+                    )}, so ${noSaleOutcome}.`
+              }
+              direction={direction}
+              currency={currencyUnit}
+            />
+          )}
+        </PolicyRow>
+
+        <PolicyRow
+          title="Ties"
+          icon={Scale}
+          phase="Post auction"
+          summary={[{ text: tieSummary }]}
+          due={{ main: 'At close', sub: 'right after Who wins' }}
+          open={expanded === 'ties'}
+          onToggle={() => toggle('ties')}
+        >
+          <div className="grid gap-4 px-4 py-4 md:grid-cols-[168px_minmax(0,1fr)]">
+            <div>
+              <p className="text-xs font-semibold text-foreground">If the winning {bidWord}s tie</p>
+              <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+                Pick how to break it.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <OptionRow
+                title={`The earliest ${bidWord} wins`}
+                description="Rewards whoever committed first. Most common."
+                selected={form.ties === 'EARLIEST'}
+                onClick={() => onChange({ ties: 'EARLIEST' })}
+              />
+              <OptionRow
+                title="Pick one at random"
+                description={`Every tied ${one} has the same chance.`}
+                selected={form.ties === 'RANDOM'}
+                onClick={() => onChange({ ties: 'RANDOM' })}
+              />
+              <OptionRow
+                title={`Tied ${who} ${bidWord} again`}
+                description="A short extra round just for them."
+                selected={form.ties === 'REBID'}
+                disabled
+                badge={<MutedBadge>Needs MULTI_ROUND</MutedBadge>}
+                onClick={() => undefined}
+              />
+              <p className="flex items-start gap-2 rounded-md border border-info/30 bg-info/10 px-3 py-2 text-[11px] leading-snug text-foreground">
+                <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-info" aria-hidden />
+                {mechanism === 'CLOCK'
+                  ? `In a clock auction this decides the winner if the last ${who} drop out on the same tick.`
+                  : showTie
+                    ? mechanism === 'SEALED'
+                      ? `Ties are possible here, because sealed ${bidWord}s are hidden from each other.`
+                      : `Ties are possible here, because ${who} can’t see the best price.`
+                    : `Every ${bidWord} must beat the best price on show, so two ${bidWord}s can’t be equal. This rule only matters if you change what ${who} see.`}
+              </p>
+            </div>
+          </div>
+          {showTie && (
+            <ExampleTable
+              rows={tieExample.rows}
+              note={
+                form.ties === 'RANDOM'
+                  ? `${One} B or C is picked at random, each with a 50% chance.`
+                  : `${One} B ${forward ? 'bid' : 'asked'} ${formatMoney(
+                      tieExample.rows[1]!.bid,
+                      currencyUnit,
+                    )} at ${tieExample.rows[1]!.placed}, before C, so B wins the tie.`
+              }
+              direction={direction}
+              currency={currencyUnit}
+            />
+          )}
+        </PolicyRow>
+
+        <PolicyRow
+          title="Winning price"
+          icon={Banknote}
+          phase="Post auction"
+          warn={reserveIssue ? 'Needs a reserve' : undefined}
+          summary={[
+            { text: priceLink },
+            ...(reserveIssue ? [{ text: 'needs a reserve', bad: true }] : []),
+          ]}
+          due={{ main: 'At close', sub: 'once the winner is known' }}
+          open={expanded === 'price'}
+          onToggle={() => toggle('price')}
+        >
+          <div className="grid gap-4 px-4 py-4 md:grid-cols-[168px_minmax(0,1fr)]">
+            <div>
+              <p className="text-xs font-semibold text-foreground">
+                {forward ? 'The winner owes' : 'The winner is paid'}
+              </p>
+              <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+                This becomes the winning price.
+              </p>
+            </div>
+            <div className="space-y-2">
+              {mechanism === 'CLOCK' ? (
+                <>
+                  <OptionRow
+                    title="The clock price"
+                    description="Where the clock stands when the last rival drops out."
+                    selected
+                    onClick={() => onChange({ winnerPriceKth: '1' })}
+                  />
+                  <OptionRow
+                    title={`The 2nd-${bestWord} ${bidWord}`}
+                    description={secondPriceHint}
+                    selected={false}
+                    disabled
+                    badge={<MutedBadge>Not for clock</MutedBadge>}
+                    onClick={() => undefined}
+                  />
+                  <OptionRow
+                    title={`The 3rd-${bestWord} ${bidWord}`}
+                    description="Rare. Needs a reserve."
+                    selected={false}
+                    disabled
+                    badge={<MutedBadge>Not for clock</MutedBadge>}
+                    onClick={() => undefined}
+                  />
+                </>
+              ) : (
+                <>
+                  <OptionRow
+                    title={`Their own winning ${bidWord}`}
+                    description={
+                      forward
+                        ? 'First price. What they bid is what they pay.'
+                        : 'First price. What they ask is what they’re paid.'
+                    }
+                    selected={form.winnerPriceKth === '1'}
+                    onClick={() => onChange({ winnerPriceKth: '1' })}
+                  />
+                  <OptionRow
+                    title={`The 2nd-${bestWord} ${bidWord}`}
+                    description={secondPriceHint}
+                    selected={form.winnerPriceKth === '2'}
+                    onClick={() => onChange({ winnerPriceKth: '2' })}
+                  />
+                  <OptionRow
+                    title={`The 3rd-${bestWord} ${bidWord}`}
+                    description="Rare. Needs a reserve."
+                    selected={form.winnerPriceKth === '3'}
+                    onClick={() => onChange({ winnerPriceKth: '3' })}
+                  />
+                </>
+              )}
+              {reserveIssue && (
+                <div className="flex flex-wrap items-center gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-[11px] text-foreground">
+                  <span className="flex-1">
+                    This rule needs a reserve price. Without one, a weak runner-up would set a very
+                    low price.
+                  </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-6 px-2 text-[11px]"
+                    onClick={onGoToBasics}
+                  >
+                    Set a reserve
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+          {mechanism !== 'CLOCK' && (
+            <ExampleTable
+              rows={priceExample.rows}
+              note={`${One} ${String.fromCharCode(
+                65 + Math.max(0, kth - 1),
+              )} wins and ${owes} ${formatMoney(owed, currencyUnit)} — ${
+                priceKth === 1
+                  ? `their own ${bidWord}.`
+                  : `the ${ordinal(Math.min(4, kth + priceKth - 1))}-${bestWord} ${bidWord}${
+                      owed !== rawOwed
+                        ? forward
+                          ? ', raised to the reserve'
+                          : ', capped at the reserve'
+                        : ''
+                    }.`
+              }${forward ? paymentSuffix : ''}`}
+              direction={direction}
+              currency={currencyUnit}
+            />
+          )}
+        </PolicyRow>
       </div>
 
       <AwardSettings
@@ -489,11 +459,55 @@ export function Step5Award({
         direction={direction}
       />
 
-      <PostAuctionSteps
-        auctionId={auctionId}
-        closeLabel={closeLabel}
+      <StepList
+        phase="POST_AUCTION"
+        workflow={workflow}
+        title="After the auction"
+        subtitle={`${workflow.post.length} workflow step${workflow.post.length === 1 ? '' : 's'} · winner only`}
+        range={endTime ? `from the close · ${closeLabel}` : undefined}
+        icon={Flag}
+        start={startTime}
+        closing={endTime}
         currencyUnit={currencyUnit}
-        onWorkflowChange={handleWorkflowChange}
+        openingPrice={openingPrice}
+        forward={forward}
+        hints={(add) => (
+          <>
+            {!forward && !hasPostBank && !workflow.loading && (
+              <div className="flex flex-wrap items-center gap-2 rounded-md border border-info/30 bg-info/10 px-3 py-2 text-[11px] leading-snug text-foreground">
+                <Info className="h-3.5 w-3.5 shrink-0 text-info" aria-hidden />
+                <span className="flex-1">
+                  In a reverse auction the platform pays the winning supplier, so they need to give
+                  bank details.
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-[11px]"
+                  onClick={() => add('BANK_DETAIL_FORM_STEP')}
+                >
+                  Add bank details
+                </Button>
+              </div>
+            )}
+            {forward && !postPayment && !workflow.loading && (
+              <div className="flex flex-wrap items-center gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-[11px] leading-snug text-foreground">
+                <Info className="h-3.5 w-3.5 shrink-0 text-warning" aria-hidden />
+                <span className="flex-1">No step collects the winning amount yet.</span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-[11px]"
+                  onClick={() => add('PAYMENT_STEP')}
+                >
+                  Add a payment step
+                </Button>
+              </div>
+            )}
+          </>
+        )}
       />
     </div>
   );

@@ -107,22 +107,40 @@ function mapWindows(policies: PolicyItemRQ[]): PriceWindow[] {
 
   return wrapper.policies.map((policy, index) => {
     const type = policyType(policy);
-    const mappedType: PriceWindow['type'] = type.includes('FIXED_PERCENTAGE')
-      ? 'PERCENT'
-      : type.includes('PERCENTAGE_RANGE')
-        ? 'RANGE'
-        : 'STEP';
+    const mappedType: PriceWindow['type'] = type.includes('CLOCK')
+      ? 'CLOCK'
+      : type.includes('FIXED_PERCENTAGE')
+        ? 'PERCENT'
+        : type.includes('PERCENTAGE_RANGE')
+          ? 'RANGE'
+          : 'STEP';
+    const everyMinutes = durationParts(policy.duration);
     return {
       id: policy.id ?? `window-${index + 1}`,
       type: mappedType,
       duration: policy.windowDuration ?? 'PT0S',
       value: String(policy.value ?? ''),
-      maxValue: String((policy as PolicyItemRQ & { maxValue?: number }).maxValue ?? ''),
+      maxValue: String(policy.maxValue ?? ''),
       steps: policy.steps ?? [],
-      clockEveryMinutes: '2',
-      clockStopAt: '',
+      clockEveryMinutes:
+        mappedType === 'CLOCK'
+          ? String(
+              Number(everyMinutes.days) * 1440 +
+                Number(everyMinutes.hours) * 60 +
+                Number(everyMinutes.minutes) || 1,
+            )
+          : '2',
+      clockStopAt: policy.thresholdPrice !== undefined ? String(policy.thresholdPrice) : '',
     };
   });
+}
+
+function tieChoice(policies: PolicyItemRQ[]): WizardState['award']['ties'] {
+  const tie = policies.find((policy) => policyType(policy).includes('TIE_BREAKING'));
+  const type = tie ? policyType(tie) : '';
+  if (type.startsWith('RANDOM')) return 'RANDOM';
+  if (type.startsWith('COMPETE')) return 'REBID';
+  return 'EARLIEST';
 }
 
 function offerVisibilityChoice(value: string): OfferState['offerVisibility'] {
@@ -200,6 +218,10 @@ export function mapAuctionToWizardState(
 
   const type = auctionType.toUpperCase();
   const status = resolveStr(auction.status).toUpperCase();
+  // A clock auction is an atomic-unit auction whose progression windows are
+  // clock policies; the auction type alone doesn't say so.
+  const windows = mapWindows(policies);
+  const clock = type.includes('CLOCK') || windows.some((window) => window.type === 'CLOCK');
   const protocol = auction.protocol;
   const monetary = auction.monetaryOptions;
   const rawStart = auction.schedule?.startTime ?? auction.startTime ?? '';
@@ -221,8 +243,9 @@ export function mapAuctionToWizardState(
     },
     offer: {
       ...initialWizardState.offer,
-      mechanism: type.includes('CLOCK') ? 'CLOCK' : type.includes('SEALED') ? 'SEALED' : 'OPEN',
-      windows: mapWindows(policies),
+      mechanism: clock ? 'CLOCK' : type.includes('SEALED') ? 'SEALED' : 'OPEN',
+      windows: clock ? initialWizardState.offer.windows : windows,
+      clockWindows: clock && windows.length ? windows : initialWizardState.offer.clockWindows,
       offerVisibility: offerVisibilityChoice(resolveStr(protocol?.offerVisibility)),
       participantVisibility: participantVisibilityChoice(
         resolveStr(protocol?.participantVisibility),
@@ -245,6 +268,7 @@ export function mapAuctionToWizardState(
         ? policyType(winnerPrice)
         : initialWizardState.award.winnerPriceType,
       winnerPriceKth: String(winnerPrice?.kth ?? initialWizardState.award.winnerPriceKth),
+      ties: tieChoice(policies),
     },
   };
 

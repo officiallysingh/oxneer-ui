@@ -55,6 +55,8 @@ export interface AuctionWorkflowStep {
   preStartDeadlineDuration?: string;
   tncText?: string;
   implicit?: boolean;
+  /** Required steps must be finished before the participant can bid. */
+  mandatory?: boolean;
   status?: {
     type?: string | Record<string, string>;
     updatedAt?: string | null;
@@ -253,6 +255,10 @@ export interface PolicyItemRQ {
   limit?: number;
   windowDuration?: string;
   steps?: number[];
+  /** PERCENTAGE_RANGE_BASED_OFFER_PRICE_POLICY upper bound. */
+  maxValue?: number;
+  /** CLOCK_BASED_PRICE_CHANGE_POLICY: the price where the clock stops. */
+  thresholdPrice?: number;
   kth?: number;
   policies?: PolicyItemRQ[];
   postPayment?: boolean;
@@ -290,6 +296,8 @@ export type WorkflowStepType =
 
 export interface AddFormStepRQ {
   type: 'FORM_STEP';
+  /** Required steps must be finished before the participant can bid. */
+  mandatory?: boolean;
   name: string;
   description: string;
   order?: number;
@@ -302,6 +310,8 @@ export interface AddFormStepRQ {
 /** Hardcoded to PRE_AUCTION server-side — `phase` is never sent in the request body. */
 export interface AddTnCFormStepRQ {
   type: 'TNC_FORM_STEP';
+  /** Required steps must be finished before the participant can bid. */
+  mandatory?: boolean;
   name?: string;
   description?: string;
   order?: number;
@@ -311,9 +321,13 @@ export interface AddTnCFormStepRQ {
 
 export interface AddBankDetailFormStepRQ {
   type: 'BANK_DETAIL_FORM_STEP';
+  /** Required steps must be finished before the participant can bid. */
+  mandatory?: boolean;
   name?: string;
   description?: string;
   order?: number;
+  /** Before the auction (refunds) or after it (payouts to the winner). */
+  phase?: WorkflowStepPhase;
   /** True when this step exists because a refundable Pre Auction payment head
    *  requires it (bank details are needed to issue that refund); false otherwise. */
   implicit?: boolean;
@@ -321,6 +335,8 @@ export interface AddBankDetailFormStepRQ {
 
 export interface AddPaymentStepRQ {
   type: 'PAYMENT_STEP';
+  /** Required steps must be finished before the participant can bid. */
+  mandatory?: boolean;
   name?: string;
   description?: string;
   order?: number;
@@ -335,6 +351,8 @@ export interface AddPaymentStepRQ {
  *  Hardcoded to PRE_AUCTION server-side — `phase` is never sent in the request body. */
 export interface AddParticipationFormStepRQ {
   type: 'PARTICIPATION_FORM_STEP';
+  /** Required steps must be finished before the participant can bid. */
+  mandatory?: boolean;
   name?: string;
   description?: string;
   order?: number;

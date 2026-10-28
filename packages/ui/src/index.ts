@@ -79,7 +79,14 @@ export {
   SheetTitle,
   SheetDescription,
 } from './components/sheet';
-export { Popover, PopoverTrigger, PopoverContent } from './components/popover';
+export { Popover, PopoverTrigger, PopoverAnchor, PopoverContent } from './components/popover';
+export {
+  Combobox,
+  ChipCombobox,
+  type ComboboxOption,
+  type ComboboxProps,
+  type ChipComboboxProps,
+} from './components/combobox';
 export { Checkbox } from './components/checkbox';
 export { Switch } from './components/switch';
 export { Skeleton } from './components/skeleton';

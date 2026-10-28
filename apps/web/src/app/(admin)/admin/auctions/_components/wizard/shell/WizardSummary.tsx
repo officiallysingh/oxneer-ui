@@ -85,14 +85,16 @@ export function WizardSummary() {
           value={
             offer.mechanism === 'SEALED'
               ? 'Not used (sealed)'
-              : `${offer.windows.length} window${offer.windows.length === 1 ? '' : 's'}`
+              : offer.mechanism === 'CLOCK'
+                ? `Clock · ${offer.clockWindows.length} window${offer.clockWindows.length === 1 ? '' : 's'}`
+                : `${offer.windows.length} window${offer.windows.length === 1 ? '' : 's'}`
           }
         />
         <SummaryItem label="Starts" value={formatDateTime(schedule.startTime)} />
         <SummaryItem
           label="Soft close"
           value={
-            offer.mechanism === 'SEALED' || !schedule.softCloseEnabled
+            offer.mechanism !== 'OPEN' || !schedule.softCloseEnabled
               ? 'Not used'
               : softCloseLabel(schedule)
           }

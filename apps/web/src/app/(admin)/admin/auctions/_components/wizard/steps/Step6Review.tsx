@@ -25,7 +25,8 @@ const MECHANISM: Record<string, string> = {
 function checklistRows(state: WizardState, workflowCount: number, postWorkflowCount: number) {
   const { basics, offer, schedule, participation } = state;
   const forward = basics.direction === 'FORWARD';
-  const windows = `${offer.windows.length} window${offer.windows.length === 1 ? '' : 's'}`;
+  const windowList = offer.mechanism === 'CLOCK' ? offer.clockWindows : offer.windows;
+  const windows = `${windowList.length} window${windowList.length === 1 ? '' : 's'}`;
   return [
     {
       step: 1,
@@ -46,7 +47,9 @@ function checklistRows(state: WizardState, workflowCount: number, postWorkflowCo
     {
       step: 3,
       summary: `Starts ${formatDateTime(schedule.startTime)} · ${
-        schedule.softCloseEnabled ? 'Soft close policy' : 'no soft close'
+        offer.mechanism === 'OPEN' && schedule.softCloseEnabled
+          ? 'Soft close policy'
+          : 'no soft close'
       }`,
     },
     {

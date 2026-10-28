@@ -67,6 +67,10 @@ export function formatDuration(duration: string): string {
 }
 
 export function windowSummary(window: PriceWindow, currency = '₹'): string {
+  if (window.type === 'CLOCK')
+    return `${currency}${Number(window.value || 0).toLocaleString('en-IN')} / ${
+      window.clockEveryMinutes || 1
+    } min`;
   if (window.type === 'STEP')
     return `${currency}${Number(window.value || 0).toLocaleString('en-IN')} steps`;
   if (window.type === 'RANGE') return `${window.value || 0}–${window.maxValue || 0}%`;

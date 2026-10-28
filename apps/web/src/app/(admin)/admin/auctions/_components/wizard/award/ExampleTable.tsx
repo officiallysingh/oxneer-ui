@@ -62,7 +62,7 @@ export function ExampleTable({
   currency: string;
 }) {
   return (
-    <div className="border-t border-border px-4 py-4">
+    <div className="px-4 py-4">
       <div className="grid gap-3 md:grid-cols-[168px_minmax(0,1fr)]">
         <div>
           <p className="text-xs font-semibold text-foreground">Example</p>

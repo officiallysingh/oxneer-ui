@@ -196,7 +196,7 @@ export function StepEditor({
     try {
       await onSave(draft);
     } catch (err) {
-      setError(parseApiError(err).general ?? 'Could not save the step.');
+      setError(parseApiError(err).summary);
     } finally {
       setSaving(false);
     }

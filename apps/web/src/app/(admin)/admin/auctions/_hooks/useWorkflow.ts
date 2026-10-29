@@ -30,7 +30,7 @@ export function useWorkflow(auctionId: string) {
       const data = await auctionsApi.getAuctionWorkflow(auctionId);
       setSteps([...data].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)));
     } catch (err) {
-      setError(parseApiError(err).general ?? 'Could not load the workflow steps.');
+      setError(parseApiError(err).summary);
     } finally {
       setLoading(false);
     }
@@ -65,7 +65,7 @@ export function useWorkflow(auctionId: string) {
       await auctionsApi.deleteWorkflowStep(auctionId, step.id);
       await load();
     } catch (err) {
-      setError(parseApiError(err).general ?? 'Could not delete the step.');
+      setError(parseApiError(err).summary);
     }
   };
 
@@ -86,7 +86,7 @@ export function useWorkflow(auctionId: string) {
     try {
       await auctionsApi.reorderWorkflowSteps(auctionId, order);
     } catch (err) {
-      setError(parseApiError(err).general ?? 'Could not reorder the steps.');
+      setError(parseApiError(err).summary);
     } finally {
       await load();
     }

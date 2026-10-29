@@ -3,6 +3,7 @@
 import { useRef } from 'react';
 import {
   auctionsApi,
+  listingsApi,
   type AuctionCreationRQ,
   type AuctionScheduleRQ,
   type AuctionUnitType,
@@ -17,7 +18,7 @@ import {
   participantVisibilityValue,
 } from '../_lib/wizard/payload';
 import { endTimeFor } from '../_lib/wizard/summary';
-import type { WizardState } from '../_lib/wizard/types';
+import type { SelectedListing, WizardState } from '../_lib/wizard/types';
 
 export interface PersistenceOptions {
   /** Null until the create flow saves Basics for the first time. */
@@ -28,6 +29,26 @@ export interface PersistenceOptions {
   /** Edit only: keeps legacy MULTI_UNIT / LOT units in their original shape. */
   unit?: { id?: string; rawType: string; supported: boolean };
   onCreated?: (id: string) => void;
+}
+
+/** The auction is filed under the subcategories of the listings in its unit;
+ *  the API requires at least one. Items picked in this session carry their
+ *  subcategory; for older ones it is looked up from the listing. */
+async function unitSubCategories(items: SelectedListing[]): Promise<string[]> {
+  const ids = await Promise.all(
+    items.map(async (item) => {
+      if (item.subCategoryId) return item.subCategoryId;
+      try {
+        const listing = await listingsApi.getListingById(item.id);
+        return typeof listing.subCategory === 'string'
+          ? listing.subCategory
+          : listing.subCategory?.id;
+      } catch {
+        return undefined;
+      }
+    }),
+  );
+  return [...new Set(ids.filter((id): id is string => Boolean(id)))];
 }
 
 export function schedulePayload(state: WizardState): AuctionScheduleRQ | null {
@@ -67,13 +88,22 @@ export function useWizardPersistence({
     if (builtUnit && unit && !unit.supported && unit.rawType) {
       builtUnit.type = unit.rawType as AuctionUnitType;
     }
+    const subCategories = await unitSubCategories(basics.items);
     const common = {
       title: basics.title.trim(),
       description: basics.description.trim() || undefined,
       referenceId: basics.referenceId.trim() || undefined,
       monetaryOptions,
       unit: builtUnit,
+      // Leave an existing auction's subcategories alone if none can be worked out.
+      ...(subCategories.length ? { subCategories } : {}),
     };
+
+    if (!auctionIdRef.current && !subCategories.length) {
+      throw new Error(
+        'The selected listing has no subcategory, so the auction can’t be filed. Pick a listing with a subcategory.',
+      );
+    }
 
     if (auctionIdRef.current) {
       await auctionsApi.updateAuction(auctionIdRef.current, {

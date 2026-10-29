@@ -79,7 +79,8 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
   const [postWorkflowCount, setPostWorkflowCount] = useState(config.workflowCounts?.post ?? 0);
   const [inviteStats, setInviteStats] = useState<InviteStats | null>(null);
 
-  const { roundingModes, policyTypeOrder } = useAuctionLookups(config.auctionType);
+  const { roundingModes, formats, unitTypes, directions, accessibilityTypes, policyTypeOrder } =
+    useAuctionLookups(config.auctionType);
   const persistence = useWizardPersistence({
     initialAuctionId: config.auctionId,
     policyTypeOrder,
@@ -170,7 +171,8 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
 
   const reportError = (err: unknown, fallback: string) => {
     const parsed = parseApiError(err);
-    const message = parsed.general ?? fallback;
+    // The summary names every violation, e.g. "Sub categories must not be empty."
+    const message = parsed.summary || fallback;
     setErrors({ ...parsed.fieldErrors, general: message });
     toast.error(message);
   };
@@ -296,6 +298,10 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
     savedAt,
     busy,
     roundingModes,
+    formats,
+    unitTypes,
+    directions,
+    accessibilityTypes,
     workflowCount,
     postWorkflowCount,
     inviteStats,

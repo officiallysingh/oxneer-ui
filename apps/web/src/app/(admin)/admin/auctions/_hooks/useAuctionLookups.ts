@@ -4,18 +4,29 @@ import { useEffect, useState } from 'react';
 import { auctionsApi } from '@repo/api';
 import type { SelectOption } from '../_components/AuctionShared';
 
-/** Reference data the wizard needs: rounding modes and the policy order the
- *  backend expects for this auction type. Both fall back to empty lists. */
+/** Reference data the wizard needs: rounding modes, auction formats, unit types,
+ *  directions, accessibility types and the policy order the backend expects for
+ *  this auction type. Each falls back to an empty list, and the screens fall
+ *  back to their built-in options. */
 export function useAuctionLookups(auctionType: string) {
   const [roundingModes, setRoundingModes] = useState<SelectOption[]>([]);
+  const [formats, setFormats] = useState<SelectOption[]>([]);
+  const [unitTypes, setUnitTypes] = useState<SelectOption[]>([]);
+  const [directions, setDirections] = useState<SelectOption[]>([]);
+  const [accessibilityTypes, setAccessibilityTypes] = useState<SelectOption[]>([]);
   const [policyTypeOrder, setPolicyTypeOrder] = useState<string[]>([]);
 
   useEffect(() => {
     let active = true;
-    auctionsApi
-      .getRoundingModeTypes()
-      .then((modes) => active && setRoundingModes(modes))
-      .catch(() => active && setRoundingModes([]));
+    const load = (request: () => Promise<SelectOption[]>, set: (options: SelectOption[]) => void) =>
+      request()
+        .then((options) => active && set(options))
+        .catch(() => active && set([]));
+    void load(auctionsApi.getRoundingModeTypes, setRoundingModes);
+    void load(auctionsApi.getFormats, setFormats);
+    void load(auctionsApi.getUnitTypes, setUnitTypes);
+    void load(auctionsApi.getDirectionTypes, setDirections);
+    void load(auctionsApi.getAccessibilityTypes, setAccessibilityTypes);
     return () => {
       active = false;
     };
@@ -33,5 +44,5 @@ export function useAuctionLookups(auctionType: string) {
     };
   }, [auctionType]);
 
-  return { roundingModes, policyTypeOrder };
+  return { roundingModes, formats, unitTypes, directions, accessibilityTypes, policyTypeOrder };
 }

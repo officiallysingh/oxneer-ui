@@ -2,9 +2,11 @@
 
 import { useMemo, useState } from 'react';
 import { Package, Trash2 } from 'lucide-react';
+import { Switch } from '@repo/ui';
 import type { ListingSummaryVM } from '@repo/api';
-import { ListingSearchField } from '../../../_components/ListingSearchField';
+import { ListingPicker } from '../basics/ListingPicker';
 import { ListingViewDialog } from '../../../../listings/_components/ListingViewDialog';
+import type { SelectOption } from '../../../_components/AuctionShared';
 import type { BasicsState, SelectedListing } from '../../../_lib/wizard/types';
 import {
   ChoiceCard,
@@ -35,6 +37,48 @@ const TIME_ZONES = [
   { value: 'America/New_York', label: 'EST: America/New_York' },
 ];
 
+/** Shown before the model lists load, or if they can't be fetched. */
+const FALLBACK_DIRECTIONS: SelectOption[] = [
+  { value: 'FORWARD', label: 'Forward/Ascending Price - Sell side' },
+  { value: 'REVERSE', label: 'Reverse/Descending Price - Buy side' },
+];
+const FALLBACK_ACCESSIBILITY: SelectOption[] = [
+  { value: 'PUBLIC', label: 'Public - Any registered user can view and participate' },
+  {
+    value: 'PRIVATE',
+    label:
+      'Private - Only registered user which are invited by Auctioneer can view and participate',
+  },
+];
+const FALLBACK_FORMATS: SelectOption[] = [
+  { value: 'SIMPLE', label: 'Simple' },
+  { value: 'MULTI_ROUND', label: 'Multi Round' },
+  { value: 'MULTI_STAGE', label: 'Multi Stage' },
+];
+const FALLBACK_UNIT_TYPES: SelectOption[] = [
+  { value: 'SINGLE_UNIT', label: 'Single Item (Atomic)' },
+  { value: 'BUNDLE', label: 'Bundle of identical or different items (Atomic)' },
+  { value: 'MULTI_UNIT', label: 'Multiple identical items' },
+];
+
+/** The simple wizard builds one-round auctions of atomic units only. */
+const SUPPORTED_FORMATS = ['SIMPLE'];
+const SUPPORTED_UNIT_TYPES: BasicsState['unitType'][] = ['SINGLE_UNIT', 'BUNDLE'];
+const SUPPORTED_DIRECTIONS: BasicsState['direction'][] = ['FORWARD', 'REVERSE'];
+const SUPPORTED_ACCESSIBILITY: BasicsState['accessibility'][] = ['PUBLIC', 'PRIVATE'];
+
+/** The server labels read "Public - Any registered user…"; keep the part after the dash. */
+function labelDetail(label: string): string {
+  const detail = label.split(' - ').slice(1).join(' - ').trim();
+  return detail ? detail.charAt(0).toUpperCase() + detail.slice(1) : label;
+}
+
+/** "MULTI_ROUND" → "Multi round", for types the server adds that we have no copy for. */
+function titleFromCode(code: string): string {
+  const words = code.toLowerCase().split('_').filter(Boolean).join(' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 function currencySymbol(code: string): string {
   return (
     {
@@ -51,10 +95,22 @@ function currencySymbol(code: string): string {
 export function Step1BasicsUnit({
   form,
   onChange,
+  formats,
+  unitTypes,
+  directions,
+  accessibilityTypes,
   errors,
 }: {
   form: BasicsState;
   onChange: (patch: Partial<BasicsState>) => void;
+  /** Auction formats from /model/auction/formats. */
+  formats: SelectOption[];
+  /** Unit types from /model/unit-types. */
+  unitTypes: SelectOption[];
+  /** Directions from /model/direction-types. */
+  directions: SelectOption[];
+  /** Who can join, from /model/accessibility-types. */
+  accessibilityTypes: SelectOption[];
   errors: Record<string, string>;
 }) {
   const [viewListingId, setViewListingId] = useState<string | null>(null);
@@ -65,19 +121,81 @@ export function Step1BasicsUnit({
   const reserveLabel = isForward ? 'Reserve price' : 'Maximum price';
   const who = isForward ? 'bidders' : 'suppliers';
   const Who = isForward ? 'Bidders' : 'Suppliers';
+  const soldOrBought = isForward ? 'sold' : 'bought';
+
+  // The server decides which formats and unit types exist; the design's
+  // wording is used for the ones we know, and the server's label otherwise.
+  const formatCopy: Record<string, { title: string; description: string }> = {
+    SIMPLE: {
+      title: 'Simple',
+      description: isForward
+        ? 'One unit, one round. For example, selling a used car.'
+        : 'One unit, one round. For example, buying school uniforms.',
+    },
+    MULTI_ROUND: {
+      title: 'Multi-round',
+      description: 'One round per unit: parallel, sequential or staggered.',
+    },
+    MULTI_STAGE: {
+      title: 'Multi-stage',
+      description:
+        'Stages with their own rules, such as a sealed qualifier and then a live auction.',
+    },
+  };
+  const unitCopy: Record<string, { title: string; description: string }> = {
+    SINGLE_UNIT: {
+      title: 'Single Unit',
+      description: `One item and its quantity, ${soldOrBought} as a whole.`,
+    },
+    BUNDLE: {
+      title: 'Bundle',
+      description: `One or more items, each with its quantity, ${soldOrBought} as a whole.`,
+    },
+    MULTI_UNIT: {
+      title: 'Multi Unit',
+      description: `${Who} choose a quantity and a price per piece.`,
+    },
+  };
+  const directionCopy: Record<string, { title: string; description: string }> = {
+    FORWARD: {
+      title: 'Forward (selling)',
+      description: 'Buyers bid the price up. The highest bid wins.',
+    },
+    REVERSE: {
+      title: 'Reverse (buying)',
+      description: 'Suppliers bid the price down. The lowest ask wins.',
+    },
+  };
+  const accessibilityCopy: Record<string, { title: string; description: string }> = {
+    PUBLIC: { title: 'Public', description: 'Any registered user can join.' },
+    PRIVATE: { title: 'Private', description: 'Only people you invite, once it’s published.' },
+  };
+  const directionOptions = directions.length ? directions : FALLBACK_DIRECTIONS;
+  const accessibilityOptions = accessibilityTypes.length
+    ? accessibilityTypes
+    : FALLBACK_ACCESSIBILITY;
+  const formatOptions = formats.length ? formats : FALLBACK_FORMATS;
+  const unitOptions = unitTypes.length ? unitTypes : FALLBACK_UNIT_TYPES;
+  const comingLater = <span className="text-[10px] font-medium text-warning">Coming later</span>;
 
   const totalQuantity = useMemo(
     () => form.items.reduce((sum, item) => sum + (parseInt(item.quantity, 10) || 1), 0),
     [form.items],
   );
 
-  const addListing = (id: string, name: string, summary: ListingSummaryVM, quantity: string) => {
+  const addListing = (
+    id: string,
+    name: string,
+    summary: ListingSummaryVM & { subCategoryId?: string },
+    quantity: string,
+  ) => {
     const nextItem: SelectedListing = {
       id,
       name,
       description: summary.description,
       quantity: quantity || '1',
       availableQuantity: summary.availableQuantity,
+      subCategoryId: summary.subCategoryId,
       summary,
     };
     const items = isSingle
@@ -111,33 +229,22 @@ export function Step1BasicsUnit({
       >
         <WizardRow label="Auction type" description="Decides how rounds and stages run.">
           <div className="grid gap-2 sm:grid-cols-3">
-            <ChoiceCard
-              title="Simple"
-              code="SIMPLE"
-              description={
-                isForward
-                  ? 'One unit, one round. For example, selling a used car.'
-                  : 'One unit, one round. For example, buying school uniforms.'
-              }
-              selected
-              onClick={() => {}}
-            />
-            <ChoiceCard
-              title="Multi-round"
-              code="MULTI_ROUND"
-              description="One round per unit: parallel, sequential or staggered."
-              disabled
-              badge={<span className="text-[10px] font-medium text-warning">Coming later</span>}
-              onClick={() => {}}
-            />
-            <ChoiceCard
-              title="Multi-stage"
-              code="MULTI_STAGE"
-              description="Stages with their own rules, such as a sealed qualifier and then a live auction."
-              disabled
-              badge={<span className="text-[10px] font-medium text-warning">Coming later</span>}
-              onClick={() => {}}
-            />
+            {formatOptions.map((option) => {
+              const supported = SUPPORTED_FORMATS.includes(option.value);
+              const copy = formatCopy[option.value];
+              return (
+                <ChoiceCard
+                  key={option.value}
+                  title={copy?.title ?? titleFromCode(option.value)}
+                  code={option.value}
+                  description={copy?.description ?? option.label}
+                  selected={form.format === option.value}
+                  disabled={!supported}
+                  badge={supported ? undefined : comingLater}
+                  onClick={() => {}}
+                />
+              );
+            })}
           </div>
         </WizardRow>
 
@@ -146,18 +253,22 @@ export function Step1BasicsUnit({
           description="Selling or buying. This changes wording and limits in later sections."
         >
           <div className="grid gap-2 sm:grid-cols-2">
-            <ChoiceCard
-              title="Forward (selling)"
-              description="Buyers bid the price up. The highest bid wins."
-              selected={isForward}
-              onClick={() => onChange({ direction: 'FORWARD' })}
-            />
-            <ChoiceCard
-              title="Reverse (buying)"
-              description="Suppliers bid the price down. The lowest ask wins."
-              selected={!isForward}
-              onClick={() => onChange({ direction: 'REVERSE' })}
-            />
+            {directionOptions.map((option) => {
+              const value = option.value as BasicsState['direction'];
+              const supported = SUPPORTED_DIRECTIONS.includes(value);
+              const copy = directionCopy[option.value];
+              return (
+                <ChoiceCard
+                  key={option.value}
+                  title={copy?.title ?? titleFromCode(option.value)}
+                  description={copy?.description ?? labelDetail(option.label)}
+                  selected={form.direction === option.value}
+                  disabled={!supported}
+                  badge={supported ? undefined : comingLater}
+                  onClick={() => onChange({ direction: value })}
+                />
+              );
+            })}
           </div>
         </WizardRow>
 
@@ -227,18 +338,22 @@ export function Step1BasicsUnit({
           description="Private auctions are invite-only. You invite people after you publish."
         >
           <div className="grid gap-2 sm:grid-cols-2">
-            <ChoiceCard
-              title="Public"
-              description="Any registered user can join."
-              selected={form.accessibility === 'PUBLIC'}
-              onClick={() => onChange({ accessibility: 'PUBLIC' })}
-            />
-            <ChoiceCard
-              title="Private"
-              description="Only people you invite, once it's published."
-              selected={form.accessibility === 'PRIVATE'}
-              onClick={() => onChange({ accessibility: 'PRIVATE' })}
-            />
+            {accessibilityOptions.map((option) => {
+              const value = option.value as BasicsState['accessibility'];
+              const supported = SUPPORTED_ACCESSIBILITY.includes(value);
+              const copy = accessibilityCopy[option.value];
+              return (
+                <ChoiceCard
+                  key={option.value}
+                  title={copy?.title ?? titleFromCode(option.value)}
+                  description={copy?.description ?? labelDetail(option.label)}
+                  selected={form.accessibility === option.value}
+                  disabled={!supported}
+                  badge={supported ? undefined : comingLater}
+                  onClick={() => onChange({ accessibility: value })}
+                />
+              );
+            })}
           </div>
         </WizardRow>
 
@@ -292,38 +407,29 @@ export function Step1BasicsUnit({
               : 'Single Units and Bundles are atomic: one price, one winner, no partial awards.'
           }
         >
-          <div className="grid gap-2 sm:grid-cols-3">
-            <ChoiceCard
-              title="Single Unit"
-              description={
-                isForward
-                  ? 'One item and its quantity, sold as a whole.'
-                  : 'One item and its quantity, bought as a whole.'
-              }
-              selected={isSingle}
-              onClick={() => onChange({ unitType: 'SINGLE_UNIT', items: form.items.slice(0, 1) })}
-            />
-            <ChoiceCard
-              title="Bundle"
-              description={
-                isForward
-                  ? 'One or more items, each with its quantity, sold as a whole.'
-                  : 'One or more items, each with its quantity, bought as a whole.'
-              }
-              selected={!isSingle}
-              onClick={() => onChange({ unitType: 'BUNDLE' })}
-            />
-            <ChoiceCard
-              title="Multi Unit"
-              description={
-                isForward
-                  ? 'Bidders choose a quantity and a price per piece.'
-                  : 'Suppliers choose a quantity and a price per piece.'
-              }
-              disabled
-              badge={<span className="text-[10px] font-medium text-warning">Coming later</span>}
-              onClick={() => {}}
-            />
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {unitOptions.map((option) => {
+              const value = option.value as BasicsState['unitType'];
+              const supported = SUPPORTED_UNIT_TYPES.includes(value);
+              const copy = unitCopy[option.value];
+              return (
+                <ChoiceCard
+                  key={option.value}
+                  title={copy?.title ?? titleFromCode(option.value)}
+                  description={copy?.description ?? option.label}
+                  selected={form.unitType === option.value}
+                  disabled={!supported}
+                  badge={supported ? undefined : comingLater}
+                  onClick={() =>
+                    onChange(
+                      value === 'SINGLE_UNIT'
+                        ? { unitType: value, items: form.items.slice(0, 1) }
+                        : { unitType: value },
+                    )
+                  }
+                />
+              );
+            })}
           </div>
         </WizardRow>
 
@@ -356,7 +462,12 @@ export function Step1BasicsUnit({
           }
         >
           <div className="space-y-2">
-            <ListingSearchField addMode onSelect={addListing} />
+            <ListingPicker
+              selectedIds={form.items.map((item) => item.id)}
+              single={isSingle}
+              forward={isForward}
+              onAdd={(listing) => addListing(listing.id, listing.name, listing, '1')}
+            />
             {form.items.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-border px-4 py-6 text-center">
                 <Package className="h-7 w-7 text-muted-foreground/40" aria-hidden />
@@ -469,23 +580,11 @@ export function Step1BasicsUnit({
           }
         >
           <div className="space-y-2.5">
-            <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-foreground">
-              <button
-                type="button"
-                role="switch"
-                aria-checked={form.reserveEnabled}
-                aria-label="Reserve price"
-                onClick={() => onChange({ reserveEnabled: !form.reserveEnabled })}
-                className={`relative h-5 w-9 rounded-full transition-colors ${
-                  form.reserveEnabled ? 'bg-primary' : 'bg-muted'
-                }`}
-              >
-                <span
-                  className={`absolute top-0.5 h-4 w-4 rounded-full bg-background transition-transform ${
-                    form.reserveEnabled ? 'translate-x-4' : 'translate-x-0.5'
-                  }`}
-                />
-              </button>
+            <label className="flex cursor-pointer items-center gap-2.5 text-xs font-medium text-foreground">
+              <Switch
+                checked={form.reserveEnabled}
+                onCheckedChange={(reserveEnabled) => onChange({ reserveEnabled })}
+              />
               {form.reserveEnabled
                 ? isForward
                   ? 'Reserve price on'

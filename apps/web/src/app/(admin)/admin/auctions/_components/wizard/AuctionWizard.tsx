@@ -24,7 +24,17 @@ function SetupStep() {
 
   switch (step) {
     case 1:
-      return <Step1BasicsUnit form={basics} onChange={wizard.patchBasics} errors={errors} />;
+      return (
+        <Step1BasicsUnit
+          form={basics}
+          onChange={wizard.patchBasics}
+          formats={wizard.formats}
+          unitTypes={wizard.unitTypes}
+          directions={wizard.directions}
+          accessibilityTypes={wizard.accessibilityTypes}
+          errors={errors}
+        />
+      );
     case 2:
       return (
         <Step2OfferRules

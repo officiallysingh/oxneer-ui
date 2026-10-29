@@ -98,7 +98,7 @@ export function InvitePanel({
       setResults((prev) => prev.filter((item) => item.username !== user.username));
       onInvited();
     } catch (err) {
-      setGeneralError(parseApiError(err).general ?? 'Failed to invite this user.');
+      setGeneralError(parseApiError(err).summary);
     } finally {
       setInvitingUser(null);
     }
@@ -157,7 +157,7 @@ export function InvitePanel({
       setMatch(null);
       onInvited();
     } catch (err) {
-      setGeneralError(parseApiError(err).general ?? 'Failed to send the invitation.');
+      setGeneralError(parseApiError(err).summary);
     } finally {
       setSending(false);
     }

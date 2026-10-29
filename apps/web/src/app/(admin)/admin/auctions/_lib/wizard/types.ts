@@ -13,6 +13,8 @@ export interface SelectedListing {
   description?: string;
   quantity: string;
   availableQuantity?: number;
+  /** The listing's subcategory; the auction is filed under its items' subcategories. */
+  subCategoryId?: string;
   summary?: ListingSummaryVM;
 }
 

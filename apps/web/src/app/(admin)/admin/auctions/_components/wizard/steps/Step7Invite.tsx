@@ -77,7 +77,7 @@ export function Step7Invite({
       })
       .catch((err) => {
         if (!active) return;
-        setWorkflowError(parseApiError(err).general ?? 'Could not load the participant steps.');
+        setWorkflowError(parseApiError(err).summary);
       });
     return () => {
       active = false;

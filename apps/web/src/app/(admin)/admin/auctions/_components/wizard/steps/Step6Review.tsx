@@ -82,7 +82,7 @@ function useWorkflowSteps(auctionId: string | null) {
       const data = await auctionsApi.getAuctionWorkflow(auctionId);
       setSteps([...data].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)));
     } catch (err) {
-      setError(parseApiError(err).general ?? 'Could not load the workflow.');
+      setError(parseApiError(err).summary);
     } finally {
       setLoading(false);
     }

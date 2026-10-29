@@ -61,7 +61,7 @@ export function InvitedList({
       if (expandedId === view.participant.id) setExpandedId(null);
       onRefresh();
     } catch (err) {
-      setActionError(parseApiError(err).general ?? 'Could not cancel this invitation.');
+      setActionError(parseApiError(err).summary);
     } finally {
       setRemovingId(null);
     }

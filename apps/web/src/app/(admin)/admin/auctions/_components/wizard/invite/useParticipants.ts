@@ -22,7 +22,7 @@ export function useParticipants(auctionId: string, preSteps: AuctionWorkflowStep
       });
       setParticipants(result.content ?? []);
     } catch (err) {
-      setError(parseApiError(err).general ?? 'Could not load participants.');
+      setError(parseApiError(err).summary);
       setParticipants([]);
     } finally {
       setLoading(false);

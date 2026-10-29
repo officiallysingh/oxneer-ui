@@ -4,7 +4,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { auctionsApi, blobsApi, type AuctionWorkflowStep } from '@repo/api';
 import { parseApiError } from '@/lib/api-errors';
 import { isPostStep } from '../_lib/wizard/workflow';
-import { toAddRequest, toUpdateRequest, type StepDraft } from '../_lib/wizard/stepDraft';
+import {
+  emptyDraft,
+  toAddRequest,
+  toUpdateRequest,
+  type StepDraft,
+} from '../_lib/wizard/stepDraft';
 
 async function uploadTerms(draft: StepDraft): Promise<string | undefined> {
   if (draft.type !== 'TNC_FORM_STEP' || draft.tncSource !== 'DOCUMENT' || !draft.tncFile) {
@@ -24,13 +29,17 @@ export function useWorkflow(auctionId: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  /** Reloads the steps and returns them, sorted, for callers that act on the result. */
+  const load = useCallback(async (): Promise<AuctionWorkflowStep[]> => {
     setError(null);
     try {
       const data = await auctionsApi.getAuctionWorkflow(auctionId);
-      setSteps([...data].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)));
+      const sorted = [...data].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      setSteps(sorted);
+      return sorted;
     } catch (err) {
       setError(parseApiError(err).summary);
+      return [];
     } finally {
       setLoading(false);
     }
@@ -47,7 +56,7 @@ export function useWorkflow(auctionId: string) {
   const add = async (draft: StepDraft, order: number) => {
     const tncBlobId = await uploadTerms(draft);
     await auctionsApi.addWorkflowStep(auctionId, toAddRequest(draft, order, tncBlobId));
-    await load();
+    return load();
   };
 
   const update = async (step: AuctionWorkflowStep, draft: StepDraft) => {
@@ -57,8 +66,13 @@ export function useWorkflow(auctionId: string) {
       step.id,
       toUpdateRequest(draft, step, tncBlobId),
     );
-    await load();
+    return load();
   };
+
+  /** Adds a Bank details step right where `order` is, so a refundable payment
+   *  saved after it has somewhere to send refunds. Returns the reloaded steps. */
+  const addBankBefore = (order: number) =>
+    add(emptyDraft('BANK_DETAIL_FORM_STEP', 'PRE_AUCTION'), order);
 
   const remove = async (step: AuctionWorkflowStep) => {
     try {
@@ -92,7 +106,20 @@ export function useWorkflow(auctionId: string) {
     }
   };
 
-  return { steps, pre, post, loading, error, setError, reload: load, add, update, remove, move };
+  return {
+    steps,
+    pre,
+    post,
+    loading,
+    error,
+    setError,
+    reload: load,
+    add,
+    update,
+    addBankBefore,
+    remove,
+    move,
+  };
 }
 
 export type WorkflowController = ReturnType<typeof useWorkflow>;

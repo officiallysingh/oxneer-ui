@@ -146,8 +146,33 @@ export interface DraftContext {
   step?: AuctionWorkflowStep;
 }
 
+export interface DraftProblem {
+  message: string;
+  /** The editor can fix this one itself by adding a Bank details step first. */
+  fix?: 'ADD_BANK_FIRST';
+}
+
 /** Returns the first problem that stops the draft from saving, or null. */
-export function validateDraft(draft: StepDraft, context: DraftContext): string | null {
+export function validateDraft(draft: StepDraft, context: DraftContext): DraftProblem | null {
+  const message = draftMessage(draft, context);
+  if (!message) return null;
+  return message === NEEDS_BANK ? { message, fix: 'ADD_BANK_FIRST' } : { message };
+}
+
+const NEEDS_BANK =
+  'A refundable charge needs a Bank details step before this payment, so the refund has somewhere to go.';
+const BANK_TOO_LATE =
+  'A refundable charge needs the Bank details step before this payment. Move Bank details up, or make the charge non-refundable.';
+
+function hasBankStep(workflow: AuctionWorkflowStep[], phase: WorkflowStepPhase): boolean {
+  return workflow.some(
+    (step) =>
+      resolveStr(step.type) === 'BANK_DETAIL_FORM_STEP' &&
+      (resolveStr(step.phase) || 'PRE_AUCTION') === phase,
+  );
+}
+
+function draftMessage(draft: StepDraft, context: DraftContext): string | null {
   const implicit = Boolean(context.step?.implicit);
   if (implicit) return null;
   switch (draft.type) {
@@ -178,7 +203,8 @@ export function validateDraft(draft: StepDraft, context: DraftContext): string |
           (s) => resolveStr(s.type) === 'BANK_DETAIL_FORM_STEP' && (s.order ?? 0) < context.order,
         )
       ) {
-        return 'A refundable charge needs a Bank details step before this payment, so the refund has somewhere to go.';
+        // Only one Bank details step is allowed, so if one exists it just needs moving.
+        return hasBankStep(context.workflow, 'PRE_AUCTION') ? BANK_TOO_LATE : NEEDS_BANK;
       }
       return null;
     }

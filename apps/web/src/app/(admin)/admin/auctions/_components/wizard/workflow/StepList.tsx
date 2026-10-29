@@ -137,8 +137,9 @@ export function StepList({
         },
       ];
 
+  // One new step at a time, so an unsaved one is never silently replaced.
   const startNew = (type: WorkflowStepType) => {
-    setOpenId(null);
+    if (draft) return;
     setDraft(emptyDraft(type, phase));
   };
 
@@ -190,6 +191,16 @@ export function StepList({
                     await workflow.update(step, next);
                     setOpenId(null);
                   }}
+                  onAddBankFirst={
+                    pre
+                      ? async (next) => {
+                          // Bank details takes this step's place; the payment moves down one.
+                          const fresh = await workflow.addBankBefore(order);
+                          await workflow.update(fresh.find((s) => s.id === step.id) ?? step, next);
+                          setOpenId(null);
+                        }
+                      : undefined
+                  }
                   onCancel={() => setOpenId(null)}
                 />
               );
@@ -210,10 +221,7 @@ export function StepList({
                 <button
                   type="button"
                   aria-expanded={false}
-                  onClick={() => {
-                    setDraft(null);
-                    setOpenId(step.id);
-                  }}
+                  onClick={() => setOpenId(step.id)}
                   className="min-w-0 flex-1 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <span className="flex flex-wrap items-center gap-1.5">
@@ -277,10 +285,7 @@ export function StepList({
                     size="icon"
                     className="h-8 w-8"
                     aria-label={`Edit ${name}`}
-                    onClick={() => {
-                      setDraft(null);
-                      setOpenId(step.id);
-                    }}
+                    onClick={() => setOpenId(step.id)}
                   >
                     <Pencil className="h-3.5 w-3.5" aria-hidden />
                   </Button>
@@ -325,6 +330,15 @@ export function StepList({
               await workflow.add(next, insertionOrder);
               setDraft(null);
             }}
+            onAddBankFirst={
+              pre
+                ? async (next) => {
+                    await workflow.addBankBefore(insertionOrder);
+                    await workflow.add(next, insertionOrder + 1);
+                    setDraft(null);
+                  }
+                : undefined
+            }
             onCancel={() => setDraft(null)}
           />
         )}
@@ -339,6 +353,8 @@ export function StepList({
           <select
             id={`add-${phase}`}
             value=""
+            disabled={Boolean(draft)}
+            aria-describedby={draft ? `add-${phase}-busy` : undefined}
             onChange={(event) => {
               if (event.target.value) startNew(event.target.value as WorkflowStepType);
             }}
@@ -351,6 +367,11 @@ export function StepList({
               </option>
             ))}
           </select>
+          {draft && (
+            <span id={`add-${phase}-busy`} className="text-[11px] text-muted-foreground">
+              Add or discard the new step above first.
+            </span>
+          )}
         </div>
 
         {workflow.error && (

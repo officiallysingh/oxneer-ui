@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { PolicyItemRQ } from '@repo/api';
+import { auctionsApi, type PolicyItemRQ } from '@repo/api';
 import { toast } from '@repo/ui';
 import { parseApiError } from '@/lib/api-errors';
 import {
@@ -25,6 +25,7 @@ import type {
   WizardState,
 } from '../_lib/wizard/types';
 import { collectIssues, validateStep, type ReviewIssue } from '../_lib/wizard/validation';
+import { collectWorkflowIssues } from '../_lib/wizard/stepDraft';
 import { useAuctionLookups } from './useAuctionLookups';
 import { schedulePayload, useWizardPersistence } from './useWizardPersistence';
 
@@ -89,7 +90,32 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
     onCreated: setAuctionId,
   });
 
-  const issues = useMemo(() => collectIssues(state, { published }), [state, published]);
+  // Problems in the saved workflow steps (e.g. a payment with no Bank details
+  // before it). Loaded here on every step change so the rail is always right,
+  // and pushed straight in by Participation and Award after each change.
+  const [workflowIssues, setWorkflowIssues] = useState<ReviewIssue[]>([]);
+  useEffect(() => {
+    if (!auctionId) return;
+    let active = true;
+    auctionsApi
+      .getAuctionWorkflow(auctionId)
+      .then((steps) => {
+        if (!active) return;
+        const sorted = [...steps].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+        setWorkflowIssues(collectWorkflowIssues(sorted));
+      })
+      .catch(() => {
+        // Keep the last known issues; the step screens show load errors themselves.
+      });
+    return () => {
+      active = false;
+    };
+  }, [auctionId, step]);
+
+  const issues = useMemo(
+    () => [...collectIssues(state, { published }), ...(published ? [] : workflowIssues)],
+    [state, published, workflowIssues],
+  );
 
   const progress = useMemo<WizardProgress>(() => {
     const mustFix = issues.filter((issue) => issue.severity === 'must-fix');
@@ -327,6 +353,7 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
     setWorkflowCount,
     setPostWorkflowCount,
     setInviteStats,
+    setWorkflowIssues,
   };
 }
 

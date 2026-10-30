@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import { AlertTriangle, ChevronUp, Pencil, Trash2, Zap, type LucideIcon } from 'lucide-react';
 import { Button, cn } from '@repo/ui';
+import { useRevealIssue } from './revealIssue';
 
 export interface PolicySummaryChip {
   text: string;
@@ -24,8 +25,11 @@ export function PolicyRow({
   onToggle,
   onRemove,
   footer,
+  id,
   children,
 }: {
+  /** Anchor for issues that point here; "Show" opens the row and scrolls to it. */
+  id?: string;
   title: string;
   icon?: LucideIcon;
   /** "During auction", "Post auction", … */
@@ -41,6 +45,12 @@ export function PolicyRow({
   footer?: ReactNode;
   children: ReactNode;
 }) {
+  useRevealIssue(id, () => {
+    if (!open) onToggle();
+  });
+  // Lets "Show" on an issue scroll here and move focus to the row.
+  const anchor = { id, tabIndex: id ? -1 : undefined };
+
   const head = (
     <div className="flex min-w-0 flex-wrap items-center gap-1.5">
       <span className="text-sm font-semibold">{title}</span>
@@ -70,8 +80,9 @@ export function PolicyRow({
   if (!open) {
     return (
       <section
+        {...anchor}
         aria-label={title}
-        className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-policy bg-policy px-3 py-3 text-policy-foreground sm:flex-nowrap sm:px-4"
+        className="flex scroll-mt-4 flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-policy bg-policy px-3 py-3 text-policy-foreground focus-visible:outline-none sm:flex-nowrap sm:px-4"
       >
         {iconBox}
         <button
@@ -115,8 +126,9 @@ export function PolicyRow({
 
   return (
     <article
+      {...anchor}
       aria-label={`Edit ${title.toLowerCase()}`}
-      className="overflow-hidden rounded-lg border border-border bg-card"
+      className="scroll-mt-4 overflow-hidden rounded-lg border border-border bg-card focus-visible:outline-none"
     >
       <header className="flex flex-wrap items-center gap-3 bg-policy px-3 py-2.5 text-policy-foreground sm:px-4">
         {iconBox}

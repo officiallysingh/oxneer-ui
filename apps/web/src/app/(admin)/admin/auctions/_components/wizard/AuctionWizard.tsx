@@ -81,6 +81,7 @@ function SetupStep() {
           currencyUnit={basics.currencyUnit}
           openingPrice={basics.openingPrice}
           onWorkflowCountChange={wizard.setWorkflowCount}
+          onWorkflowIssuesChange={wizard.setWorkflowIssues}
         />
       ) : null;
     case 5:
@@ -101,6 +102,7 @@ function SetupStep() {
           latestClose={latestCloseFor(schedule)}
           onGoToBasics={() => wizard.goToStep(1)}
           onPostWorkflowCountChange={wizard.setPostWorkflowCount}
+          onWorkflowIssuesChange={wizard.setWorkflowIssues}
         />
       ) : null;
     default:

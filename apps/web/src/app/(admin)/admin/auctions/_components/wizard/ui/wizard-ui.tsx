@@ -37,11 +37,14 @@ export function WizardSection({
 }
 
 export function WizardRow({
+  id,
   label,
   description,
   children,
   className,
 }: {
+  /** Anchor for issues that point here: "Show" scrolls to and focuses the row. */
+  id?: string;
   label: ReactNode;
   description?: ReactNode;
   children: ReactNode;
@@ -49,7 +52,12 @@ export function WizardRow({
 }) {
   return (
     <div
-      className={cn('grid gap-4 px-4 py-4 md:grid-cols-[148px_minmax(0,1fr)] md:gap-6', className)}
+      id={id}
+      tabIndex={id ? -1 : undefined}
+      className={cn(
+        'grid scroll-mt-4 gap-4 px-4 py-4 focus-visible:outline-none md:grid-cols-[148px_minmax(0,1fr)] md:gap-6',
+        className,
+      )}
     >
       <div className="space-y-1">
         <div className="text-xs font-semibold text-foreground">{label}</div>

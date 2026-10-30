@@ -117,6 +117,9 @@ export function Step6Review() {
   } = useAuctionWizard();
   const workflow = useWorkflowSteps(auctionId);
   const publishing = busy === 'publish';
+  // `issues` already includes problems in the saved steps (see the controller).
+  const allIssues = issues;
+  const ready = progress.ready;
 
   const rules = useMemo(
     () => buildRules(state, workflow.pre, workflow.post),
@@ -144,15 +147,15 @@ export function Step6Review() {
 
       <SetupChecklist
         rows={checklistRows(state, workflowCount, postWorkflowCount)}
-        issues={issues}
+        issues={allIssues}
         visited={visited}
         reviewFlags={reviewFlags}
         published={published}
-        ready={progress.ready}
+        ready={ready}
         onEdit={goToStep}
       />
 
-      <IssuesList issues={issues} published={published} onEdit={goToStep} />
+      <IssuesList issues={allIssues} published={published} onEdit={goToStep} />
 
       <section className="overflow-hidden rounded-lg border border-border bg-card">
         <RulesTimeline
@@ -183,14 +186,14 @@ export function Step6Review() {
           <span className="text-[11px] text-muted-foreground">
             {published
               ? 'The rules are locked.'
-              : progress.ready
+              : ready
                 ? `Publishing locks the rules as version 1${isPrivate ? '. Then you invite people.' : '.'}`
                 : 'Finish the checklist to publish.'}
           </span>
           <Button
             type="button"
             onClick={() => void publish()}
-            disabled={publishing || published || !progress.ready}
+            disabled={publishing || published || !ready}
             className="gap-2"
           >
             {publishing ? (

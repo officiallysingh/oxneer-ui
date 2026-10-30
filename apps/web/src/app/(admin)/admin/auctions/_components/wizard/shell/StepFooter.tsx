@@ -5,6 +5,7 @@ import { Button } from '@repo/ui';
 import { useAuctionWizard } from '../../../_context';
 import { STEP_LABELS, isSetupStep } from '../../../_lib/wizard/steps';
 import { StatusPill } from '../review/StatusPill';
+import { revealIssue } from '../ui/revealIssue';
 
 /** Issues raised in the current setup step ("In this section"). */
 function SectionIssues() {
@@ -26,7 +27,20 @@ function SectionIssues() {
                 {issue.severity === 'must-fix' ? 'Must fix' : 'Check'}
               </StatusPill>
             </span>
-            <span className="text-[11px] leading-snug text-foreground">{issue.message}</span>
+            <span className="min-w-0 flex-1 text-[11px] leading-snug text-foreground">
+              {issue.message}
+            </span>
+            {issue.anchor && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 shrink-0 px-2.5 text-[11px]"
+                onClick={() => revealIssue(issue.anchor!)}
+              >
+                Show
+              </Button>
+            )}
           </li>
         ))}
       </ul>

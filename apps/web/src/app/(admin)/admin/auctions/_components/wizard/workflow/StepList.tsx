@@ -21,7 +21,14 @@ import {
 } from '../../../_components/PolicyShared';
 import type { WorkflowController } from '../../../_hooks/useWorkflow';
 import { effectiveDeadlines, postStepDue, preStepDue } from '../../../_lib/wizard/deadlines';
-import { draftFromStep, emptyDraft, type StepDraft } from '../../../_lib/wizard/stepDraft';
+import {
+  draftFromStep,
+  emptyDraft,
+  paymentsMissingBank,
+  type StepDraft,
+} from '../../../_lib/wizard/stepDraft';
+import { parseApiError } from '@/lib/api-errors';
+import { ISSUE_ANCHOR } from '../../../_lib/wizard/validation';
 import {
   WORKFLOW_TYPE_LABEL,
   headsSummary,
@@ -137,6 +144,10 @@ export function StepList({
         },
       ];
 
+  const [fixingBank, setFixingBank] = useState(false);
+  const unbanked = pre ? paymentsMissingBank(workflow.steps) : [];
+  const hasPreBank = has('BANK_DETAIL_FORM_STEP', workflow.pre);
+
   // One new step at a time, so an unsaved one is never silently replaced.
   const startNew = (type: WorkflowStepType) => {
     if (draft) return;
@@ -144,7 +155,12 @@ export function StepList({
   };
 
   return (
-    <section aria-label={title} className="overflow-hidden rounded-lg border border-border bg-card">
+    <section
+      id={pre ? ISSUE_ANCHOR.stepsBeforeAuction : undefined}
+      tabIndex={pre ? -1 : undefined}
+      aria-label={title}
+      className="scroll-mt-4 overflow-hidden rounded-lg border border-border bg-card focus-visible:outline-none"
+    >
       <header className="flex flex-wrap items-center gap-2.5 border-b border-border bg-muted/20 px-4 py-2.5">
         <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary">
           <Icon className="h-4 w-4" aria-hidden />
@@ -162,6 +178,43 @@ export function StepList({
 
       <div className="space-y-2 p-3">
         {hints?.(startNew)}
+
+        {pre && !workflow.loading && unbanked.length > 0 && (
+          <div
+            role="alert"
+            className="flex flex-wrap items-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-[11px] leading-snug text-foreground"
+          >
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-destructive" aria-hidden />
+            <span className="min-w-0 flex-1">
+              {hasPreBank
+                ? `“${stepTitle(unbanked[0]!)}” comes before Bank details. Move Bank details above it so deposits can be refunded.`
+                : `“${stepTitle(unbanked[0]!)}” needs a Bank details step before it so deposits can be refunded.`}
+            </span>
+            {!hasPreBank && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={fixingBank}
+                className="h-7 gap-1.5 text-[11px]"
+                onClick={async () => {
+                  setFixingBank(true);
+                  try {
+                    const position =
+                      workflow.steps.findIndex((step) => step.id === unbanked[0]!.id) + 1;
+                    await workflow.addBankBefore(position);
+                  } catch (err) {
+                    workflow.setError(parseApiError(err).summary);
+                  } finally {
+                    setFixingBank(false);
+                  }
+                }}
+              >
+                Add Bank details before it
+              </Button>
+            )}
+          </div>
+        )}
 
         {workflow.loading ? (
           <div className="space-y-2" aria-busy="true" aria-label="Loading steps">

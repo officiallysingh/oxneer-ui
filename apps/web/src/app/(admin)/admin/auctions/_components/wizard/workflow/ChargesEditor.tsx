@@ -1,7 +1,7 @@
 'use client';
 
 import { AlertTriangle, Plus, Trash2 } from 'lucide-react';
-import { Switch } from '@repo/ui';
+import { Switch, cn } from '@repo/ui';
 import type { PolicyHeadRQ } from '@repo/api';
 import { formatMoney } from '../../../_lib/wizard/summary';
 import { emptyHead } from '../../../_lib/wizard/stepDraft';
@@ -18,6 +18,7 @@ export function ChargesEditor({
   examplePrefix,
   namePlaceholder,
   forWhom,
+  showErrors = false,
 }: {
   heads: PolicyHeadRQ[];
   onChange: (heads: PolicyHeadRQ[]) => void;
@@ -30,6 +31,8 @@ export function ChargesEditor({
   namePlaceholder: string;
   /** "participants" / "the winner". */
   forWhom: string;
+  /** Flags missing names once the user has tried to save. */
+  showErrors?: boolean;
 }) {
   const symbol = formatMoney(0, currencyUnit).replace(/[\d.,\s]/g, '') || currencyUnit;
   const update = (index: number, patch: Partial<PolicyHeadRQ>) =>
@@ -60,7 +63,7 @@ export function ChargesEditor({
           className="hidden grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_150px_120px_96px_32px] gap-2 px-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground lg:grid"
         >
           <span role="columnheader">Charge</span>
-          <span role="columnheader">What it’s for</span>
+          <span role="columnheader">What it’s for · optional</span>
           <span role="columnheader">Charged as</span>
           <span role="columnheader">Value</span>
           <span role="columnheader">Refundable</span>
@@ -68,68 +71,109 @@ export function ChargesEditor({
             Remove
           </span>
         </div>
-        {heads.map((head, index) => (
-          <div
-            key={index}
-            role="row"
-            className="grid grid-cols-2 items-center gap-2 rounded-md border border-border p-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_150px_120px_96px_32px] lg:border-0 lg:p-0"
-          >
-            <input
-              aria-label="Charge name"
-              placeholder={namePlaceholder}
-              value={head.name ?? ''}
-              onChange={(event) => update(index, { name: event.target.value })}
-              className={`${inputClass} col-span-2 h-9 lg:col-span-1`}
-            />
-            <input
-              aria-label="What it is for"
-              placeholder={`Shown to ${forWhom}`}
-              value={head.description ?? ''}
-              onChange={(event) => update(index, { description: event.target.value })}
-              className={`${inputClass} col-span-2 h-9 lg:col-span-1`}
-            />
-            <select
-              aria-label="Charged as"
-              value={head.basis ?? 'AMOUNT_BASED'}
-              onChange={(event) => update(index, { basis: event.target.value })}
-              className={`${selectClass} h-9`}
+        {heads.map((head, index) => {
+          const isPercentage = head.basis === 'PERCENTAGE_BASED';
+          const outOfRange = isPercentage && (Number(head.value) < 0 || Number(head.value) > 100);
+          const nameMissing = showErrors && !head.name?.trim();
+          const nameErrorId = `charge-${index}-name-error`;
+          return (
+            <div
+              key={index}
+              role="row"
+              className="grid grid-cols-2 items-start gap-2 rounded-md border border-border p-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_150px_120px_96px_32px] lg:border-0 lg:p-0"
             >
-              <option value="AMOUNT_BASED">Fixed amount ({symbol})</option>
-              <option value="PERCENTAGE_BASED">% of the {baseName}</option>
-            </select>
-            <div className="flex h-9 items-center overflow-hidden rounded-md border border-input bg-background focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30">
-              <span className="border-r border-border px-2 text-xs text-muted-foreground">
-                {head.basis === 'PERCENTAGE_BASED' ? '%' : symbol}
-              </span>
+              <div className="col-span-2 flex flex-col gap-1 lg:col-span-1">
+                <input
+                  aria-label="Charge name"
+                  aria-invalid={nameMissing}
+                  aria-describedby={nameMissing ? nameErrorId : undefined}
+                  placeholder={namePlaceholder}
+                  value={head.name ?? ''}
+                  onChange={(event) => update(index, { name: event.target.value })}
+                  className={cn(
+                    inputClass,
+                    'h-9',
+                    nameMissing &&
+                      'border-destructive focus:border-destructive focus:ring-destructive/30',
+                  )}
+                />
+                {nameMissing && (
+                  <p id={nameErrorId} className="text-[11px] leading-snug text-destructive">
+                    Give this charge a name.
+                  </p>
+                )}
+              </div>
               <input
-                type="number"
-                min={0}
-                step="any"
-                aria-label="Value"
-                value={head.value ?? ''}
-                onChange={(event) => update(index, { value: Number(event.target.value) })}
-                className="h-full w-full bg-transparent px-2 text-sm tabular-nums outline-none"
+                aria-label="What it is for (optional)"
+                placeholder={`Shown to ${forWhom} · optional`}
+                value={head.description ?? ''}
+                onChange={(event) => update(index, { description: event.target.value })}
+                className={`${inputClass} col-span-2 h-9 lg:col-span-1`}
               />
+              <select
+                aria-label="Charged as"
+                value={head.basis ?? 'AMOUNT_BASED'}
+                onChange={(event) => {
+                  const basis = event.target.value;
+                  const value = Number(head.value);
+                  update(index, {
+                    basis,
+                    ...(basis === 'PERCENTAGE_BASED' && value > 100 ? { value: 100 } : {}),
+                  });
+                }}
+                className={`${selectClass} h-9`}
+              >
+                <option value="AMOUNT_BASED">Fixed amount ({symbol})</option>
+                <option value="PERCENTAGE_BASED">% of the {baseName}</option>
+              </select>
+              <div className="flex flex-col gap-1">
+                <div className="flex h-9 items-center overflow-hidden rounded-md border border-input bg-background focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30">
+                  <span className="border-r border-border px-2 text-xs text-muted-foreground">
+                    {isPercentage ? '%' : symbol}
+                  </span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={isPercentage ? 100 : undefined}
+                    step="any"
+                    aria-label="Value"
+                    aria-invalid={outOfRange}
+                    value={head.value ?? ''}
+                    onChange={(event) => {
+                      const next = Number(event.target.value);
+                      update(index, {
+                        value: isPercentage ? Math.min(100, Math.max(0, next)) : next,
+                      });
+                    }}
+                    className="h-full w-full bg-transparent px-2 text-sm tabular-nums outline-none"
+                  />
+                </div>
+                {outOfRange && (
+                  <p role="alert" className="text-[11px] leading-snug text-destructive">
+                    Must be between 0 and 100%.
+                  </p>
+                )}
+              </div>
+              <label className="flex items-center gap-2 text-xs text-foreground">
+                <Switch
+                  aria-label="Refundable"
+                  checked={Boolean(head.refundable)}
+                  onCheckedChange={(checked) => update(index, { refundable: checked })}
+                />
+                {head.refundable ? 'Yes' : 'No'}
+              </label>
+              <button
+                type="button"
+                aria-label={`Remove ${head.name || `charge ${index + 1}`}`}
+                disabled={heads.length === 1}
+                onClick={() => onChange(heads.filter((_, i) => i !== index))}
+                className="flex h-8 w-8 items-center justify-center justify-self-end rounded text-muted-foreground hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-30"
+              >
+                <Trash2 className="h-3.5 w-3.5" aria-hidden />
+              </button>
             </div>
-            <label className="flex items-center gap-2 text-xs text-foreground">
-              <Switch
-                aria-label="Refundable"
-                checked={Boolean(head.refundable)}
-                onCheckedChange={(checked) => update(index, { refundable: checked })}
-              />
-              {head.refundable ? 'Yes' : 'No'}
-            </label>
-            <button
-              type="button"
-              aria-label={`Remove ${head.name || `charge ${index + 1}`}`}
-              disabled={heads.length === 1}
-              onClick={() => onChange(heads.filter((_, i) => i !== index))}
-              className="flex h-8 w-8 items-center justify-center justify-self-end rounded text-muted-foreground hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-30"
-            >
-              <Trash2 className="h-3.5 w-3.5" aria-hidden />
-            </button>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {heads.length === 0 && (

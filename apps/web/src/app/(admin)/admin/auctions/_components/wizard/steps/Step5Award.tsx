@@ -11,6 +11,8 @@ import { PolicyRow } from '../ui/PolicyRow';
 import { formatMoney, formatTime } from '../../../_lib/wizard/summary';
 import { awardNeedsReserve } from '../../../_lib/wizard/validation';
 import { paymentTotalNote } from '../../../_lib/wizard/workflow';
+import { collectWorkflowIssues } from '../../../_lib/wizard/stepDraft';
+import type { ReviewIssue } from '../../../_lib/wizard/validation';
 import { ExampleTable, buildExample } from '../award/ExampleTable';
 import { AwardSettings } from '../award/AwardSettings';
 import { StepList } from '../workflow/StepList';
@@ -31,6 +33,7 @@ export function Step5Award({
   latestClose,
   onGoToBasics,
   onPostWorkflowCountChange,
+  onWorkflowIssuesChange,
 }: {
   auctionId: string;
   form: AwardState;
@@ -47,6 +50,8 @@ export function Step5Award({
   latestClose: string;
   onGoToBasics: () => void;
   onPostWorkflowCountChange: (count: number) => void;
+  /** Problems in the saved steps, for the step rail and Review. */
+  onWorkflowIssuesChange: (issues: ReviewIssue[]) => void;
 }) {
   const [expanded, setExpanded] = useState<'winner' | 'ties' | 'price' | null>(null);
   const workflow = useWorkflow(auctionId);
@@ -60,8 +65,16 @@ export function Step5Award({
   );
 
   useEffect(() => {
-    if (!workflow.loading) onPostWorkflowCountChange(workflow.post.length);
-  }, [workflow.loading, workflow.post.length, onPostWorkflowCountChange]);
+    if (workflow.loading) return;
+    onPostWorkflowCountChange(workflow.post.length);
+    onWorkflowIssuesChange(collectWorkflowIssues(workflow.steps));
+  }, [
+    workflow.loading,
+    workflow.post.length,
+    workflow.steps,
+    onPostWorkflowCountChange,
+    onWorkflowIssuesChange,
+  ]);
 
   const latestCloseLabel = latestClose || endTime;
   const closeLabel = latestCloseLabel

@@ -2,7 +2,8 @@
 
 import { useId, useState } from 'react';
 import { AlertTriangle, ChevronDown, ChevronUp, Info, Plus, Trash2 } from 'lucide-react';
-import { ChipCombobox, Combobox, Switch, cn, type ComboboxOption } from '@repo/ui';
+import { Button, ChipCombobox, Combobox, Switch, cn, type ComboboxOption } from '@repo/ui';
+import { ISSUE_ANCHOR } from '../../../_lib/wizard/validation';
 import type { SelectOption } from '../../../_components/AuctionShared';
 import type { OfferState, PriceWindow, ScheduleState } from '../../../_lib/wizard/types';
 import {
@@ -402,7 +403,6 @@ export function Step2OfferRules({
   onRoundingModeChange: (value: string) => void;
   errors: Record<string, string>;
 }) {
-  const [progressionOpen, setProgressionOpen] = useState(Boolean(errors.windows));
   const forward = direction === 'FORWARD';
   const symbol =
     { INR: '₹', USD: '$', EUR: '€', GBP: '£', AED: 'د.إ', SGD: 'S$' }[currencyUnit] ?? currencyUnit;
@@ -420,6 +420,14 @@ export function Step2OfferRules({
   const windows = clock ? form.clockWindows : form.windows;
   const setWindows = (next: PriceWindow[]) =>
     onChange(clock ? { clockWindows: next } : { windows: next });
+
+  // Start open when something needs doing, so the fix is in view.
+  const [progressionOpen, setProgressionOpen] = useState(
+    Boolean(errors.windows) || windows.length === 0,
+  );
+  // With no windows there's nothing to collapse to, so the row stays open.
+  const noWindows = !sealed && windows.length === 0;
+  const progressionShown = progressionOpen || noWindows;
 
   const updateWindow = (id: string, patch: Partial<PriceWindow>) =>
     setWindows(windows.map((window) => (window.id === id ? { ...window, ...patch } : window)));
@@ -481,69 +489,82 @@ export function Step2OfferRules({
   const overrun = open && windows.length > 1 && biddingMinutes > 0 && used >= biddingMinutes;
   const startLabel = schedule.startTime ? formatTime(schedule.startTime) : 'Start';
   const hasPercent = open && form.windows.some((window) => window.type !== 'STEP');
-  const issueCount = (errors.windows ? 1 : 0) + (overrun ? 1 : 0);
+  const issueCount = (errors.windows || noWindows ? 1 : 0) + (overrun ? 1 : 0);
 
   return (
     <div className="space-y-4">
-      <WizardRow
-        label="Mechanism"
-        description="How prices are made."
-        className="rounded-lg border border-border bg-card"
+      <div
+        id={ISSUE_ANCHOR.mechanism}
+        tabIndex={-1}
+        className="scroll-mt-4 focus-visible:outline-none"
       >
-        <div className="grid gap-2 sm:grid-cols-3">
-          <ChoiceCard
-            title="Open"
-            description={`${Who} post prices that beat the current price.`}
-            selected={open}
-            onClick={() => onChange({ mechanism: 'OPEN' })}
-          />
-          <ChoiceCard
-            title="Clock"
-            description={
-              forward
-                ? 'The platform raises the price on a timer. Bidders stay in or drop out.'
-                : 'The platform lowers the price on a timer. Suppliers stay in or drop out.'
-            }
-            selected={clock}
-            onClick={() => onChange({ mechanism: 'CLOCK' })}
-          />
-          <ChoiceCard
-            title="Sealed"
-            description={`Hidden ${noun}s by a deadline, opened together.`}
-            selected={sealed}
-            badge={<span className="text-[10px] font-medium text-warning">Can’t publish yet</span>}
-            onClick={() => onChange({ mechanism: 'SEALED' })}
-          />
-        </div>
-        {sealed && (
-          <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-snug text-warning">
-            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-            The server doesn’t support sealed auctions yet, so this one can be set up but not
-            published.
-          </p>
-        )}
-      </WizardRow>
+        <WizardRow
+          label="Mechanism"
+          description="How prices are made."
+          className="rounded-lg border border-border bg-card"
+        >
+          <div className="grid gap-2 sm:grid-cols-3">
+            <ChoiceCard
+              title="Open"
+              description={`${Who} post prices that beat the current price.`}
+              selected={open}
+              onClick={() => onChange({ mechanism: 'OPEN' })}
+            />
+            <ChoiceCard
+              title="Clock"
+              description={
+                forward
+                  ? 'The platform raises the price on a timer. Bidders stay in or drop out.'
+                  : 'The platform lowers the price on a timer. Suppliers stay in or drop out.'
+              }
+              selected={clock}
+              onClick={() => onChange({ mechanism: 'CLOCK' })}
+            />
+            <ChoiceCard
+              title="Sealed"
+              description={`Hidden ${noun}s by a deadline, opened together.`}
+              selected={sealed}
+              badge={
+                <span className="text-[10px] font-medium text-warning">Can’t publish yet</span>
+              }
+              onClick={() => onChange({ mechanism: 'SEALED' })}
+            />
+          </div>
+          {sealed && (
+            <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-snug text-warning">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+              The server doesn’t support sealed auctions yet, so this one can be set up but not
+              published.
+            </p>
+          )}
+        </WizardRow>
+      </div>
 
       {!sealed && (
         <PolicyRow
+          id={ISSUE_ANCHOR.priceProgression}
           title="Price progression"
           phase="During auction"
           warn={
             issueCount ? `${issueCount} ${issueCount === 1 ? 'issue' : 'issues'} to fix` : undefined
           }
-          summary={[
-            { text: `${windows.length} ${windows.length === 1 ? 'window' : 'windows'}` },
-            {
-              text: windows.map((window) => windowSummary(window, symbol)).join(' → '),
-              bad: Boolean(errors.windows),
-            },
-          ]}
+          summary={
+            noWindows
+              ? [{ text: 'No windows yet. Add one to set how the price moves.', bad: true }]
+              : [
+                  { text: `${windows.length} ${windows.length === 1 ? 'window' : 'windows'}` },
+                  {
+                    text: windows.map((window) => windowSummary(window, symbol)).join(' → '),
+                    bad: Boolean(errors.windows),
+                  },
+                ]
+          }
           due={{
             main: `${startLabel} → ${clock ? 'clock stops' : 'close'}`,
             sub: 'runs the whole auction',
           }}
-          open={progressionOpen}
-          onToggle={() => setProgressionOpen((value) => !value)}
+          open={progressionShown}
+          onToggle={() => setProgressionOpen(!progressionShown)}
           footer={
             errors.windows ? 'Some windows need fixing. See “In this section” below.' : undefined
           }
@@ -581,6 +602,20 @@ export function Step2OfferRules({
             }
           >
             <div className="space-y-2">
+              {noWindows && (
+                <div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-border px-4 py-6 text-center">
+                  <p className="text-sm font-medium text-foreground">No price windows yet</p>
+                  <p className="max-w-sm text-xs text-muted-foreground">
+                    {clock
+                      ? 'A window sets how fast the clock moves the price. Add one to start.'
+                      : `A window sets how far each ${noun} moves the price. Add one to start; the last window runs to the close.`}
+                  </p>
+                  <Button type="button" size="sm" onClick={addWindow} className="mt-1 gap-1.5">
+                    <Plus className="h-3.5 w-3.5" aria-hidden />
+                    Add a window
+                  </Button>
+                </div>
+              )}
               {windows.map((window, index) => (
                 <WindowEditor
                   key={window.id}
@@ -600,14 +635,18 @@ export function Step2OfferRules({
                   onRemove={() => removeWindow(window.id)}
                 />
               ))}
-              <button
-                type="button"
-                onClick={addWindow}
-                className="inline-flex items-center gap-1 rounded-sm text-[11px] font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <Plus className="h-3 w-3" aria-hidden />
-                Add a window
-              </button>
+              {!noWindows && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addWindow}
+                  className="h-8 gap-1.5 text-xs"
+                >
+                  <Plus className="h-3.5 w-3.5" aria-hidden />
+                  Add a window
+                </Button>
+              )}
               {errors.windows && <p className="text-[11px] text-destructive">{errors.windows}</p>}
             </div>
           </WizardRow>
@@ -664,6 +703,7 @@ export function Step2OfferRules({
           )}
 
           <WizardRow
+            id={ISSUE_ANCHOR.withdrawal}
             label={`Withdrawing a${forward ? '' : 'n'} ${noun}`}
             description={`Can a${forward ? '' : 'n'} ${noun} be taken back once it’s placed?`}
           >

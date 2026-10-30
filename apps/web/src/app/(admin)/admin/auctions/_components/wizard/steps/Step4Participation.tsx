@@ -7,6 +7,8 @@ import type { ParticipationState } from '../../../_lib/wizard/types';
 import { dhm, effectiveDeadlines } from '../../../_lib/wizard/deadlines';
 import { formatDateTime, minimumCheckAt } from '../../../_lib/wizard/summary';
 import { stepTitle } from '../../../_lib/wizard/workflow';
+import { collectWorkflowIssues } from '../../../_lib/wizard/stepDraft';
+import type { ReviewIssue } from '../../../_lib/wizard/validation';
 import { Field, InfoNote, MutedNote, WizardRow, inputClass } from '../ui/wizard-ui';
 import { PolicyOffRow, PolicyRow } from '../ui/PolicyRow';
 import { StepList } from '../workflow/StepList';
@@ -21,6 +23,7 @@ export function Step4Participation({
   currencyUnit,
   openingPrice,
   onWorkflowCountChange,
+  onWorkflowIssuesChange,
 }: {
   auctionId: string;
   form: ParticipationState;
@@ -31,13 +34,23 @@ export function Step4Participation({
   currencyUnit: string;
   openingPrice: string;
   onWorkflowCountChange: (count: number) => void;
+  /** Problems in the saved steps, for the step rail and Review. */
+  onWorkflowIssuesChange: (issues: ReviewIssue[]) => void;
 }) {
   const workflow = useWorkflow(auctionId);
   const [minimumOpen, setMinimumOpen] = useState(false);
 
   useEffect(() => {
-    if (!workflow.loading) onWorkflowCountChange(workflow.pre.length);
-  }, [workflow.loading, workflow.pre.length, onWorkflowCountChange]);
+    if (workflow.loading) return;
+    onWorkflowCountChange(workflow.pre.length);
+    onWorkflowIssuesChange(collectWorkflowIssues(workflow.steps));
+  }, [
+    workflow.loading,
+    workflow.pre.length,
+    workflow.steps,
+    onWorkflowCountChange,
+    onWorkflowIssuesChange,
+  ]);
 
   const count = parseInt(form.minimumCount, 10) || 0;
   const tooLow = count < 2;

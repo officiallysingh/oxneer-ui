@@ -11,7 +11,9 @@ import {
   paymentStepData,
   resolveStr,
 } from '../../_components/PolicyShared';
-import { WORKFLOW_TYPE_LABEL } from './workflow';
+import { WORKFLOW_TYPE_LABEL, stepTitle } from './workflow';
+import { STEP_LABELS } from './steps';
+import { ISSUE_ANCHOR, type ReviewIssue } from './validation';
 
 /** Everything the inline step editor can change, for a saved step or a new one. */
 export interface StepDraft {
@@ -160,15 +162,50 @@ export function validateDraft(draft: StepDraft, context: DraftContext): DraftPro
 }
 
 const NEEDS_BANK =
-  'A refundable charge needs a Bank details step before this payment, so the refund has somewhere to go.';
+  'A payment before the auction needs a Bank details step before it, so deposits can be refunded.';
 const BANK_TOO_LATE =
-  'A refundable charge needs the Bank details step before this payment. Move Bank details up, or make the charge non-refundable.';
+  'A payment before the auction needs the Bank details step before it. Move Bank details above this payment.';
+
+const isPreBank = (step: AuctionWorkflowStep) =>
+  resolveStr(step.type) === 'BANK_DETAIL_FORM_STEP' &&
+  (resolveStr(step.phase) || 'PRE_AUCTION') === 'PRE_AUCTION';
 
 function hasBankStep(workflow: AuctionWorkflowStep[], phase: WorkflowStepPhase): boolean {
   return workflow.some(
     (step) =>
       resolveStr(step.type) === 'BANK_DETAIL_FORM_STEP' &&
       (resolveStr(step.phase) || 'PRE_AUCTION') === phase,
+  );
+}
+
+/** True when a pre-auction Bank details step sits before `position` (1-based,
+ *  in the sorted workflow). Positions, not `order` values, so gaps can't fool it. */
+function bankBefore(workflow: AuctionWorkflowStep[], position: number): boolean {
+  const index = workflow.findIndex(isPreBank);
+  return index >= 0 && index + 1 < position;
+}
+
+/** Problems in the saved workflow steps, as review issues for the step rail,
+ *  "In this section" and Review. `steps` must be the whole workflow, sorted. */
+export function collectWorkflowIssues(steps: AuctionWorkflowStep[]): ReviewIssue[] {
+  return paymentsMissingBank(steps).map((step, index) => ({
+    id: `workflow-bank-${step.id ?? index}`,
+    step: 4,
+    scope: STEP_LABELS[4] ?? 'Participation',
+    severity: 'must-fix',
+    message: `“${stepTitle(step)}” needs a Bank details step before it, so deposits can be refunded.`,
+    goto: 4,
+    anchor: ISSUE_ANCHOR.stepsBeforeAuction,
+  }));
+}
+
+/** Saved pre-auction payments with no Bank details step before them. */
+export function paymentsMissingBank(workflow: AuctionWorkflowStep[]): AuctionWorkflowStep[] {
+  return workflow.filter(
+    (step, index) =>
+      resolveStr(step.type) === 'PAYMENT_STEP' &&
+      (resolveStr(step.phase) || paymentStepData(step).phase || 'PRE_AUCTION') === 'PRE_AUCTION' &&
+      !bankBefore(workflow, index + 1),
   );
 }
 
@@ -192,17 +229,23 @@ function draftMessage(draft: StepDraft, context: DraftContext): string | null {
     case 'PAYMENT_STEP': {
       if (!draft.mode) return 'Choose how they pay.';
       if (!draft.heads.length) return 'Add at least one charge.';
-      if (draft.heads.some((head) => !head.name?.trim() || !head.description?.trim())) {
-        return 'Every charge needs a name and what it’s for.';
+      // "What it's for" is optional: an empty one is sent as the charge's name.
+      if (draft.heads.some((head) => !head.name?.trim())) {
+        return 'Every charge needs a name.';
       }
-      if (!draftMinutes(draft)) return 'Must be more than zero. They need some time to pay.';
       if (
-        draft.phase === 'PRE_AUCTION' &&
-        draft.heads.some((head) => head.refundable) &&
-        !context.workflow.some(
-          (s) => resolveStr(s.type) === 'BANK_DETAIL_FORM_STEP' && (s.order ?? 0) < context.order,
+        draft.heads.some(
+          (head) =>
+            head.basis === 'PERCENTAGE_BASED' &&
+            (Number(head.value) < 0 || Number(head.value) > 100),
         )
       ) {
+        return 'A percentage charge must be between 0 and 100.';
+      }
+      if (!draftMinutes(draft)) return 'Must be more than zero. They need some time to pay.';
+      // Every payment before the auction needs bank details first, so deposits
+      // (and any refundable charge) can be paid back.
+      if (draft.phase === 'PRE_AUCTION' && !bankBefore(context.workflow, context.order)) {
         // Only one Bank details step is allowed, so if one exists it just needs moving.
         return hasBankStep(context.workflow, 'PRE_AUCTION') ? BANK_TOO_LATE : NEEDS_BANK;
       }
@@ -214,6 +257,26 @@ function draftMessage(draft: StepDraft, context: DraftContext): string | null {
 }
 
 const deadline = (draft: StepDraft) => formatOffsetDuration(draft.days, draft.hours, draft.minutes);
+
+const paymentName = (draft: StepDraft) =>
+  draft.phase === 'POST_AUCTION' ? 'Post Payment' : 'Pre Payment';
+
+/** The API requires a description on payment steps. */
+const paymentDescription = (draft: StepDraft) =>
+  draft.phase === 'POST_AUCTION' ? 'Payment due from the winner' : 'Payment due before the auction';
+
+/** The API requires a description on every charge; an empty one falls back to its name. */
+function cleanHeads(heads: PolicyHeadRQ[]): PolicyHeadRQ[] {
+  return heads.map((head) => {
+    const name = head.name?.trim() ?? '';
+    return {
+      ...head,
+      name,
+      description: head.description?.trim() || name,
+      value: Number(head.value) || 0,
+    };
+  });
+}
 
 /** Request for a step that doesn't exist yet. `tncBlobId` comes from an upload. */
 export function toAddRequest(
@@ -271,14 +334,14 @@ export function toAddRequest(
       return {
         type: 'PAYMENT_STEP',
         // Payment steps keep the platform's names (the existing dialogs do the same).
-        name: draft.phase === 'POST_AUCTION' ? 'Post Payment' : 'Pre Payment',
-        description: '',
+        name: paymentName(draft),
+        description: paymentDescription(draft),
         order,
         mandatory: draft.mandatory,
         mode: draft.mode,
         phase: draft.phase,
         offset: deadline(draft),
-        heads: draft.heads,
+        heads: cleanHeads(draft.heads),
       };
   }
 }
@@ -293,12 +356,8 @@ export function toUpdateRequest(
   const isPayment = draft.type === 'PAYMENT_STEP';
   return {
     type: draft.type,
-    name: isPayment
-      ? draft.phase === 'POST_AUCTION'
-        ? 'Post Payment'
-        : 'Pre Payment'
-      : draft.name.trim() || undefined,
-    description: isPayment ? '' : draft.description.trim() || undefined,
+    name: isPayment ? paymentName(draft) : draft.name.trim() || undefined,
+    description: isPayment ? paymentDescription(draft) : draft.description.trim() || undefined,
     order: step.order,
     mandatory: draft.mandatory,
     ...(explicit && draft.type === 'TNC_FORM_STEP'
@@ -311,7 +370,12 @@ export function toUpdateRequest(
         }
       : {}),
     ...(explicit && isPayment
-      ? { mode: draft.mode, phase: draft.phase, offset: deadline(draft), heads: draft.heads }
+      ? {
+          mode: draft.mode,
+          phase: draft.phase,
+          offset: deadline(draft),
+          heads: cleanHeads(draft.heads),
+        }
       : {}),
     ...(explicit && draft.type === 'PARTICIPATION_FORM_STEP'
       ? { manualApproval: draft.manualApproval, preStartDeadlineDuration: deadline(draft) }

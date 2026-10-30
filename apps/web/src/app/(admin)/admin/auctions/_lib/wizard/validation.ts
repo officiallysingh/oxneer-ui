@@ -205,7 +205,17 @@ export interface ReviewIssue {
   /** Step the "Go to" action opens — usually the same as `step`, but the reserve
    *  issue lives in Basics even though it is raised from Award. */
   goto: number;
+  /** Element id of the block on that step where it's fixed; "Show" scrolls there. */
+  anchor?: string;
 }
+
+/** Ids of blocks issues can point at, shared by validation and the step screens. */
+export const ISSUE_ANCHOR = {
+  mechanism: 'offer-mechanism',
+  priceProgression: 'price-progression',
+  withdrawal: 'offer-withdrawal',
+  stepsBeforeAuction: 'steps-before-auction',
+} as const;
 
 function biddingMinutes(schedule: ScheduleState): number {
   const start = new Date(schedule.startTime).getTime();
@@ -222,7 +232,13 @@ export function collectIssues(
   { published = false }: { published?: boolean } = {},
 ): ReviewIssue[] {
   const issues: ReviewIssue[] = [];
-  const add = (step: number, severity: IssueSeverity, message: string, goto = step): void => {
+  const add = (
+    step: number,
+    severity: IssueSeverity,
+    message: string,
+    goto = step,
+    anchor?: string,
+  ): void => {
     issues.push({
       id: `${step}-${issues.length}`,
       step,
@@ -230,6 +246,7 @@ export function collectIssues(
       severity,
       message,
       goto,
+      ...(anchor ? { anchor } : {}),
     });
   };
   const forward = state.basics.direction === 'FORWARD';
@@ -255,7 +272,9 @@ export function collectIssues(
   }
 
   const offer = validateOffer(state.offer);
-  if (offer.windows) add(2, 'must-fix', `Price progression: ${offer.windows}`);
+  if (offer.windows) {
+    add(2, 'must-fix', `Price progression: ${offer.windows}`, 2, ISSUE_ANCHOR.priceProgression);
+  }
   if (state.offer.mechanism === 'SEALED') {
     // The API has no way to store a sealed auction yet (no policy type and no
     // protocol field), so publishing one would quietly run it as open bidding.
@@ -263,6 +282,8 @@ export function collectIssues(
       2,
       'must-fix',
       'Sealed auctions can’t be published yet: the server doesn’t support them. Choose Open or Clock.',
+      2,
+      ISSUE_ANCHOR.mechanism,
     );
   }
   if (state.offer.mechanism === 'OPEN' && state.offer.windows.length > 1) {
@@ -276,6 +297,8 @@ export function collectIssues(
         2,
         'check',
         `Windows 1 to ${last - 1} add up to ${used} min, but bidding is open for ${open} min. Window ${last} would never run.`,
+        2,
+        ISSUE_ANCHOR.priceProgression,
       );
     }
   }
@@ -284,6 +307,8 @@ export function collectIssues(
       2,
       'check',
       `Allowing withdrawal invites ${noun}s that are pulled at the last moment. The withdrawer pays any shortfall.`,
+      2,
+      ISSUE_ANCHOR.withdrawal,
     );
   }
 

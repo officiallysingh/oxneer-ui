@@ -155,6 +155,8 @@ export function StepEditor({
   const [collapsed, setCollapsed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<DraftProblem | null>(null);
+  // Field-level errors only appear once the user has tried to save.
+  const [attempted, setAttempted] = useState(false);
   const dirty =
     Boolean(draft.tncFile) ||
     JSON.stringify({ ...draft, tncFile: null }) !== JSON.stringify({ ...initial, tncFile: null });
@@ -207,6 +209,7 @@ export function StepEditor({
   };
 
   const save = async () => {
+    setAttempted(true);
     const problem = validateDraft(draft, context);
     if (problem) {
       setError(problem);
@@ -640,6 +643,7 @@ export function StepEditor({
                   examplePrefix={pre ? `At an ${openWord} price of` : 'If the winning price is'}
                   namePlaceholder={pre ? 'e.g. EMD' : 'e.g. Winning amount'}
                   forWhom={who}
+                  showErrors={attempted}
                 />
               </WizardRow>
             </>

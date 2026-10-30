@@ -52,17 +52,29 @@ const PHASE_STYLE: Record<TimelinePhase['id'], { box: string; icon: string; Icon
 };
 
 /** The time tag at the top of each card. Its left end tapers into a curve that
- *  cups the item's dot on the rail. */
+ *  cups the item's dot on the rail. The whole outline is drawn as SVG strokes
+ *  (curve and box alike), so every side renders at the same weight at any zoom;
+ *  a CSS border would snap to whole pixels while the curve stays anti-aliased. */
+/** Outline weight of the time tag, and half of it: lines sit that far in from
+ *  the edges so the whole stroke stays inside the tag. */
+const TAG_STROKE = 1;
+const TAG_INSET = TAG_STROKE / 2;
+
 function TimeTag({ item }: { item: TimelineItem }) {
+  const stroke = item.policy ? 'stroke-policy' : 'stroke-foreground';
   return (
     <div
+      // Every tag is the same width so they line up down the rail; text that
+      // doesn't fit is cut with "…" and shown in full on hover.
+      title={`${item.timeMain} · ${item.timeSub}`}
       className={cn(
-        'relative -ml-[19px] flex h-[54px] max-w-full shrink-0 flex-col justify-center whitespace-nowrap border-2 border-l-0 pl-2 pr-4',
-        item.policy ? 'border-policy bg-policy-raise' : 'border-foreground bg-secondary',
+        'relative -ml-[19px] flex h-[54px] w-[264px] max-w-full shrink-0 flex-col justify-center whitespace-nowrap pl-2 pr-4',
+        item.policy ? 'bg-policy-raise' : 'bg-secondary',
       )}
     >
+      {/* Curved end, fixed size. */}
       <svg
-        className="absolute -left-[28px] -top-[2px] h-[54px] w-[28px] overflow-visible"
+        className="pointer-events-none absolute -left-[28px] top-0 h-[54px] w-[28px] overflow-visible"
         viewBox="0 0 28 54"
         aria-hidden
       >
@@ -71,15 +83,32 @@ function TimeTag({ item }: { item: TimelineItem }) {
           d="M28 0L1.87 9A24 24 0 0 1 1.87 45L28 54Z"
         />
         <path
-          className={cn('fill-none', item.policy ? 'stroke-policy' : 'stroke-foreground')}
-          strokeWidth={2}
+          className={cn('fill-none', stroke)}
+          strokeWidth={TAG_STROKE}
           strokeLinejoin="round"
-          d="M28 1L1.87 9A24 24 0 0 1 1.87 45L28 53"
+          d={`M28 ${TAG_INSET}L1.87 9A24 24 0 0 1 1.87 45L28 ${54 - TAG_INSET}`}
+        />
+      </svg>
+      {/* Top, right and bottom edges. Stretches with the tag; the stroke keeps its width. */}
+      <svg
+        // An <svg> ignores left/right for its width, so size it explicitly: the
+        // tag's width less half a stroke, which keeps the right edge inside the tag.
+        className="pointer-events-none absolute left-0 top-0 h-[54px] w-[calc(100%-0.75px)] overflow-visible"
+        viewBox="0 0 100 54"
+        preserveAspectRatio="none"
+        aria-hidden
+      >
+        <path
+          className={cn('fill-none', stroke)}
+          strokeWidth={TAG_STROKE}
+          strokeLinecap="square"
+          vectorEffect="non-scaling-stroke"
+          d={`M0 ${TAG_INSET}H100V${54 - TAG_INSET}H0`}
         />
       </svg>
       <b
         className={cn(
-          'text-[13px] font-semibold tabular-nums',
+          'truncate text-[13px] font-semibold tabular-nums',
           item.policy ? 'text-policy-foreground' : 'text-foreground/85',
         )}
       >
@@ -87,7 +116,7 @@ function TimeTag({ item }: { item: TimelineItem }) {
       </b>
       <span
         className={cn(
-          'text-[11px]',
+          'truncate text-[11px]',
           item.policy ? 'text-policy-foreground/70' : 'text-muted-foreground',
         )}
       >

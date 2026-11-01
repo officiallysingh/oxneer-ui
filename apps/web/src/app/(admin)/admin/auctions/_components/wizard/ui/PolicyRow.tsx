@@ -82,7 +82,7 @@ export function PolicyRow({
       <section
         {...anchor}
         aria-label={title}
-        className="flex scroll-mt-4 flex-wrap items-center gap-x-3 gap-y-2 rounded-none border border-policy bg-policy px-3 py-3 text-policy-foreground focus-visible:outline-none sm:flex-nowrap sm:px-4"
+        className="flex scroll-mt-4 flex-wrap items-center gap-x-3 gap-y-2 rounded-none border border-policy-border bg-policy px-3 py-3 text-policy-foreground focus-visible:outline-none sm:flex-nowrap sm:px-4"
       >
         {iconBox}
         <button

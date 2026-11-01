@@ -47,7 +47,8 @@ const ITEM_ICON: Record<TimelineIcon, LucideIcon> = {
 
 const PHASE_STYLE: Record<TimelinePhase['id'], { box: string; icon: string; Icon: LucideIcon }> = {
   pre: { box: 'border-info/25 bg-info/5', icon: 'text-info', Icon: CalendarClock },
-  during: { box: 'border-primary/30 bg-primary/10', icon: 'text-primary', Icon: Gavel },
+  // Neutral, so the gold-tinted policy cards inside it stand out.
+  during: { box: 'border-border bg-muted/40', icon: 'text-primary', Icon: Gavel },
   post: { box: 'border-success/25 bg-success/5', icon: 'text-success', Icon: Flag },
 };
 
@@ -61,7 +62,7 @@ const TAG_STROKE = 1;
 const TAG_INSET = TAG_STROKE / 2;
 
 function TimeTag({ item }: { item: TimelineItem }) {
-  const stroke = item.policy ? 'stroke-policy' : 'stroke-foreground';
+  const stroke = item.policy ? 'stroke-policy-border' : 'stroke-foreground';
   return (
     <div
       // Every tag is the same width so they line up down the rail; text that
@@ -165,7 +166,7 @@ function ItemCard({ item, track }: { item: TimelineItem; track: ReactNode }) {
       className={cn(
         'relative rounded-md border px-[18px] pb-4 pt-3.5',
         item.policy
-          ? 'border-policy bg-policy text-policy-foreground'
+          ? 'border-policy-border bg-policy text-policy-foreground'
           : 'border-border bg-card text-card-foreground shadow-sm',
       )}
     >
@@ -353,7 +354,7 @@ function PhaseBlock({ phase, track }: { phase: TimelinePhase; track: ReactNode }
                       className={cn(
                         'absolute left-1/2 top-6 z-[1] -ml-[18px] flex h-9 w-9 items-center justify-center border-2',
                         item.policy
-                          ? 'rounded-md border-policy bg-policy text-primary'
+                          ? 'rounded-md border-policy-border bg-policy text-primary'
                           : 'rounded-full border-foreground bg-card text-foreground',
                       )}
                     >
@@ -525,8 +526,11 @@ export function RulesTimeline({
                 White card · workflow step (a participant does it)
               </li>
               <li className="flex items-center gap-3">
-                <span className="h-5 w-7 shrink-0 rounded-sm bg-policy" aria-hidden />
-                Dark card · policy (applied automatically)
+                <span
+                  className="h-5 w-7 shrink-0 rounded-sm border-2 border-policy-border bg-policy"
+                  aria-hidden
+                />
+                Gold card · policy (applied automatically)
               </li>
               <li className="flex items-center gap-3">
                 <span

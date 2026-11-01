@@ -167,7 +167,7 @@ export function InvitePanel({
 
   return (
     <section
-      className="overflow-hidden rounded-lg border border-border bg-card"
+      className="overflow-hidden rounded-none border border-border bg-card"
       aria-label="Invite participants"
     >
       <div className="grid gap-4 px-4 py-4 md:grid-cols-[168px_minmax(0,1fr)] md:gap-6">

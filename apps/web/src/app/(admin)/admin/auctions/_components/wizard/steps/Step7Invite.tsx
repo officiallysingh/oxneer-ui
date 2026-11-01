@@ -31,7 +31,7 @@ function StateCard({
   action?: ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-border bg-card px-4 py-4">
+    <section className="rounded-none border border-border bg-card px-4 py-4">
       <div className="flex items-start gap-3">
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
           {icon}

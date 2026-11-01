@@ -250,7 +250,6 @@ export function collectIssues(
     });
   };
   const forward = state.basics.direction === 'FORWARD';
-  const noun = forward ? 'bid' : 'ask';
 
   const basics = validateBasics(state.basics);
   if (basics.title) add(1, 'must-fix', 'Add an auction title.');
@@ -301,15 +300,6 @@ export function collectIssues(
         ISSUE_ANCHOR.priceProgression,
       );
     }
-  }
-  if (state.offer.mechanism === 'OPEN' && state.offer.withdrawal === 'ALLOWED') {
-    add(
-      2,
-      'check',
-      `Allowing withdrawal invites ${noun}s that are pulled at the last moment. The withdrawer pays any shortfall.`,
-      2,
-      ISSUE_ANCHOR.withdrawal,
-    );
   }
 
   const schedule = validateSchedule(state.schedule, {

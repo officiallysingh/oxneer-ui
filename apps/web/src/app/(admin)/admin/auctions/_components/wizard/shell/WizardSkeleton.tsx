@@ -27,7 +27,7 @@ export function WizardSkeleton() {
             <Skeleton className="h-3 w-full max-w-xl" />
           </div>
           {Array.from({ length: 2 }, (_, index) => (
-            <div key={index} className="space-y-3 rounded-lg border border-border bg-card p-4">
+            <div key={index} className="space-y-3 rounded-none border border-border bg-card p-4">
               <Skeleton className="h-4 w-40" />
               <Skeleton className="h-9 w-full" />
               <Skeleton className="h-9 w-2/3" />

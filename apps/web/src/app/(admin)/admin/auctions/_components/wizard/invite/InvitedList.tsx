@@ -69,7 +69,7 @@ export function InvitedList({
 
   return (
     <section
-      className="overflow-hidden rounded-lg border border-border bg-card"
+      className="overflow-hidden rounded-none border border-border bg-card"
       aria-label="Invited participants"
     >
       <header className="flex flex-wrap items-start gap-3 border-b border-border px-4 py-3">

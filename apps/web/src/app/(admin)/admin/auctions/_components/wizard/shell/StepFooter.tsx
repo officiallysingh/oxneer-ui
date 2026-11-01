@@ -16,7 +16,7 @@ function SectionIssues() {
   return (
     <section
       aria-label="Issues in this section"
-      className="rounded-lg border border-border bg-card px-4 py-3"
+      className="rounded-none border border-border bg-card px-4 py-3"
     >
       <h3 className="text-xs font-semibold text-foreground">In this section</h3>
       <ul className="mt-2 space-y-1.5">

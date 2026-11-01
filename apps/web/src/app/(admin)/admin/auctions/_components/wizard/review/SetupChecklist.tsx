@@ -54,7 +54,7 @@ export function SetupChecklist({
   const completed = statuses.filter((row) => row.status === 'ok').length;
 
   return (
-    <section className="overflow-hidden rounded-lg border border-border bg-card">
+    <section className="overflow-hidden rounded-none border border-border bg-card">
       <header className="flex flex-wrap items-baseline gap-x-2 gap-y-1 border-b border-border bg-muted/20 px-4 py-2.5">
         <h3 className="text-sm font-semibold text-foreground">Setup checklist</h3>
         <p className="text-[11px] text-muted-foreground">

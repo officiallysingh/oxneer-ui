@@ -157,7 +157,7 @@ export function Step6Review() {
 
       <IssuesList issues={allIssues} published={published} onEdit={goToStep} />
 
-      <section className="overflow-hidden rounded-lg border border-border bg-card">
+      <section className="overflow-hidden rounded-none border border-border bg-card">
         <RulesTimeline
           state={state}
           preSteps={workflow.pre}

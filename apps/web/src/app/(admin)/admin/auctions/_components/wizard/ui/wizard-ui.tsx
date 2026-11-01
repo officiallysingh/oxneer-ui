@@ -22,7 +22,7 @@ export function WizardSection({
 }) {
   return (
     <section
-      className={cn('overflow-hidden rounded-lg border border-border bg-card', className)}
+      className={cn('overflow-hidden rounded-none border border-border bg-card', className)}
       aria-label={title}
     >
       {title && (

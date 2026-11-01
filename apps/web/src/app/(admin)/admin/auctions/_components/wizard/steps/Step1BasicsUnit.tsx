@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { Package, Trash2 } from 'lucide-react';
-import { Switch } from '@repo/ui';
+import { Switch, Tooltip, TooltipContent, TooltipTrigger, cn } from '@repo/ui';
 import type { ListingSummaryVM } from '@repo/api';
 import { ListingPicker } from '../basics/ListingPicker';
 import { ListingViewDialog } from '../../../../listings/_components/ListingViewDialog';
@@ -35,6 +35,46 @@ const TIME_ZONES = [
   { value: 'Asia/Singapore', label: 'SGT: Asia/Singapore' },
   { value: 'Europe/London', label: 'GMT: Europe/London' },
   { value: 'America/New_York', label: 'EST: America/New_York' },
+];
+
+/** Rounding modes as /model/monetary-rounding-mode-types sends them (key →
+ *  description), used only if that call fails. */
+const FALLBACK_ROUNDING: SelectOption[] = [
+  {
+    value: 'UP',
+    label:
+      'Rounding mode to round away from zero. Always increments the digit prior to a non-zero discarded fraction. Note that this rounding mode never decreases the magnitude of the calculated value.',
+  },
+  {
+    value: 'DOWN',
+    label:
+      'Rounding mode to round towards zero. Never increments the digit prior to a discarded fraction (i.e., truncates). Note that this rounding mode never increases the magnitude of the calculated value.',
+  },
+  {
+    value: 'CEILING',
+    label:
+      'Rounding mode to round towards positive infinity. If the result is positive, behaves as for RoundingMode.UP; if negative, behaves as for RoundingMode.DOWN. Note that this rounding mode never decreases the calculated value.',
+  },
+  {
+    value: 'FLOOR',
+    label:
+      'Rounding mode to round towards negative infinity. If the result is positive, behave as for RoundingMode.DOWN; if negative, behave as for RoundingMode.UP. Note that this rounding mode never increases the calculated value.',
+  },
+  {
+    value: 'HALF_UP',
+    label:
+      'Rounding mode to round towards "nearest neighbor" unless both neighbors are equidistant, in which case round up. Behaves as for RoundingMode.UP if the discarded fraction is ≥ 0.5; otherwise, behaves as for RoundingMode.DOWN.',
+  },
+  {
+    value: 'HALF_DOWN',
+    label:
+      'Rounding mode to round towards "nearest neighbor" unless both neighbors are equidistant, in which case round down. Behaves as for RoundingMode.UP if the discarded fraction is > 0.5; otherwise, behaves as for RoundingMode.DOWN.',
+  },
+  {
+    value: 'HALF_EVEN',
+    label:
+      'Rounding mode to round towards the "nearest neighbor" unless both neighbors are equidistant, in which case, round towards the even neighbor. Behaves as for RoundingMode.HALF_UP if the digit to the left of the discarded fraction is odd; behaves as for RoundingMode.HALF_DOWN if it\'s even.',
+  },
 ];
 
 /** Shown before the model lists load, or if they can't be fetched. */
@@ -99,8 +139,11 @@ export function Step1BasicsUnit({
   unitTypes,
   directions,
   accessibilityTypes,
+  roundingModes,
   errors,
 }: {
+  /** Rounding modes from /model/monetary-rounding-mode-types. */
+  roundingModes: SelectOption[];
   form: BasicsState;
   onChange: (patch: Partial<BasicsState>) => void;
   /** Auction formats from /model/auction/formats. */
@@ -156,15 +199,10 @@ export function Step1BasicsUnit({
       description: `${Who} choose a quantity and a price per piece.`,
     },
   };
-  const directionCopy: Record<string, { title: string; description: string }> = {
-    FORWARD: {
-      title: 'Forward (selling)',
-      description: 'Buyers bid the price up. The highest bid wins.',
-    },
-    REVERSE: {
-      title: 'Reverse (buying)',
-      description: 'Suppliers bid the price down. The lowest ask wins.',
-    },
+  // Direction descriptions come straight from /model/direction-types.
+  const directionTitle: Record<string, string> = {
+    FORWARD: 'Forward (selling)',
+    REVERSE: 'Reverse (buying)',
   };
   const accessibilityCopy: Record<string, { title: string; description: string }> = {
     PUBLIC: { title: 'Public', description: 'Any registered user can join.' },
@@ -174,6 +212,7 @@ export function Step1BasicsUnit({
   const accessibilityOptions = accessibilityTypes.length
     ? accessibilityTypes
     : FALLBACK_ACCESSIBILITY;
+  const roundingOptions = roundingModes.length ? roundingModes : FALLBACK_ROUNDING;
   const formatOptions = formats.length ? formats : FALLBACK_FORMATS;
   const unitOptions = unitTypes.length ? unitTypes : FALLBACK_UNIT_TYPES;
   const comingLater = <span className="text-[10px] font-medium text-warning">Coming later</span>;
@@ -256,12 +295,11 @@ export function Step1BasicsUnit({
             {directionOptions.map((option) => {
               const value = option.value as BasicsState['direction'];
               const supported = SUPPORTED_DIRECTIONS.includes(value);
-              const copy = directionCopy[option.value];
               return (
                 <ChoiceCard
                   key={option.value}
-                  title={copy?.title ?? titleFromCode(option.value)}
-                  description={copy?.description ?? labelDetail(option.label)}
+                  title={directionTitle[option.value] ?? titleFromCode(option.value)}
+                  description={option.label}
                   selected={form.direction === option.value}
                   disabled={!supported}
                   badge={supported ? undefined : comingLater}
@@ -387,6 +425,54 @@ export function Step1BasicsUnit({
                 ))}
               </select>
             </Field>
+          </div>
+          <div className="mt-4 space-y-2">
+            <p
+              id="rounding-label"
+              className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
+            >
+              Rounding
+            </p>
+            <div
+              role="radiogroup"
+              aria-labelledby="rounding-label"
+              aria-describedby="rounding-hint"
+              className="flex flex-wrap gap-2"
+            >
+              {roundingOptions.map((mode) => {
+                const selected = form.roundingMode === mode.value;
+                return (
+                  // The chip shows the API key; hovering or focusing it shows
+                  // the key and the API's description of what it does.
+                  <Tooltip key={mode.value}>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        onClick={() => onChange({ roundingMode: mode.value })}
+                        className={cn(
+                          'h-9 rounded-md border px-3 font-mono text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                          selected
+                            ? 'border-primary bg-primary/25 text-foreground'
+                            : 'border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground',
+                        )}
+                      >
+                        {mode.value}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs text-xs leading-relaxed">
+                      <p className="font-mono font-semibold">{mode.value}</p>
+                      <p className="mt-1">{mode.label}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })}
+            </div>
+            <p id="rounding-hint" className="text-[11px] text-muted-foreground">
+              How amounts with too many decimals are rounded, for example a percentage step. Hover a
+              choice to see what it does.
+            </p>
           </div>
         </WizardRow>
       </WizardSection>

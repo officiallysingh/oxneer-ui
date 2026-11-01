@@ -26,7 +26,7 @@ export function AwardSettings({
 
   return (
     <>
-      <section className="overflow-hidden rounded-lg border border-border bg-card">
+      <section className="overflow-hidden rounded-none border border-border bg-card">
         <div className="grid gap-4 px-4 py-4 md:grid-cols-[168px_minmax(0,1fr)]">
           <div>
             <p className="text-xs font-semibold text-foreground">
@@ -69,7 +69,7 @@ export function AwardSettings({
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-lg border border-border bg-card">
+      <section className="overflow-hidden rounded-none border border-border bg-card">
         <div className="grid gap-4 px-4 py-4 md:grid-cols-[168px_minmax(0,1fr)]">
           <div>
             <p className="text-xs font-semibold text-foreground">Confirming the result</p>

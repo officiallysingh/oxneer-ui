@@ -159,7 +159,7 @@ export function StepList({
       id={pre ? ISSUE_ANCHOR.stepsBeforeAuction : undefined}
       tabIndex={pre ? -1 : undefined}
       aria-label={title}
-      className="scroll-mt-4 overflow-hidden rounded-lg border border-border bg-card focus-visible:outline-none"
+      className="scroll-mt-4 overflow-hidden rounded-none border border-border bg-card focus-visible:outline-none"
     >
       <header className="flex flex-wrap items-center gap-2.5 border-b border-border bg-muted/20 px-4 py-2.5">
         <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary">

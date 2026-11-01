@@ -4,7 +4,6 @@ import { useId, useState } from 'react';
 import { AlertTriangle, ChevronDown, ChevronUp, Info, Plus, Trash2 } from 'lucide-react';
 import { Button, ChipCombobox, Combobox, Switch, cn, type ComboboxOption } from '@repo/ui';
 import { ISSUE_ANCHOR } from '../../../_lib/wizard/validation';
-import type { SelectOption } from '../../../_components/AuctionShared';
 import type { OfferState, PriceWindow, ScheduleState } from '../../../_lib/wizard/types';
 import {
   ChoiceCard,
@@ -17,7 +16,6 @@ import {
   WizardRow,
   WizardSection,
   inputClass,
-  selectClass,
 } from '../ui/wizard-ui';
 import { PolicyRow } from '../ui/PolicyRow';
 import { WindowTrack } from '../ui/WindowTrack';
@@ -387,9 +385,6 @@ export function Step2OfferRules({
   direction,
   openingPrice,
   currencyUnit,
-  roundingModes,
-  roundingMode,
-  onRoundingModeChange,
   errors,
 }: {
   form: OfferState;
@@ -398,9 +393,6 @@ export function Step2OfferRules({
   direction: 'FORWARD' | 'REVERSE';
   openingPrice: string;
   currencyUnit: string;
-  roundingModes: SelectOption[];
-  roundingMode: string;
-  onRoundingModeChange: (value: string) => void;
   errors: Record<string, string>;
 }) {
   const forward = direction === 'FORWARD';
@@ -409,7 +401,6 @@ export function Step2OfferRules({
   const noun = forward ? 'bid' : 'ask';
   const Who = forward ? 'Bidders' : 'Suppliers';
   const who = Who.toLowerCase();
-  const openWord = forward ? 'opening' : 'starting';
   const clock = form.mechanism === 'CLOCK';
   const sealed = form.mechanism === 'SEALED';
   const open = form.mechanism === 'OPEN';
@@ -488,7 +479,6 @@ export function Step2OfferRules({
   const used = starts[starts.length - 1] ?? 0;
   const overrun = open && windows.length > 1 && biddingMinutes > 0 && used >= biddingMinutes;
   const startLabel = schedule.startTime ? formatTime(schedule.startTime) : 'Start';
-  const hasPercent = open && form.windows.some((window) => window.type !== 'STEP');
   const issueCount = (errors.windows || noWindows ? 1 : 0) + (overrun ? 1 : 0);
 
   return (
@@ -501,7 +491,7 @@ export function Step2OfferRules({
         <WizardRow
           label="Mechanism"
           description="How prices are made."
-          className="rounded-lg border border-border bg-card"
+          className="rounded-none border border-border bg-card"
         >
           <div className="grid gap-2 sm:grid-cols-3">
             <ChoiceCard
@@ -651,94 +641,6 @@ export function Step2OfferRules({
             </div>
           </WizardRow>
         </PolicyRow>
-      )}
-
-      {open && (
-        <WizardSection>
-          <WizardRow label={`First ${noun}`} description={`Where the first ${noun} may land.`}>
-            <label className="flex cursor-pointer items-center gap-2.5 text-xs font-medium text-foreground">
-              <Switch
-                checked={form.firstBidMayEqual}
-                onCheckedChange={(firstBidMayEqual) => onChange({ firstBidMayEqual })}
-              />
-              {form.firstBidMayEqual
-                ? `The first ${noun} may equal the ${openWord} price`
-                : `The first ${noun} must beat the ${openWord} price by one step`}
-            </label>
-          </WizardRow>
-
-          {hasPercent && (
-            <WizardRow label="Rounding" description="Percentage windows give uneven amounts.">
-              <div className="max-w-sm">
-                <Field label="Round percentage prices to" htmlFor="offer-rounding">
-                  <select
-                    id="offer-rounding"
-                    value={roundingMode}
-                    onChange={(event) => onRoundingModeChange(event.target.value)}
-                    className={selectClass}
-                  >
-                    {roundingModes.length === 0 ? (
-                      <>
-                        <option value="HALF_UP">The nearest {symbol} (half up)</option>
-                        <option value="UP">Always up</option>
-                        <option value="DOWN">Always down</option>
-                        <option value="HALF_EVEN">Nearest, ties to even</option>
-                      </>
-                    ) : (
-                      roundingModes.map((mode) => (
-                        <option key={mode.value} value={mode.value}>
-                          {mode.label}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </Field>
-                <p className="mt-1 text-[11px] text-muted-foreground">
-                  Percentages give uneven amounts, such as 2% {forward ? 'above' : 'below'}{' '}
-                  {formatMoney(594, currencyUnit)} ={' '}
-                  {formatMoney(forward ? 605.88 : 582.12, currencyUnit)}.
-                </p>
-              </div>
-            </WizardRow>
-          )}
-
-          <WizardRow
-            id={ISSUE_ANCHOR.withdrawal}
-            label={`Withdrawing a${forward ? '' : 'n'} ${noun}`}
-            description={`Can a${forward ? '' : 'n'} ${noun} be taken back once it’s placed?`}
-          >
-            <div className="space-y-2">
-              <div className="grid gap-2 sm:grid-cols-2">
-                <ChoiceCard
-                  title="Not allowed"
-                  description={`A${forward ? '' : 'n'} ${noun} is final once placed.`}
-                  selected={form.withdrawal === 'NOT_ALLOWED'}
-                  onClick={() => onChange({ withdrawal: 'NOT_ALLOWED' })}
-                />
-                <ChoiceCard
-                  title="Allowed, with a penalty"
-                  description="Until a set time before the close. If the final price ends up worse, the withdrawer pays the difference."
-                  selected={form.withdrawal === 'ALLOWED'}
-                  onClick={() => onChange({ withdrawal: 'ALLOWED' })}
-                />
-              </div>
-              {form.withdrawal === 'ALLOWED' && (
-                <div className="max-w-[200px]">
-                  <Field label="Allowed until (min before the close)" htmlFor="offer-withdraw">
-                    <input
-                      id="offer-withdraw"
-                      type="number"
-                      min={0}
-                      value={form.withdrawalMinutes}
-                      onChange={(event) => onChange({ withdrawalMinutes: event.target.value })}
-                      className={inputClass}
-                    />
-                  </Field>
-                </div>
-              )}
-            </div>
-          </WizardRow>
-        </WizardSection>
       )}
 
       {clock && (

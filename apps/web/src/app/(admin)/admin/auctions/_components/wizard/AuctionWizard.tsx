@@ -32,6 +32,7 @@ function SetupStep() {
           unitTypes={wizard.unitTypes}
           directions={wizard.directions}
           accessibilityTypes={wizard.accessibilityTypes}
+          roundingModes={wizard.roundingModes}
           errors={errors}
         />
       );
@@ -44,9 +45,6 @@ function SetupStep() {
           direction={basics.direction}
           openingPrice={basics.openingPrice}
           currencyUnit={basics.currencyUnit}
-          roundingModes={wizard.roundingModes}
-          roundingMode={basics.roundingMode}
-          onRoundingModeChange={(roundingMode) => wizard.patchBasics({ roundingMode })}
           errors={errors}
         />
       );

@@ -18,7 +18,7 @@ export function IssuesList({
   if (issues.length === 0 || published) return null;
 
   return (
-    <section className="overflow-hidden rounded-lg border border-border bg-card">
+    <section className="overflow-hidden rounded-none border border-border bg-card">
       <header className="border-b border-border px-4 py-2.5">
         <h3 className="text-sm font-semibold text-foreground">Issues</h3>
       </header>

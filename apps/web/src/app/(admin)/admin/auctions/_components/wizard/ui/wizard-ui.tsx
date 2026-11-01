@@ -79,6 +79,7 @@ export function ChoiceCard({
   badge,
   onClick,
   className,
+  radio = false,
 }: {
   title: ReactNode;
   code?: string;
@@ -88,11 +89,15 @@ export function ChoiceCard({
   badge?: ReactNode;
   onClick: () => void;
   className?: string;
+  /** Inside a radiogroup: announce as a radio rather than a toggle button. */
+  radio?: boolean;
 }) {
   return (
     <button
       type="button"
-      aria-pressed={selected}
+      {...(radio
+        ? { role: 'radio', 'aria-checked': Boolean(selected) }
+        : { 'aria-pressed': selected })}
       disabled={disabled}
       onClick={onClick}
       className={cn(
@@ -124,6 +129,62 @@ export function ChoiceCard({
         </span>
       )}
     </button>
+  );
+}
+
+export interface ChoiceCardOption<T extends string> {
+  value: T;
+  title: ReactNode;
+  description?: ReactNode;
+  code?: string;
+  badge?: ReactNode;
+  disabled?: boolean;
+}
+
+/** A single-choice set of cards (one selected), laid out in a grid. Used for
+ *  choices like Mechanism, What bidders see and Names. */
+export function ChoiceCardGroup<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+  columns = 3,
+  className,
+}: {
+  /** Accessible name for the group, e.g. "Mechanism". */
+  label: string;
+  options: ChoiceCardOption<T>[];
+  value: T;
+  onChange: (value: T) => void;
+  columns?: 2 | 3 | 4;
+  className?: string;
+}) {
+  return (
+    <div
+      role="radiogroup"
+      aria-label={label}
+      className={cn(
+        'grid gap-2',
+        columns === 2 && 'sm:grid-cols-2',
+        columns === 3 && 'sm:grid-cols-3',
+        columns === 4 && 'sm:grid-cols-2 lg:grid-cols-4',
+        className,
+      )}
+    >
+      {options.map((option) => (
+        <ChoiceCard
+          key={option.value}
+          radio
+          title={option.title}
+          description={option.description}
+          code={option.code}
+          badge={option.badge}
+          disabled={option.disabled}
+          selected={value === option.value}
+          onClick={() => onChange(option.value)}
+        />
+      ))}
+    </div>
   );
 }
 

@@ -6,7 +6,7 @@ import { Button } from '@repo/ui';
 import { useWorkflow } from '../../../_hooks/useWorkflow';
 import { paymentStepData, resolveStr } from '../../../_components/PolicyShared';
 import type { AwardState, OfferVisibilityChoice } from '../../../_lib/wizard/types';
-import { MutedBadge, OptionRow } from '../ui/wizard-ui';
+import { ChoiceCardGroup, MutedBadge } from '../ui/wizard-ui';
 import { PolicyRow } from '../ui/PolicyRow';
 import { formatMoney, formatTime } from '../../../_lib/wizard/summary';
 import { awardNeedsReserve } from '../../../_lib/wizard/validation';
@@ -93,6 +93,8 @@ export function Step5Award({
   const owes = forward ? 'owes' : 'is paid';
   const ordinal = (rank: number) => (rank === 2 ? '2nd' : rank === 3 ? '3rd' : `${rank}th`);
   const secondPriceHint = `Second price. ${Who} can ${bidWord} what it’s truly worth to them. Needs a reserve.`;
+  const clock = mechanism === 'CLOCK';
+  const notForClock = <MutedBadge>Not for clock</MutedBadge>;
 
   const kth = parseInt(form.winnerKth, 10) || 1;
   const priceKth = parseInt(form.winnerPriceKth, 10) || 1;
@@ -216,55 +218,35 @@ export function Step5Award({
                     : 'Reverse auction: lower asks are better.'}
               </p>
             </div>
-            <div className="space-y-2">
-              {mechanism === 'CLOCK' ? (
-                <>
-                  <OptionRow
-                    title={`The last ${one} left in`}
-                    description="Everyone else has dropped out."
-                    selected
-                    onClick={() => onChange({ winnerKth: '1' })}
-                  />
-                  <OptionRow
-                    title={`The 2nd-${bestWord} ${bidWord}`}
-                    description="Rare. Used in some sealed-bid formats."
-                    selected={false}
-                    disabled
-                    badge={<MutedBadge>Not for clock</MutedBadge>}
-                    onClick={() => undefined}
-                  />
-                  <OptionRow
-                    title={`The 3rd-${bestWord} ${bidWord}`}
-                    description="Rare."
-                    selected={false}
-                    disabled
-                    badge={<MutedBadge>Not for clock</MutedBadge>}
-                    onClick={() => undefined}
-                  />
-                </>
-              ) : (
-                <>
-                  <OptionRow
-                    title={`The ${bestWord} ${bidWord}`}
-                    description="Standard. The best offer wins."
-                    selected={form.winnerKth === '1'}
-                    onClick={() => onChange({ winnerKth: '1' })}
-                  />
-                  <OptionRow
-                    title={`The 2nd-${bestWord} ${bidWord}`}
-                    description="Rare. Used in some sealed-bid formats."
-                    selected={form.winnerKth === '2'}
-                    onClick={() => onChange({ winnerKth: '2' })}
-                  />
-                  <OptionRow
-                    title={`The 3rd-${bestWord} ${bidWord}`}
-                    description="Rare."
-                    selected={form.winnerKth === '3'}
-                    onClick={() => onChange({ winnerKth: '3' })}
-                  />
-                </>
-              )}
-            </div>
+            <ChoiceCardGroup<string>
+              label="The winner is"
+              // A clock auction is always won by the last one left in.
+              value={clock ? '1' : form.winnerKth}
+              onChange={(winnerKth) => onChange({ winnerKth })}
+              options={[
+                {
+                  value: '1',
+                  title: clock ? `The last ${one} left in` : `The ${bestWord} ${bidWord}`,
+                  description: clock
+                    ? 'Everyone else has dropped out.'
+                    : 'Standard. The best offer wins.',
+                },
+                {
+                  value: '2',
+                  title: `The 2nd-${bestWord} ${bidWord}`,
+                  description: 'Rare. Used in some sealed-bid formats.',
+                  disabled: clock,
+                  badge: clock ? notForClock : undefined,
+                },
+                {
+                  value: '3',
+                  title: `The 3rd-${bestWord} ${bidWord}`,
+                  description: 'Rare.',
+                  disabled: clock,
+                  badge: clock ? notForClock : undefined,
+                },
+              ]}
+            />
           </div>
           {mechanism !== 'CLOCK' && (
             <ExampleTable
@@ -300,25 +282,29 @@ export function Step5Award({
               </p>
             </div>
             <div className="space-y-2">
-              <OptionRow
-                title={`The earliest ${bidWord} wins`}
-                description="Rewards whoever committed first. Most common."
-                selected={form.ties === 'EARLIEST'}
-                onClick={() => onChange({ ties: 'EARLIEST' })}
-              />
-              <OptionRow
-                title="Pick one at random"
-                description={`Every tied ${one} has the same chance.`}
-                selected={form.ties === 'RANDOM'}
-                onClick={() => onChange({ ties: 'RANDOM' })}
-              />
-              <OptionRow
-                title={`Tied ${who} ${bidWord} again`}
-                description="A short extra round just for them."
-                selected={form.ties === 'REBID'}
-                disabled
-                badge={<MutedBadge>Needs MULTI_ROUND</MutedBadge>}
-                onClick={() => undefined}
+              <ChoiceCardGroup
+                label="Tie-break"
+                value={form.ties}
+                onChange={(ties) => onChange({ ties })}
+                options={[
+                  {
+                    value: 'EARLIEST',
+                    title: `The earliest ${bidWord} wins`,
+                    description: 'Rewards whoever committed first. Most common.',
+                  },
+                  {
+                    value: 'RANDOM',
+                    title: 'Pick one at random',
+                    description: `Every tied ${one} has the same chance.`,
+                  },
+                  {
+                    value: 'REBID',
+                    title: `Tied ${who} ${bidWord} again`,
+                    description: 'A short extra round just for them.',
+                    disabled: true,
+                    badge: <MutedBadge>Needs MULTI_ROUND</MutedBadge>,
+                  },
+                ]}
               />
               <p className="flex items-start gap-2 rounded-md border border-info/30 bg-info/10 px-3 py-2 text-[11px] leading-snug text-foreground">
                 <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-info" aria-hidden />
@@ -372,57 +358,37 @@ export function Step5Award({
               </p>
             </div>
             <div className="space-y-2">
-              {mechanism === 'CLOCK' ? (
-                <>
-                  <OptionRow
-                    title="The clock price"
-                    description="Where the clock stands when the last rival drops out."
-                    selected
-                    onClick={() => onChange({ winnerPriceKth: '1' })}
-                  />
-                  <OptionRow
-                    title={`The 2nd-${bestWord} ${bidWord}`}
-                    description={secondPriceHint}
-                    selected={false}
-                    disabled
-                    badge={<MutedBadge>Not for clock</MutedBadge>}
-                    onClick={() => undefined}
-                  />
-                  <OptionRow
-                    title={`The 3rd-${bestWord} ${bidWord}`}
-                    description="Rare. Needs a reserve."
-                    selected={false}
-                    disabled
-                    badge={<MutedBadge>Not for clock</MutedBadge>}
-                    onClick={() => undefined}
-                  />
-                </>
-              ) : (
-                <>
-                  <OptionRow
-                    title={`Their own winning ${bidWord}`}
-                    description={
-                      forward
+              <ChoiceCardGroup<string>
+                label={forward ? 'The winner owes' : 'The winner is paid'}
+                // A clock auction always pays the clock price.
+                value={clock ? '1' : form.winnerPriceKth}
+                onChange={(winnerPriceKth) => onChange({ winnerPriceKth })}
+                options={[
+                  {
+                    value: '1',
+                    title: clock ? 'The clock price' : `Their own winning ${bidWord}`,
+                    description: clock
+                      ? 'Where the clock stands when the last rival drops out.'
+                      : forward
                         ? 'First price. What they bid is what they pay.'
-                        : 'First price. What they ask is what they’re paid.'
-                    }
-                    selected={form.winnerPriceKth === '1'}
-                    onClick={() => onChange({ winnerPriceKth: '1' })}
-                  />
-                  <OptionRow
-                    title={`The 2nd-${bestWord} ${bidWord}`}
-                    description={secondPriceHint}
-                    selected={form.winnerPriceKth === '2'}
-                    onClick={() => onChange({ winnerPriceKth: '2' })}
-                  />
-                  <OptionRow
-                    title={`The 3rd-${bestWord} ${bidWord}`}
-                    description="Rare. Needs a reserve."
-                    selected={form.winnerPriceKth === '3'}
-                    onClick={() => onChange({ winnerPriceKth: '3' })}
-                  />
-                </>
-              )}
+                        : 'First price. What they ask is what they’re paid.',
+                  },
+                  {
+                    value: '2',
+                    title: `The 2nd-${bestWord} ${bidWord}`,
+                    description: secondPriceHint,
+                    disabled: clock,
+                    badge: clock ? notForClock : undefined,
+                  },
+                  {
+                    value: '3',
+                    title: `The 3rd-${bestWord} ${bidWord}`,
+                    description: 'Rare. Needs a reserve.',
+                    disabled: clock,
+                    badge: clock ? notForClock : undefined,
+                  },
+                ]}
+              />
               {reserveIssue && (
                 <div className="flex flex-wrap items-center gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-[11px] text-foreground">
                   <span className="flex-1">

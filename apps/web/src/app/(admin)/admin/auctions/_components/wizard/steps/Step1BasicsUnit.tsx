@@ -9,7 +9,7 @@ import { ListingViewDialog } from '../../../../listings/_components/ListingViewD
 import type { SelectOption } from '../../../_components/AuctionShared';
 import type { BasicsState, SelectedListing } from '../../../_lib/wizard/types';
 import {
-  ChoiceCard,
+  ChoiceCardGroup,
   Field,
   MoneyField,
   WizardRow,
@@ -267,47 +267,48 @@ export function Step1BasicsUnit({
         hint={isForward ? 'How it runs, and who can join.' : 'How it runs, and who can join.'}
       >
         <WizardRow label="Auction type" description="Decides how rounds and stages run.">
-          <div className="grid gap-2 sm:grid-cols-3">
-            {formatOptions.map((option) => {
+          <ChoiceCardGroup<string>
+            label="Auction type"
+            value={form.format}
+            // Only SIMPLE is supported, and it's already selected.
+            onChange={() => {}}
+            options={formatOptions.map((option) => {
               const supported = SUPPORTED_FORMATS.includes(option.value);
               const copy = formatCopy[option.value];
-              return (
-                <ChoiceCard
-                  key={option.value}
-                  title={copy?.title ?? titleFromCode(option.value)}
-                  code={option.value}
-                  description={copy?.description ?? option.label}
-                  selected={form.format === option.value}
-                  disabled={!supported}
-                  badge={supported ? undefined : comingLater}
-                  onClick={() => {}}
-                />
-              );
+              return {
+                value: option.value,
+                title: copy?.title ?? titleFromCode(option.value),
+                code: option.value,
+                description: copy?.description ?? option.label,
+                disabled: !supported,
+                badge: supported ? undefined : comingLater,
+              };
             })}
-          </div>
+          />
         </WizardRow>
 
         <WizardRow
           label="Direction"
           description="Selling or buying. This changes wording and limits in later sections."
         >
-          <div className="grid gap-2 sm:grid-cols-2">
-            {directionOptions.map((option) => {
-              const value = option.value as BasicsState['direction'];
-              const supported = SUPPORTED_DIRECTIONS.includes(value);
-              return (
-                <ChoiceCard
-                  key={option.value}
-                  title={directionTitle[option.value] ?? titleFromCode(option.value)}
-                  description={option.label}
-                  selected={form.direction === option.value}
-                  disabled={!supported}
-                  badge={supported ? undefined : comingLater}
-                  onClick={() => onChange({ direction: value })}
-                />
+          <ChoiceCardGroup<string>
+            label="Direction"
+            columns={2}
+            value={form.direction}
+            onChange={(direction) => onChange({ direction: direction as BasicsState['direction'] })}
+            options={directionOptions.map((option) => {
+              const supported = SUPPORTED_DIRECTIONS.includes(
+                option.value as BasicsState['direction'],
               );
+              return {
+                value: option.value,
+                title: directionTitle[option.value] ?? titleFromCode(option.value),
+                description: option.label,
+                disabled: !supported,
+                badge: supported ? undefined : comingLater,
+              };
             })}
-          </div>
+          />
         </WizardRow>
 
         <WizardRow
@@ -375,24 +376,27 @@ export function Step1BasicsUnit({
           label="Who can join"
           description="Private auctions are invite-only. You invite people after you publish."
         >
-          <div className="grid gap-2 sm:grid-cols-2">
-            {accessibilityOptions.map((option) => {
-              const value = option.value as BasicsState['accessibility'];
-              const supported = SUPPORTED_ACCESSIBILITY.includes(value);
-              const copy = accessibilityCopy[option.value];
-              return (
-                <ChoiceCard
-                  key={option.value}
-                  title={copy?.title ?? titleFromCode(option.value)}
-                  description={copy?.description ?? labelDetail(option.label)}
-                  selected={form.accessibility === option.value}
-                  disabled={!supported}
-                  badge={supported ? undefined : comingLater}
-                  onClick={() => onChange({ accessibility: value })}
-                />
+          <ChoiceCardGroup<string>
+            label="Who can join"
+            columns={2}
+            value={form.accessibility}
+            onChange={(accessibility) =>
+              onChange({ accessibility: accessibility as BasicsState['accessibility'] })
+            }
+            options={accessibilityOptions.map((option) => {
+              const supported = SUPPORTED_ACCESSIBILITY.includes(
+                option.value as BasicsState['accessibility'],
               );
+              const copy = accessibilityCopy[option.value];
+              return {
+                value: option.value,
+                title: copy?.title ?? titleFromCode(option.value),
+                description: copy?.description ?? labelDetail(option.label),
+                disabled: !supported,
+                badge: supported ? undefined : comingLater,
+              };
             })}
-          </div>
+          />
         </WizardRow>
 
         <WizardRow label="Money and time" description="Used for every price and deadline.">
@@ -493,30 +497,33 @@ export function Step1BasicsUnit({
               : 'Single Units and Bundles are atomic: one price, one winner, no partial awards.'
           }
         >
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            {unitOptions.map((option) => {
-              const value = option.value as BasicsState['unitType'];
-              const supported = SUPPORTED_UNIT_TYPES.includes(value);
-              const copy = unitCopy[option.value];
-              return (
-                <ChoiceCard
-                  key={option.value}
-                  title={copy?.title ?? titleFromCode(option.value)}
-                  description={copy?.description ?? option.label}
-                  selected={form.unitType === option.value}
-                  disabled={!supported}
-                  badge={supported ? undefined : comingLater}
-                  onClick={() =>
-                    onChange(
-                      value === 'SINGLE_UNIT'
-                        ? { unitType: value, items: form.items.slice(0, 1) }
-                        : { unitType: value },
-                    )
-                  }
-                />
+          <ChoiceCardGroup<string>
+            label="Unit type"
+            columns={4}
+            value={form.unitType}
+            onChange={(next) => {
+              const unitType = next as BasicsState['unitType'];
+              // A Single Unit holds one listing.
+              onChange(
+                unitType === 'SINGLE_UNIT'
+                  ? { unitType, items: form.items.slice(0, 1) }
+                  : { unitType },
               );
+            }}
+            options={unitOptions.map((option) => {
+              const supported = SUPPORTED_UNIT_TYPES.includes(
+                option.value as BasicsState['unitType'],
+              );
+              const copy = unitCopy[option.value];
+              return {
+                value: option.value,
+                title: copy?.title ?? titleFromCode(option.value),
+                description: copy?.description ?? option.label,
+                disabled: !supported,
+                badge: supported ? undefined : comingLater,
+              };
             })}
-          </div>
+          />
         </WizardRow>
 
         <WizardRow

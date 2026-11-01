@@ -6,13 +6,11 @@ import { Button, ChipCombobox, Combobox, Switch, cn, type ComboboxOption } from 
 import { ISSUE_ANCHOR } from '../../../_lib/wizard/validation';
 import type { OfferState, PriceWindow, ScheduleState } from '../../../_lib/wizard/types';
 import {
-  ChoiceCard,
-  ChoiceList,
+  ChoiceCardGroup,
   DurationFields,
   Field,
   MoneyField,
   MutedNote,
-  OptionRow,
   WizardRow,
   WizardSection,
   inputClass,
@@ -412,10 +410,8 @@ export function Step2OfferRules({
   const setWindows = (next: PriceWindow[]) =>
     onChange(clock ? { clockWindows: next } : { windows: next });
 
-  // Start open when something needs doing, so the fix is in view.
-  const [progressionOpen, setProgressionOpen] = useState(
-    Boolean(errors.windows) || windows.length === 0,
-  );
+  // Starts expanded; Done collapses it to the summary row.
+  const [progressionOpen, setProgressionOpen] = useState(true);
   // With no windows there's nothing to collapse to, so the row stays open.
   const noWindows = !sealed && windows.length === 0;
   const progressionShown = progressionOpen || noWindows;
@@ -493,33 +489,33 @@ export function Step2OfferRules({
           description="How prices are made."
           className="rounded-none border border-border bg-card"
         >
-          <div className="grid gap-2 sm:grid-cols-3">
-            <ChoiceCard
-              title="Open"
-              description={`${Who} post prices that beat the current price.`}
-              selected={open}
-              onClick={() => onChange({ mechanism: 'OPEN' })}
-            />
-            <ChoiceCard
-              title="Clock"
-              description={
-                forward
+          <ChoiceCardGroup
+            label="Mechanism"
+            value={form.mechanism}
+            onChange={(mechanism) => onChange({ mechanism })}
+            options={[
+              {
+                value: 'OPEN',
+                title: 'Open',
+                description: `${Who} post prices that beat the current price.`,
+              },
+              {
+                value: 'CLOCK',
+                title: 'Clock',
+                description: forward
                   ? 'The platform raises the price on a timer. Bidders stay in or drop out.'
-                  : 'The platform lowers the price on a timer. Suppliers stay in or drop out.'
-              }
-              selected={clock}
-              onClick={() => onChange({ mechanism: 'CLOCK' })}
-            />
-            <ChoiceCard
-              title="Sealed"
-              description={`Hidden ${noun}s by a deadline, opened together.`}
-              selected={sealed}
-              badge={
-                <span className="text-[10px] font-medium text-warning">Can’t publish yet</span>
-              }
-              onClick={() => onChange({ mechanism: 'SEALED' })}
-            />
-          </div>
+                  : 'The platform lowers the price on a timer. Suppliers stay in or drop out.',
+              },
+              {
+                value: 'SEALED',
+                title: 'Sealed',
+                description: `Hidden ${noun}s by a deadline, opened together.`,
+                badge: (
+                  <span className="text-[10px] font-medium text-warning">Can’t publish yet</span>
+                ),
+              },
+            ]}
+          />
           {sealed && (
             <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-snug text-warning">
               <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
@@ -688,47 +684,57 @@ export function Step2OfferRules({
             </p>
           </WizardRow>
           <WizardRow label="Opening" description={`When the sealed ${noun}s are opened.`}>
-            <div className="grid gap-2 sm:grid-cols-2">
-              <ChoiceCard
-                title="When bidding closes"
-                description="Results are worked out straight away."
-                selected={form.sealedOpening === 'ON_CLOSE'}
-                onClick={() => onChange({ sealedOpening: 'ON_CLOSE' })}
-              />
-              <ChoiceCard
-                title="At a set time after the close"
-                description="For example, at a public opening."
-                selected={form.sealedOpening === 'AFTER_CLOSE'}
-                onClick={() => onChange({ sealedOpening: 'AFTER_CLOSE' })}
-              />
-            </div>
+            <ChoiceCardGroup
+              label="Opening"
+              columns={2}
+              value={form.sealedOpening}
+              onChange={(sealedOpening) => onChange({ sealedOpening })}
+              options={[
+                {
+                  value: 'ON_CLOSE',
+                  title: 'When bidding closes',
+                  description: 'Results are worked out straight away.',
+                },
+                {
+                  value: 'AFTER_CLOSE',
+                  title: 'At a set time after the close',
+                  description: 'For example, at a public opening.',
+                },
+              ]}
+            />
           </WizardRow>
         </WizardSection>
       )}
 
-      <WizardSection>
-        {!sealed && (
-          <WizardRow label={`What ${who} see`} description="While bidding is open.">
-            <ChoiceList>
-              <OptionRow
-                title="Best price and own rank"
-                description={`${Who} see the current best ${noun} and where they stand.`}
-                selected={form.offerVisibility === 'FULL'}
-                onClick={() => onChange({ offerVisibility: 'FULL' })}
-              />
-              <OptionRow
-                title="Own rank only"
-                description={`${Who} see only their position: ${forward ? 'H1, H2, …' : 'L1, L2, …'}`}
-                selected={form.offerVisibility === 'RANK'}
-                onClick={() => onChange({ offerVisibility: 'RANK' })}
-              />
-              <OptionRow
-                title="Nothing until close"
-                description="No prices or ranks while bidding is open."
-                selected={form.offerVisibility === 'NOTHING'}
-                onClick={() => onChange({ offerVisibility: 'NOTHING' })}
-              />
-            </ChoiceList>
+      {!sealed && (
+        <WizardRow
+          label={`What ${who} see`}
+          description="While bidding is open."
+          className="rounded-none border border-border bg-card"
+        >
+          <div className="space-y-2">
+            <ChoiceCardGroup
+              label={`What ${who} see`}
+              value={form.offerVisibility}
+              onChange={(offerVisibility) => onChange({ offerVisibility })}
+              options={[
+                {
+                  value: 'FULL',
+                  title: 'Best price and own rank',
+                  description: `${Who} see the current best ${noun} and where they stand.`,
+                },
+                {
+                  value: 'RANK',
+                  title: 'Own rank only',
+                  description: `${Who} see only their position: ${forward ? 'H1, H2, …' : 'L1, L2, …'}`,
+                },
+                {
+                  value: 'NOTHING',
+                  title: 'Nothing until close',
+                  description: 'No prices or ranks while bidding is open.',
+                },
+              ]}
+            />
             {open && form.offerVisibility === 'RANK' && (
               <MutedNote>
                 {Who} can’t see the best price, so each new {noun} only has to beat their own last{' '}
@@ -741,34 +747,40 @@ export function Step2OfferRules({
                 this better.
               </MutedNote>
             )}
-          </WizardRow>
-        )}
-
-        <WizardRow label="Names" description={`How ${who} appear to each other.`}>
-          <ChoiceList>
-            <OptionRow
-              title="Aliases"
-              description={`${forward ? 'Bidder' : 'Supplier'} 1, ${
-                forward ? 'Bidder' : 'Supplier'
-              } 2… kept the same for the whole auction.`}
-              selected={form.participantVisibility === 'ALIAS'}
-              onClick={() => onChange({ participantVisibility: 'ALIAS' })}
-            />
-            <OptionRow
-              title="Real names"
-              description="Everyone sees who is bidding."
-              selected={form.participantVisibility === 'REAL'}
-              onClick={() => onChange({ participantVisibility: 'REAL' })}
-            />
-            <OptionRow
-              title="Hidden"
-              description="No names or aliases are shown."
-              selected={form.participantVisibility === 'HIDDEN'}
-              onClick={() => onChange({ participantVisibility: 'HIDDEN' })}
-            />
-          </ChoiceList>
+          </div>
         </WizardRow>
-      </WizardSection>
+      )}
+
+      <WizardRow
+        label="Names"
+        description={`How ${who} appear to each other.`}
+        className="rounded-none border border-border bg-card"
+      >
+        <ChoiceCardGroup
+          label="Names"
+          value={form.participantVisibility}
+          onChange={(participantVisibility) => onChange({ participantVisibility })}
+          options={[
+            {
+              value: 'ALIAS',
+              title: 'Aliases',
+              description: `${forward ? 'Bidder' : 'Supplier'} 1, ${
+                forward ? 'Bidder' : 'Supplier'
+              } 2… kept the same for the whole auction.`,
+            },
+            {
+              value: 'REAL',
+              title: 'Real names',
+              description: 'Everyone sees who is bidding.',
+            },
+            {
+              value: 'HIDDEN',
+              title: 'Hidden',
+              description: 'No names or aliases are shown.',
+            },
+          ]}
+        />
+      </WizardRow>
     </div>
   );
 }

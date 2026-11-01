@@ -7,7 +7,7 @@ import { participantsApi, usersApi, type UserSummary } from '@repo/api';
 import { parseApiError } from '@/lib/api-errors';
 import { UserAvatar } from '@/components/common/admin/UserAvatar';
 import { DismissibleError } from '../../../_components/AuctionShared';
-import { ChoiceCard, Field, InfoNote, inputClass } from '../ui/wizard-ui';
+import { ChoiceCardGroup, Field, InfoNote, inputClass } from '../ui/wizard-ui';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^[0-9]{7,15}$/;
@@ -180,20 +180,24 @@ export function InvitePanel({
         </div>
 
         <div className="min-w-0 space-y-3">
-          <div className="grid gap-2 sm:grid-cols-2">
-            <ChoiceCard
-              title="Existing user"
-              description="Someone already on the platform"
-              selected={mode === 'existing'}
-              onClick={() => setMode('existing')}
-            />
-            <ChoiceCard
-              title="New person"
-              description="Invite by email. They sign up when they accept."
-              selected={mode === 'new'}
-              onClick={() => setMode('new')}
-            />
-          </div>
+          <ChoiceCardGroup
+            label="Who to invite"
+            columns={2}
+            value={mode}
+            onChange={setMode}
+            options={[
+              {
+                value: 'existing',
+                title: 'Existing user',
+                description: 'Someone already on the platform',
+              },
+              {
+                value: 'new',
+                title: 'New person',
+                description: 'Invite by email. They sign up when they accept.',
+              },
+            ]}
+          />
 
           <DismissibleError message={generalError} />
 

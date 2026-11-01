@@ -4,7 +4,14 @@ import { useMemo, useState } from 'react';
 import { Info } from 'lucide-react';
 import { DateTimePicker } from '@repo/ui';
 import type { AuctionMechanism, ScheduleState } from '../../../_lib/wizard/types';
-import { ChoiceCard, Field, InfoNote, WizardRow, WizardSection, inputClass } from '../ui/wizard-ui';
+import {
+  ChoiceCardGroup,
+  Field,
+  InfoNote,
+  WizardRow,
+  WizardSection,
+  inputClass,
+} from '../ui/wizard-ui';
 import { PolicyOffRow, PolicyRow } from '../ui/PolicyRow';
 import {
   endTimeFor,
@@ -137,20 +144,24 @@ export function Step3Schedule({
             </InfoNote>
           ) : (
             <div className="space-y-3">
-              <div className="grid gap-2 sm:grid-cols-2">
-                <ChoiceCard
-                  title="Runs for a set time"
-                  description="Bidding lasts a fixed length from the start."
-                  selected={form.endMode === 'DURATION'}
-                  onClick={() => onChange({ endMode: 'DURATION' })}
-                />
-                <ChoiceCard
-                  title="Ends at a set time"
-                  description="Pick the exact closing date and time."
-                  selected={form.endMode === 'FIXED'}
-                  onClick={() => onChange({ endMode: 'FIXED' })}
-                />
-              </div>
+              <ChoiceCardGroup
+                label="How bidding ends"
+                columns={2}
+                value={form.endMode}
+                onChange={(endMode) => onChange({ endMode })}
+                options={[
+                  {
+                    value: 'DURATION',
+                    title: 'Runs for a set time',
+                    description: 'Bidding lasts a fixed length from the start.',
+                  },
+                  {
+                    value: 'FIXED',
+                    title: 'Ends at a set time',
+                    description: 'Pick the exact closing date and time.',
+                  },
+                ]}
+              />
 
               {form.endMode === 'DURATION' ? (
                 <Field label="Bidding runs for">
@@ -270,20 +281,25 @@ export function Step3Schedule({
                 />
               </Field>
             </div>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              <ChoiceCard
-                title="From the scheduled close"
-                description={`Each extension adds to ${closeTime}`}
-                selected={form.extensionReference === 'FROM_AUCTION_END_TIME'}
-                onClick={() => onChange({ extensionReference: 'FROM_AUCTION_END_TIME' })}
-              />
-              <ChoiceCard
-                title={`From the latest ${noun}`}
-                description={`The close is always ${extendMinutes || 'N'} min after the last ${noun}`}
-                selected={form.extensionReference === 'FROM_LATEST_OFFER_TIME'}
-                onClick={() => onChange({ extensionReference: 'FROM_LATEST_OFFER_TIME' })}
-              />
-            </div>
+            <ChoiceCardGroup
+              label="Measured from"
+              columns={2}
+              className="mt-3"
+              value={form.extensionReference}
+              onChange={(extensionReference) => onChange({ extensionReference })}
+              options={[
+                {
+                  value: 'FROM_AUCTION_END_TIME',
+                  title: 'From the scheduled close',
+                  description: `Each extension adds to ${closeTime}`,
+                },
+                {
+                  value: 'FROM_LATEST_OFFER_TIME',
+                  title: `From the latest ${noun}`,
+                  description: `The close is always ${extendMinutes || 'N'} min after the last ${noun}`,
+                },
+              ]}
+            />
           </WizardRow>
 
           <WizardRow
@@ -291,20 +307,24 @@ export function Step3Schedule({
             description="Put a cap on how long the auction can run."
           >
             <div className="space-y-2">
-              <div className="grid gap-2 sm:grid-cols-2">
-                <ChoiceCard
-                  title="Up to a number"
-                  description="There’s a known latest close."
-                  selected={form.limitEnabled}
-                  onClick={() => onChange({ limitEnabled: true })}
-                />
-                <ChoiceCard
-                  title="No limit"
-                  description={`Runs until ${noun}s stop.`}
-                  selected={!form.limitEnabled}
-                  onClick={() => onChange({ limitEnabled: false })}
-                />
-              </div>
+              <ChoiceCardGroup
+                label="How many times"
+                columns={2}
+                value={form.limitEnabled ? 'CAPPED' : 'UNLIMITED'}
+                onChange={(limit) => onChange({ limitEnabled: limit === 'CAPPED' })}
+                options={[
+                  {
+                    value: 'CAPPED',
+                    title: 'Up to a number',
+                    description: 'There’s a known latest close.',
+                  },
+                  {
+                    value: 'UNLIMITED',
+                    title: 'No limit',
+                    description: `Runs until ${noun}s stop.`,
+                  },
+                ]}
+              />
               {form.limitEnabled && (
                 <div className="flex items-center gap-2">
                   <input

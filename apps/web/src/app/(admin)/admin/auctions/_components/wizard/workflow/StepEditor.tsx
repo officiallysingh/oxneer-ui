@@ -16,7 +16,7 @@ import {
   type DraftProblem,
   type StepDraft,
 } from '../../../_lib/wizard/stepDraft';
-import { ChoiceCard, Field, WizardRow, inputClass } from '../ui/wizard-ui';
+import { ChoiceCardGroup, Field, WizardRow, inputClass } from '../ui/wizard-ui';
 import { ChargesEditor } from './ChargesEditor';
 import { TemplatePicker } from './TemplatePicker';
 import { STEP_ICON } from './stepIcons';
@@ -341,20 +341,24 @@ export function StepEditor({
             <>
               <WizardRow label="Terms" description="Write them here, or upload a Word document.">
                 <div className="space-y-3">
-                  <div role="radiogroup" aria-label="Source" className="grid gap-2 sm:grid-cols-2">
-                    <ChoiceCard
-                      title="Write them here"
-                      description="Participants read them on the page."
-                      selected={draft.tncSource === 'TEXT'}
-                      onClick={() => patch({ tncSource: 'TEXT' })}
-                    />
-                    <ChoiceCard
-                      title="Upload a document"
-                      description="A .doc or .docx file participants open."
-                      selected={draft.tncSource === 'DOCUMENT'}
-                      onClick={() => patch({ tncSource: 'DOCUMENT' })}
-                    />
-                  </div>
+                  <ChoiceCardGroup
+                    label="Source"
+                    columns={2}
+                    value={draft.tncSource}
+                    onChange={(tncSource) => patch({ tncSource })}
+                    options={[
+                      {
+                        value: 'TEXT',
+                        title: 'Write them here',
+                        description: 'Participants read them on the page.',
+                      },
+                      {
+                        value: 'DOCUMENT',
+                        title: 'Upload a document',
+                        description: 'A .doc or .docx file participants open.',
+                      },
+                    ]}
+                  />
                   {draft.tncSource === 'TEXT' ? (
                     <RichTextEditor
                       value={draft.tncText}
@@ -457,24 +461,24 @@ export function StepEditor({
             <>
               <WizardRow label="Approval" description="Who decides whether a participant may bid.">
                 <div className="space-y-2">
-                  <div
-                    role="radiogroup"
-                    aria-label="Approval"
-                    className="grid gap-2 sm:grid-cols-2"
-                  >
-                    <ChoiceCard
-                      title="You approve each one"
-                      description="Submissions wait in your review queue."
-                      selected={draft.manualApproval}
-                      onClick={() => patch({ manualApproval: true })}
-                    />
-                    <ChoiceCard
-                      title="Automatic"
-                      description="Anyone who submits can bid."
-                      selected={!draft.manualApproval}
-                      onClick={() => patch({ manualApproval: false })}
-                    />
-                  </div>
+                  <ChoiceCardGroup
+                    label="Approval"
+                    columns={2}
+                    value={draft.manualApproval ? 'MANUAL' : 'AUTOMATIC'}
+                    onChange={(approval) => patch({ manualApproval: approval === 'MANUAL' })}
+                    options={[
+                      {
+                        value: 'MANUAL',
+                        title: 'You approve each one',
+                        description: 'Submissions wait in your review queue.',
+                      },
+                      {
+                        value: 'AUTOMATIC',
+                        title: 'Automatic',
+                        description: 'Anyone who submits can bid.',
+                      },
+                    ]}
+                  />
                   {draft.manualApproval && (
                     <p className="flex items-start gap-1.5 text-[11px] leading-snug text-muted-foreground">
                       <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
@@ -566,32 +570,26 @@ export function StepEditor({
                 label="How they pay"
                 description="Online is collected by the platform. Offline you record yourself."
               >
-                <div
-                  role="radiogroup"
-                  aria-label="Payment mode"
-                  className="grid gap-2 sm:grid-cols-2"
-                >
-                  {paymentModes.length === 0 ? (
-                    <p className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-                      Loading payment modes…
-                    </p>
-                  ) : (
-                    paymentModes.map((mode) => (
-                      <ChoiceCard
-                        key={mode.value}
-                        title={mode.label}
-                        description={
-                          /online/i.test(mode.value)
-                            ? 'Collected by the platform.'
-                            : 'Cash, cheque or bank transfer, recorded by you.'
-                        }
-                        selected={draft.mode === mode.value}
-                        onClick={() => patch({ mode: mode.value })}
-                      />
-                    ))
-                  )}
-                </div>
+                {paymentModes.length === 0 ? (
+                  <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+                    Loading payment modes…
+                  </p>
+                ) : (
+                  <ChoiceCardGroup<string>
+                    label="Payment mode"
+                    columns={2}
+                    value={draft.mode}
+                    onChange={(mode) => patch({ mode })}
+                    options={paymentModes.map((mode) => ({
+                      value: mode.value,
+                      title: mode.label,
+                      description: /online/i.test(mode.value)
+                        ? 'Collected by the platform.'
+                        : 'Cash, cheque or bank transfer, recorded by you.',
+                    }))}
+                  />
+                )}
               </WizardRow>
               <WizardRow
                 label="Due by"

@@ -53,6 +53,8 @@ export function Step4Participation({
   ]);
 
   const count = parseInt(form.minimumCount, 10) || 0;
+  // Forward auctions take bids; reverse auctions take asks.
+  const nouns = direction === 'FORWARD' ? 'bids' : 'asks';
   const tooLow = count < 2;
   const checkMinutes =
     (parseInt(form.checkDays, 10) || 0) * 1440 +
@@ -170,7 +172,10 @@ export function Step4Participation({
             </div>
           </WizardRow>
 
-          <WizardRow label="Who counts" description="Only people who are ready to bid.">
+          <WizardRow
+            label="Who counts"
+            description={`Only people who are ready to place ${nouns}.`}
+          >
             <div className="space-y-2">
               <InfoNote>
                 Counts participants who have finished every required step due by then. People who
@@ -206,7 +211,7 @@ export function Step4Participation({
       <p className="flex items-start gap-2 rounded-md bg-muted/50 px-3 py-2.5 text-[11px] leading-snug text-muted-foreground">
         <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
         {isPrivate
-          ? 'This auction is private. You invite people after you publish it, in step 7. Everyone you invite completes the steps below before they can bid.'
+          ? `This auction is private. You invite people after you publish it, in step 7. Everyone you invite completes the steps below before they can place ${nouns}.`
           : 'This auction is public. Once it’s published, anyone registered can join by completing the steps below.'}
       </p>
 
@@ -225,8 +230,8 @@ export function Step4Participation({
       />
 
       <MutedNote>
-        Only participants who finish every required step by its deadline can bid. Steps set by the
-        platform are locked.
+        Only participants who finish every required step by its deadline can place {nouns}. Steps
+        set by the platform are locked.
       </MutedNote>
     </div>
   );

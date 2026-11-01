@@ -234,7 +234,7 @@ export function Step5Award({
                 {
                   value: '2',
                   title: `The 2nd-${bestWord} ${bidWord}`,
-                  description: 'Rare. Used in some sealed-bid formats.',
+                  description: `Rare. Used in some sealed-${bidWord} formats.`,
                   disabled: clock,
                   badge: clock ? notForClock : undefined,
                 },

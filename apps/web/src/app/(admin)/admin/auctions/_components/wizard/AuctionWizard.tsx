@@ -120,6 +120,7 @@ function InviteStep() {
         readyToPublish: wizard.progress.ready,
         startTime: wizard.startTime,
         participation: wizard.state.participation,
+        direction: wizard.state.basics.direction,
       }}
     >
       <Step7Invite

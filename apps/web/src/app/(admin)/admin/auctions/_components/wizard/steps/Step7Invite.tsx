@@ -62,8 +62,15 @@ export function Step7Invite({
   onFinish: () => void;
   onStatsChange?: (stats: { invited: number; ready: number; review: number }) => void;
 }) {
-  const { auctionId, isPublic, published, readyToPublish, startTime, participation } =
-    useInviteAuction();
+  const {
+    auctionId,
+    isPublic,
+    published,
+    readyToPublish,
+    startTime,
+    participation,
+    direction = 'FORWARD',
+  } = useInviteAuction();
   const [workflow, setWorkflow] = useState<AuctionWorkflowStep[]>([]);
   const [workflowError, setWorkflowError] = useState<string | null>(null);
   const [decisions, setDecisions] = useState<Record<string, InviteDecision>>({});
@@ -92,11 +99,16 @@ export function Step7Invite({
     [workflow],
   );
 
-  const { views: baseViews, loading, error, refresh } = useParticipants(auctionId, preSteps);
+  const {
+    views: baseViews,
+    loading,
+    error,
+    refresh,
+  } = useParticipants(auctionId, preSteps, direction);
 
   const views = useMemo(
-    () => baseViews.map((view) => applyDecision(view, decisions[view.participant.id])),
-    [baseViews, decisions],
+    () => baseViews.map((view) => applyDecision(view, decisions[view.participant.id], direction)),
+    [baseViews, decisions, direction],
   );
 
   const counts = useMemo(() => inviteCounts(views), [views]);

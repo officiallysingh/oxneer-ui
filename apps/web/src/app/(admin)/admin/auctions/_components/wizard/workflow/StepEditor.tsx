@@ -170,6 +170,8 @@ export function StepEditor({
   const kind = WORKFLOW_TYPE_LABEL[draft.type] ?? 'Step';
   const who = pre ? 'participants' : 'the winner';
   const openWord = forward ? 'opening' : 'starting';
+  // Forward auctions take bids; reverse auctions take asks.
+  const nouns = forward ? 'bids' : 'asks';
 
   useEffect(() => {
     if (draft.type !== 'PAYMENT_STEP') return;
@@ -331,7 +333,7 @@ export function StepEditor({
                   onCheckedChange={(mandatory) => patch({ mandatory })}
                 />
                 {draft.mandatory
-                  ? `Required: ${who} must finish it${pre ? ' before they can bid' : ''}`
+                  ? `Required: ${who} must finish it${pre ? ` before they can place ${nouns}` : ''}`
                   : 'Optional'}
               </label>
             </div>
@@ -436,7 +438,7 @@ export function StepEditor({
                 label="Form"
                 description={
                   draft.type === 'PARTICIPATION_FORM_STEP'
-                    ? 'What participants tell you before they can bid.'
+                    ? `What participants tell you before they can place ${nouns}.`
                     : `Extra details ${who} fill in.`
                 }
               >
@@ -459,7 +461,10 @@ export function StepEditor({
 
           {!implicit && draft.type === 'PARTICIPATION_FORM_STEP' && (
             <>
-              <WizardRow label="Approval" description="Who decides whether a participant may bid.">
+              <WizardRow
+                label="Approval"
+                description={`Who decides whether a participant may place ${nouns}.`}
+              >
                 <div className="space-y-2">
                   <ChoiceCardGroup
                     label="Approval"
@@ -475,7 +480,7 @@ export function StepEditor({
                       {
                         value: 'AUTOMATIC',
                         title: 'Automatic',
-                        description: 'Anyone who submits can bid.',
+                        description: `Anyone who submits can place ${nouns}.`,
                       },
                     ]}
                   />

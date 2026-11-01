@@ -3,11 +3,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { participantsApi, type AuctionWorkflowStep, type ParticipantVM } from '@repo/api';
 import { parseApiError } from '@/lib/api-errors';
-import { buildParticipantViews, inviteCounts } from './invite';
+import { buildParticipantViews, inviteCounts, type AuctionDirection } from './invite';
 
 /** Loads everyone invited to the auction and derives the review-friendly view
  *  models used by the Step 7 invitation screen. */
-export function useParticipants(auctionId: string, preSteps: AuctionWorkflowStep[]) {
+export function useParticipants(
+  auctionId: string,
+  preSteps: AuctionWorkflowStep[],
+  direction: AuctionDirection = 'FORWARD',
+) {
   const [participants, setParticipants] = useState<ParticipantVM[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,8 +38,8 @@ export function useParticipants(auctionId: string, preSteps: AuctionWorkflowStep
   }, [refresh]);
 
   const views = useMemo(
-    () => buildParticipantViews(participants, preSteps),
-    [participants, preSteps],
+    () => buildParticipantViews(participants, preSteps, direction),
+    [participants, preSteps, direction],
   );
 
   const counts = useMemo(() => inviteCounts(views), [views]);

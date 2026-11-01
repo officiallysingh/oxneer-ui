@@ -21,6 +21,8 @@ export interface InviteAuctionContextValue {
   readyToPublish?: boolean;
   startTime: string;
   participation: InviteParticipation;
+  /** Forward auctions take bids; reverse auctions take asks. */
+  direction?: 'FORWARD' | 'REVERSE';
 }
 
 const InviteAuctionContext = createContext<InviteAuctionContextValue | null>(null);

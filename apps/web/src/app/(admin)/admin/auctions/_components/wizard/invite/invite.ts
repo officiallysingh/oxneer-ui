@@ -193,9 +193,16 @@ function invitationLine(participant: ParticipantVM): string {
 
 // ── View builder ─────────────────────────────────────────────────────────────
 
+export type AuctionDirection = 'FORWARD' | 'REVERSE';
+
+/** Forward auctions take bids; reverse auctions take asks. */
+export const readyText = (direction: AuctionDirection) =>
+  direction === 'REVERSE' ? 'Ready to place asks' : 'Ready to place bids';
+
 export function buildParticipantView(
   participant: ParticipantVM,
   preSteps: AuctionWorkflowStep[],
+  direction: AuctionDirection = 'FORWARD',
 ): ParticipantView {
   const steps = preSteps.map((step) => {
     const status = participant.workflowStatus?.[step.id];
@@ -243,7 +250,7 @@ export function buildParticipantView(
   } else if (allDone && !anyReview) {
     bucket = 'approved';
     label = 'Approved';
-    note = 'Ready to bid';
+    note = readyText(direction);
   } else if (anyReview) {
     const reviewStep = steps.find((step) => step.state === 'review');
     const when = reviewStep?.updatedAt ? ` ${timeAgo(reviewStep.updatedAt)}` : '';
@@ -253,7 +260,7 @@ export function buildParticipantView(
   } else if (accepted && total === 0) {
     bucket = 'approved';
     label = 'Approved';
-    note = 'Ready to bid';
+    note = readyText(direction);
   } else if (anyDone) {
     bucket = 'waiting';
     label = 'In progress';
@@ -295,8 +302,9 @@ export function buildParticipantView(
 export function buildParticipantViews(
   participants: ParticipantVM[],
   preSteps: AuctionWorkflowStep[],
+  direction: AuctionDirection = 'FORWARD',
 ): ParticipantView[] {
-  return participants.map((participant) => buildParticipantView(participant, preSteps));
+  return participants.map((participant) => buildParticipantView(participant, preSteps, direction));
 }
 
 export function inviteCounts(views: ParticipantView[]): InviteCounts {
@@ -318,6 +326,7 @@ export function inviteCounts(views: ParticipantView[]): InviteCounts {
 export function applyDecision(
   view: ParticipantView,
   decision: InviteDecision | undefined,
+  direction: AuctionDirection = 'FORWARD',
 ): ParticipantView {
   if (!decision) return view;
   const approved = decision.decision === 'APPROVED';
@@ -325,7 +334,9 @@ export function applyDecision(
     ...view,
     bucket: approved ? 'approved' : 'rejected',
     label: approved ? 'Approved' : 'Rejected',
-    note: approved ? 'Ready to bid' : `Rejected ${decision.at ? timeAgo(decision.at) : 'just now'}`,
+    note: approved
+      ? readyText(direction)
+      : `Rejected ${decision.at ? timeAgo(decision.at) : 'just now'}`,
     ready: approved,
     decision,
   };

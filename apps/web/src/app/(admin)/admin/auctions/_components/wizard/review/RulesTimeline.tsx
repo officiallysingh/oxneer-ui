@@ -300,7 +300,7 @@ function PhaseBlock({ phase, track }: { phase: TimelinePhase; track: ReactNode }
       <div className="mb-4 flex flex-wrap items-center gap-x-3.5 gap-y-2.5">
         <span
           className={cn(
-            'flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-card/85',
+            'flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-card/85',
             style.icon,
           )}
         >
@@ -352,10 +352,10 @@ function PhaseBlock({ phase, track }: { phase: TimelinePhase; track: ReactNode }
                     )}
                     <span
                       className={cn(
-                        'absolute left-1/2 top-6 z-[1] -ml-[18px] flex h-9 w-9 items-center justify-center border-2',
+                        'absolute left-1/2 top-6 z-[1] -ml-[18px] flex h-9 w-9 items-center justify-center rounded-full border-2',
                         item.policy
-                          ? 'rounded-md border-policy-border bg-policy text-primary'
-                          : 'rounded-full border-foreground bg-card text-foreground',
+                          ? 'border-policy-border bg-policy text-primary'
+                          : 'border-foreground bg-card text-foreground',
                       )}
                     >
                       <Icon className="h-4 w-4" />

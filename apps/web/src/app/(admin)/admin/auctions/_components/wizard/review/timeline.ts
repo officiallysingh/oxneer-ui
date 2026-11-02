@@ -377,20 +377,26 @@ export function buildTimeline(
         ? `The last ${one} left in wins.`
         : `${winnerRank(state)} wins${reserve > 0 ? ', if it meets the reserve.' : '.'}`,
     },
-    {
-      key: 'ties',
-      policy: true,
-      icon: 'policy',
-      timeMain: 'At close',
-      timeSub: 'right after Who wins',
-      moment: 'close',
-      name: 'Ties',
-      tag: 'Policy',
-      desc:
-        award.ties === 'RANDOM'
-          ? `If the winning ${nouns} tie, one is picked at random.`
-          : `If the winning ${nouns} tie, the earliest ${noun} wins.`,
-    },
+    ...(sealed
+      ? [
+          {
+            key: 'ties',
+            policy: true,
+            icon: 'policy',
+            timeMain: 'At close',
+            timeSub: 'right after Who wins',
+            moment: 'close',
+            name: 'Ties',
+            tag: 'Policy',
+            desc:
+              award.ties === 'RANDOM'
+                ? `If the winning ${nouns} tie, one is picked at random.`
+                : award.ties === 'REBID'
+                  ? `If the winning ${nouns} tie, the tied participants compete in another round.`
+                  : `If the winning ${nouns} tie, the earliest ${noun} wins.`,
+          } satisfies TimelineItem,
+        ]
+      : []),
     {
       key: 'winning-price',
       policy: true,

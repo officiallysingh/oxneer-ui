@@ -1,15 +1,7 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
-import {
-  AlertTriangle,
-  ChevronDown,
-  ChevronUp,
-  Lock,
-  Pencil,
-  Trash2,
-  type LucideIcon,
-} from 'lucide-react';
+import { useState } from 'react';
+import { AlertTriangle, Lock, Pencil, Plus, Trash2, type LucideIcon } from 'lucide-react';
 import { Button, cn } from '@repo/ui';
 import type { AuctionWorkflowStep, WorkflowStepPhase, WorkflowStepType } from '@repo/api';
 import ConfirmDialog from '@/components/common/admin/ConfirmDialog';
@@ -37,7 +29,6 @@ import {
 } from '../../../_lib/wizard/workflow';
 import { StepEditor } from './StepEditor';
 import { STEP_ICON } from './stepIcons';
-import { selectClass } from '../ui/wizard-ui';
 
 function stepSummary(step: AuctionWorkflowStep, currencyUnit: string): string[] {
   const type = resolveStr(step.type);
@@ -60,15 +51,98 @@ function stepSummary(step: AuctionWorkflowStep, currencyUnit: string): string[] 
   return [fields.length ? `${fields.length} fields` : 'Custom form'];
 }
 
-interface AddOption {
+/** A fixed place in the workflow for one step type. Steps always run in slot
+ *  order, so there is nothing to reorder. */
+interface Slot {
   type: WorkflowStepType;
-  label: string;
-  allowed: boolean;
+  /** Several steps of this type are allowed. */
+  multi: boolean;
+  empty: string;
+  text: string;
+  /** The slot is recommended for this auction, so its empty state warns. */
+  warn?: boolean;
+  add: string;
+  more?: string;
+}
+
+function slotsFor(pre: boolean, forward: boolean): Slot[] {
+  if (pre) {
+    return [
+      {
+        type: 'TNC_FORM_STEP',
+        multi: false,
+        empty: 'No terms and conditions',
+        text: 'Participants tick to accept your terms before anything else.',
+        add: 'Add terms',
+      },
+      {
+        type: 'PARTICIPATION_FORM_STEP',
+        multi: false,
+        empty: 'No participation form',
+        text: 'Ask who is taking part, and approve each one if you want to.',
+        add: 'Add participation form',
+      },
+      {
+        type: 'FORM_STEP',
+        multi: true,
+        empty: 'No custom forms',
+        text: 'Collect extra details participants fill in.',
+        add: 'Add custom form',
+        more: 'Add another custom form',
+      },
+      {
+        type: 'BANK_DETAIL_FORM_STEP',
+        multi: false,
+        empty: 'No bank details',
+        text: 'Where refundable deposits are returned.',
+        add: 'Add bank details',
+      },
+      {
+        type: 'PAYMENT_STEP',
+        multi: true,
+        empty: 'No payments',
+        text: 'Collect a deposit or fee before the auction.',
+        add: 'Add payment',
+        more: 'Add another payment',
+      },
+    ];
+  }
+  return [
+    {
+      type: 'BANK_DETAIL_FORM_STEP',
+      multi: false,
+      empty: 'No bank details',
+      text: forward
+        ? 'Where payouts to the winner are sent.'
+        : 'The platform pays the winning supplier, so they need to give bank details.',
+      warn: !forward,
+      add: 'Add bank details',
+    },
+    {
+      type: 'PAYMENT_STEP',
+      multi: true,
+      empty: 'No payments',
+      text: forward
+        ? 'No step collects the winning amount yet.'
+        : 'Collect a fee from the winning supplier.',
+      warn: forward,
+      add: 'Add payment',
+      more: 'Add another payment',
+    },
+    {
+      type: 'FORM_STEP',
+      multi: true,
+      empty: 'No custom forms',
+      text: 'Collect extra details the winner fills in.',
+      add: 'Add custom form',
+      more: 'Add another custom form',
+    },
+  ];
 }
 
 /** One phase of the workflow ("Before the auction" or "After the auction"):
- *  each step as a summary row that opens into its editor in place, and a select
- *  to add another step. */
+ *  a fixed slot per step type, in the order the steps run. Empty slots offer
+ *  an Add button; saved steps are summary rows that open into their editor. */
 export function StepList({
   phase,
   workflow,
@@ -81,7 +155,6 @@ export function StepList({
   currencyUnit,
   openingPrice,
   forward,
-  hints,
 }: {
   phase: WorkflowStepPhase;
   workflow: WorkflowController;
@@ -94,55 +167,50 @@ export function StepList({
   currencyUnit: string;
   openingPrice: string;
   forward: boolean;
-  /** Suggestions above the list; `add` opens a new step of that type. */
-  hints?: (add: (type: WorkflowStepType) => void) => ReactNode;
 }) {
   const pre = phase === 'PRE_AUCTION';
   const steps = pre ? workflow.pre : workflow.post;
   const [openId, setOpenId] = useState<string | null>(null);
   const [draft, setDraft] = useState<StepDraft | null>(null);
   const [deleting, setDeleting] = useState<AuctionWorkflowStep | null>(null);
+  const [arranging, setArranging] = useState(false);
   const deadlines = effectiveDeadlines(workflow.pre);
 
-  const insertionOrder = pre ? workflow.pre.length + 1 : workflow.steps.length + 1;
+  const slots = slotsFor(pre, forward);
+  const typeOf = (step: AuctionWorkflowStep) => resolveStr(step.type) as WorkflowStepType;
+  const rank = (type: WorkflowStepType) => {
+    const index = slots.findIndex((slot) => slot.type === type);
+    return index === -1 ? slots.length : index;
+  };
+  // Steps in slot order; types without a slot trail at the end.
+  const ordered = slots
+    .flatMap((slot) => steps.filter((step) => typeOf(step) === slot.type))
+    .concat(steps.filter((step) => rank(typeOf(step)) === slots.length));
+  const outOfOrder = ordered.some((step, index) => step.id !== steps[index]?.id);
+
+  /** Where a new step of `type` is saved: after every step in its own and earlier slots. */
+  const insertionOrder = (type: WorkflowStepType) => {
+    const next = steps.findIndex((step) => rank(typeOf(step)) > rank(type));
+    return (pre ? 0 : workflow.pre.length) + (next === -1 ? steps.length : next) + 1;
+  };
   const has = (type: string, list = workflow.steps) =>
     list.some((step) => resolveStr(step.type) === type);
-  const allowed = allowedStepTypesAt(
-    workflow.steps,
-    insertionOrder,
-    has('TNC_FORM_STEP'),
-    has('BANK_DETAIL_FORM_STEP', workflow.pre),
-    has('PARTICIPATION_FORM_STEP'),
-  );
-  const options: AddOption[] = pre
-    ? [
-        { type: 'FORM_STEP', label: 'Custom form', allowed: allowed.formPreAuction },
-        { type: 'PAYMENT_STEP', label: 'Payment', allowed: allowed.prePayment },
-        {
-          type: 'PARTICIPATION_FORM_STEP',
-          label: 'Participation form (one per auction)',
-          allowed: allowed.participationForm,
-        },
-        {
-          type: 'BANK_DETAIL_FORM_STEP',
-          label: 'Bank details (one per phase)',
-          allowed: allowed.bank,
-        },
-        {
-          type: 'TNC_FORM_STEP',
-          label: 'Terms and conditions (one per auction)',
-          allowed: allowed.tnc,
-        },
-      ]
-    : [
-        { type: 'PAYMENT_STEP', label: 'Payment', allowed: allowed.postPayment },
-        { type: 'FORM_STEP', label: 'Custom form', allowed: allowed.formPostAuction },
-        {
-          type: 'BANK_DETAIL_FORM_STEP',
-          label: 'Bank details (one per phase)',
-          allowed: !has('BANK_DETAIL_FORM_STEP', workflow.post),
-        },
-      ];
+  const canAdd = (type: WorkflowStepType) => {
+    const allowed = allowedStepTypesAt(
+      workflow.steps,
+      insertionOrder(type),
+      has('TNC_FORM_STEP'),
+      has('BANK_DETAIL_FORM_STEP', steps),
+      has('PARTICIPATION_FORM_STEP'),
+    );
+    if (type === 'TNC_FORM_STEP') return allowed.tnc;
+    if (type === 'PARTICIPATION_FORM_STEP') return allowed.participationForm;
+    if (type === 'BANK_DETAIL_FORM_STEP') {
+      return pre ? allowed.bank : !has('BANK_DETAIL_FORM_STEP', steps);
+    }
+    if (type === 'PAYMENT_STEP') return pre ? allowed.prePayment : allowed.postPayment;
+    return pre ? allowed.formPreAuction : allowed.formPostAuction;
+  };
 
   const [fixingBank, setFixingBank] = useState(false);
   const unbanked = pre ? paymentsMissingBank(workflow.steps) : [];
@@ -151,8 +219,183 @@ export function StepList({
   // One new step at a time, so an unsaved one is never silently replaced.
   const startNew = (type: WorkflowStepType) => {
     if (draft) return;
+    setOpenId(null);
     setDraft(emptyDraft(type, phase));
   };
+
+  const putInOrder = async () => {
+    setArranging(true);
+    try {
+      await workflow.arrange(
+        !pre,
+        ordered.map((step) => step.id),
+      );
+    } finally {
+      setArranging(false);
+    }
+  };
+
+  const addBank = async () => {
+    setFixingBank(true);
+    try {
+      await workflow.addBankBefore(insertionOrder('BANK_DETAIL_FORM_STEP'));
+    } catch (err) {
+      workflow.setError(parseApiError(err).summary);
+    } finally {
+      setFixingBank(false);
+    }
+  };
+
+  const renderStep = (step: AuctionWorkflowStep) => {
+    const type = typeOf(step);
+    const StepIcon = STEP_ICON[type] ?? Pencil;
+    const n = ordered.findIndex((item) => item.id === step.id) + 1;
+    const order = workflow.steps.findIndex((item) => item.id === step.id) + 1;
+    if (openId === step.id) {
+      return (
+        <StepEditor
+          key={step.id}
+          initial={draftFromStep(step)}
+          step={step}
+          n={n}
+          context={{ workflow: workflow.steps, order, step }}
+          start={start}
+          closing={closing}
+          currencyUnit={currencyUnit}
+          openingPrice={openingPrice}
+          forward={forward}
+          onSave={async (next) => {
+            await workflow.update(step, next);
+            setOpenId(null);
+          }}
+          onAddBankFirst={
+            pre
+              ? async (next) => {
+                  // Bank details goes in its own slot, ahead of every payment.
+                  const fresh = await workflow.addBankBefore(
+                    insertionOrder('BANK_DETAIL_FORM_STEP'),
+                  );
+                  await workflow.update(fresh.find((s) => s.id === step.id) ?? step, next);
+                  setOpenId(null);
+                }
+              : undefined
+          }
+          onCancel={() => setOpenId(null)}
+        />
+      );
+    }
+    const index = workflow.pre.findIndex((item) => item.id === step.id);
+    const due = pre ? preStepDue(step, deadlines[index]!, start) : postStepDue(step, closing);
+    const name = stepTitle(step);
+    return (
+      <div
+        key={step.id}
+        className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-border bg-background px-3 py-2.5 sm:flex-nowrap"
+      >
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foreground text-[11px] font-bold text-background">
+          {n}
+        </span>
+        <StepIcon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+        <button
+          type="button"
+          aria-expanded={false}
+          onClick={() => setOpenId(step.id)}
+          className="min-w-0 flex-1 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <span className="flex flex-wrap items-center gap-1.5">
+            <span className="text-sm font-semibold text-foreground">{name}</span>
+            <span className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted-foreground">
+              {WORKFLOW_TYPE_LABEL[type] ?? fmtLabel(type)}
+            </span>
+            {step.mandatory === false && (
+              <span className="rounded-full border border-input px-2 py-0.5 text-[10px] text-muted-foreground">
+                Optional
+              </span>
+            )}
+            {step.implicit && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-dashed border-muted-foreground px-2 py-0.5 text-[10px] text-muted-foreground">
+                <Lock className="h-2.5 w-2.5" aria-hidden />
+                Set by the platform
+              </span>
+            )}
+          </span>
+          <span className="mt-0.5 flex flex-wrap gap-x-2 text-[11px] text-muted-foreground">
+            {stepSummary(step, currencyUnit).map((text, i) => (
+              <span
+                key={`${text}-${i}`}
+                className={cn(i > 0 && 'before:mr-2 before:content-["·"]')}
+              >
+                {text}
+              </span>
+            ))}
+          </span>
+        </button>
+        <span className="order-last flex w-full flex-col rounded-md bg-muted/50 px-2.5 py-1 text-[11px] sm:order-none sm:w-auto sm:shrink-0 sm:text-right">
+          <b className="font-semibold tabular-nums text-foreground">{due.main}</b>
+          <span className="text-muted-foreground">{due.sub}</span>
+        </span>
+        <span className="flex shrink-0 items-center gap-0.5">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            aria-label={`Edit ${name}`}
+            onClick={() => setOpenId(step.id)}
+          >
+            <Pencil className="h-3.5 w-3.5" aria-hidden />
+          </Button>
+          {!step.implicit && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
+              aria-label={`Delete ${name}`}
+              onClick={() => setDeleting(step)}
+            >
+              <Trash2 className="h-3.5 w-3.5" aria-hidden />
+            </Button>
+          )}
+        </span>
+      </div>
+    );
+  };
+
+  const renderDraft = (type: WorkflowStepType) => {
+    if (draft?.type !== type) return null;
+    const order = insertionOrder(type);
+    return (
+      <StepEditor
+        key={`new-${type}`}
+        initial={draft}
+        n={ordered.filter((step) => rank(typeOf(step)) <= rank(type)).length + 1}
+        context={{ workflow: workflow.steps, order }}
+        start={start}
+        closing={closing}
+        currencyUnit={currencyUnit}
+        openingPrice={openingPrice}
+        forward={forward}
+        onSave={async (next) => {
+          await workflow.add(next, order);
+          setDraft(null);
+        }}
+        onAddBankFirst={
+          pre
+            ? async (next) => {
+                // Bank details' slot comes before this one, so the new step moves down one.
+                await workflow.addBankBefore(insertionOrder('BANK_DETAIL_FORM_STEP'));
+                await workflow.add(next, order + 1);
+                setDraft(null);
+              }
+            : undefined
+        }
+        onCancel={() => setDraft(null)}
+      />
+    );
+  };
+
+  const unslotted = ordered.filter((step) => rank(typeOf(step)) === slots.length);
 
   return (
     <section
@@ -177,18 +420,37 @@ export function StepList({
       </header>
 
       <div className="space-y-2 p-3">
-        {hints?.(startNew)}
+        {!workflow.loading && outOfOrder && (
+          <div
+            role="alert"
+            className="flex flex-wrap items-center gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-[11px] leading-snug text-foreground"
+          >
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-warning" aria-hidden />
+            <span className="min-w-0 flex-1">
+              These steps were saved in a different order from the one shown here.
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={arranging}
+              className="h-7 text-[11px]"
+              onClick={() => void putInOrder()}
+            >
+              Put in order
+            </Button>
+          </div>
+        )}
 
-        {pre && !workflow.loading && unbanked.length > 0 && (
+        {pre && !workflow.loading && !outOfOrder && unbanked.length > 0 && (
           <div
             role="alert"
             className="flex flex-wrap items-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-[11px] leading-snug text-foreground"
           >
             <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-destructive" aria-hidden />
             <span className="min-w-0 flex-1">
-              {hasPreBank
-                ? `“${stepTitle(unbanked[0]!)}” comes before Bank details. Move Bank details above it so deposits can be refunded.`
-                : `“${stepTitle(unbanked[0]!)}” needs a Bank details step before it so deposits can be refunded.`}
+              “{stepTitle(unbanked[0]!)}” needs a Bank details step before it so deposits can be
+              refunded.
             </span>
             {!hasPreBank && (
               <Button
@@ -196,21 +458,10 @@ export function StepList({
                 variant="outline"
                 size="sm"
                 disabled={fixingBank}
-                className="h-7 gap-1.5 text-[11px]"
-                onClick={async () => {
-                  setFixingBank(true);
-                  try {
-                    const position =
-                      workflow.steps.findIndex((step) => step.id === unbanked[0]!.id) + 1;
-                    await workflow.addBankBefore(position);
-                  } catch (err) {
-                    workflow.setError(parseApiError(err).summary);
-                  } finally {
-                    setFixingBank(false);
-                  }
-                }}
+                className="h-7 text-[11px]"
+                onClick={() => void addBank()}
               >
-                Add Bank details before it
+                Add bank details
               </Button>
             )}
           </div>
@@ -218,214 +469,77 @@ export function StepList({
 
         {workflow.loading ? (
           <div className="space-y-2" aria-busy="true" aria-label="Loading steps">
-            {[0, 1].map((key) => (
-              <div key={key} className="h-[60px] animate-pulse rounded-md bg-muted/50" />
+            {slots.map((slot) => (
+              <div key={slot.type} className="h-[60px] animate-pulse rounded-md bg-muted/50" />
             ))}
           </div>
         ) : (
-          steps.map((step, index) => {
-            const type = resolveStr(step.type) as WorkflowStepType;
-            const StepIcon = STEP_ICON[type] ?? Pencil;
-            const order = workflow.steps.findIndex((item) => item.id === step.id) + 1;
-            if (openId === step.id) {
+          <>
+            {slots.map((slot) => {
+              const filled = steps.filter((step) => typeOf(step) === slot.type);
+              const allowed = canAdd(slot.type);
+              const SlotIcon = STEP_ICON[slot.type] ?? Pencil;
+              const drafting = draft?.type === slot.type;
               return (
-                <StepEditor
-                  key={step.id}
-                  initial={draftFromStep(step)}
-                  step={step}
-                  n={index + 1}
-                  context={{ workflow: workflow.steps, order, step }}
-                  start={start}
-                  closing={closing}
-                  currencyUnit={currencyUnit}
-                  openingPrice={openingPrice}
-                  forward={forward}
-                  onSave={async (next) => {
-                    await workflow.update(step, next);
-                    setOpenId(null);
-                  }}
-                  onAddBankFirst={
-                    pre
-                      ? async (next) => {
-                          // Bank details takes this step's place; the payment moves down one.
-                          const fresh = await workflow.addBankBefore(order);
-                          await workflow.update(fresh.find((s) => s.id === step.id) ?? step, next);
-                          setOpenId(null);
-                        }
-                      : undefined
-                  }
-                  onCancel={() => setOpenId(null)}
-                />
-              );
-            }
-            const due = pre
-              ? preStepDue(step, deadlines[index]!, start)
-              : postStepDue(step, closing);
-            const name = stepTitle(step);
-            return (
-              <div
-                key={step.id}
-                className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-border bg-background px-3 py-2.5 sm:flex-nowrap"
-              >
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foreground text-[11px] font-bold text-background">
-                  {index + 1}
-                </span>
-                <StepIcon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-                <button
-                  type="button"
-                  aria-expanded={false}
-                  onClick={() => setOpenId(step.id)}
-                  className="min-w-0 flex-1 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <span className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-sm font-semibold text-foreground">{name}</span>
-                    <span className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted-foreground">
-                      {WORKFLOW_TYPE_LABEL[type] ?? fmtLabel(type)}
-                    </span>
-                    {step.mandatory === false && (
-                      <span className="rounded-full border border-input px-2 py-0.5 text-[10px] text-muted-foreground">
-                        Optional
-                      </span>
-                    )}
-                    {step.implicit && (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-dashed border-muted-foreground px-2 py-0.5 text-[10px] text-muted-foreground">
-                        <Lock className="h-2.5 w-2.5" aria-hidden />
-                        Set by the platform
-                      </span>
-                    )}
-                  </span>
-                  <span className="mt-0.5 flex flex-wrap gap-x-2 text-[11px] text-muted-foreground">
-                    {stepSummary(step, currencyUnit).map((text, i) => (
-                      <span
-                        key={`${text}-${i}`}
-                        className={cn(i > 0 && 'before:mr-2 before:content-["·"]')}
+                <div key={slot.type} className="space-y-2">
+                  {filled.map(renderStep)}
+                  {renderDraft(slot.type)}
+                  {!filled.length && !drafting && (
+                    <div
+                      className={cn(
+                        'flex flex-wrap items-center gap-3 rounded-md border border-dashed px-3 py-2.5',
+                        slot.warn ? 'border-warning/50 bg-warning/5' : 'border-border',
+                      )}
+                    >
+                      <SlotIcon
+                        className={cn(
+                          'h-4 w-4 shrink-0',
+                          slot.warn ? 'text-warning' : 'text-muted-foreground',
+                        )}
+                        aria-hidden
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-foreground">{slot.empty}</p>
+                        <p className="text-[11px] text-muted-foreground">{slot.text}</p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={Boolean(draft) || !allowed}
+                        onClick={() => startNew(slot.type)}
+                        className="h-8 gap-1.5 text-xs"
                       >
-                        {text}
-                      </span>
-                    ))}
-                  </span>
-                </button>
-                <span className="order-last flex w-full flex-col rounded-md bg-muted/50 px-2.5 py-1 text-[11px] sm:order-none sm:w-auto sm:shrink-0 sm:text-right">
-                  <b className="font-semibold tabular-nums text-foreground">{due.main}</b>
-                  <span className="text-muted-foreground">{due.sub}</span>
-                </span>
-                <span className="flex shrink-0 items-center gap-0.5">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    aria-label={`Move ${name} earlier`}
-                    disabled={index === 0}
-                    onClick={() => void workflow.move(step, -1)}
-                  >
-                    <ChevronUp className="h-3.5 w-3.5" aria-hidden />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    aria-label={`Move ${name} later`}
-                    disabled={index === steps.length - 1}
-                    onClick={() => void workflow.move(step, 1)}
-                  >
-                    <ChevronDown className="h-3.5 w-3.5" aria-hidden />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    aria-label={`Edit ${name}`}
-                    onClick={() => setOpenId(step.id)}
-                  >
-                    <Pencil className="h-3.5 w-3.5" aria-hidden />
-                  </Button>
-                  {!step.implicit && (
+                        <Plus className="h-3.5 w-3.5" aria-hidden />
+                        {slot.add}
+                      </Button>
+                    </div>
+                  )}
+                  {slot.multi && filled.length > 0 && !drafting && (
                     <Button
                       type="button"
                       variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
-                      aria-label={`Delete ${name}`}
-                      onClick={() => setDeleting(step)}
+                      size="sm"
+                      disabled={Boolean(draft) || !allowed}
+                      onClick={() => startNew(slot.type)}
+                      className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
                     >
-                      <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                      <Plus className="h-3.5 w-3.5" aria-hidden />
+                      {slot.more}
                     </Button>
                   )}
-                </span>
-              </div>
-            );
-          })
-        )}
-
-        {!workflow.loading && steps.length === 0 && !draft && (
-          <p className="rounded-md border border-dashed border-border px-3 py-5 text-center text-xs text-muted-foreground">
-            {pre
-              ? 'No steps before the auction. Add terms, a participation form, bank details or a payment.'
-              : 'No steps after the auction yet. Add a payment step to collect the winning amount.'}
-          </p>
+                </div>
+              );
+            })}
+            {unslotted.map(renderStep)}
+          </>
         )}
 
         {draft && (
-          <StepEditor
-            key={`new-${draft.type}`}
-            initial={draft}
-            n={steps.length + 1}
-            context={{ workflow: workflow.steps, order: insertionOrder }}
-            start={start}
-            closing={closing}
-            currencyUnit={currencyUnit}
-            openingPrice={openingPrice}
-            forward={forward}
-            onSave={async (next) => {
-              await workflow.add(next, insertionOrder);
-              setDraft(null);
-            }}
-            onAddBankFirst={
-              pre
-                ? async (next) => {
-                    await workflow.addBankBefore(insertionOrder);
-                    await workflow.add(next, insertionOrder + 1);
-                    setDraft(null);
-                  }
-                : undefined
-            }
-            onCancel={() => setDraft(null)}
-          />
+          <p className="text-[11px] text-muted-foreground">
+            Save or discard the new step before adding another.
+          </p>
         )}
-
-        <div className="flex flex-wrap items-center gap-2 pt-1">
-          <label
-            htmlFor={`add-${phase}`}
-            className="text-[11px] font-semibold text-muted-foreground"
-          >
-            Add a step {pre ? 'before' : 'after'} the auction
-          </label>
-          <select
-            id={`add-${phase}`}
-            value=""
-            disabled={Boolean(draft)}
-            aria-describedby={draft ? `add-${phase}-busy` : undefined}
-            onChange={(event) => {
-              if (event.target.value) startNew(event.target.value as WorkflowStepType);
-            }}
-            className={cn(selectClass, 'h-9 w-auto min-w-[220px]')}
-          >
-            <option value="">Choose a step…</option>
-            {options.map((option) => (
-              <option key={option.type} value={option.type} disabled={!option.allowed}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          {draft && (
-            <span id={`add-${phase}-busy`} className="text-[11px] text-muted-foreground">
-              Add or discard the new step above first.
-            </span>
-          )}
-        </div>
 
         {workflow.error && (
           <p

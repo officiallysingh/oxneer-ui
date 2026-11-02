@@ -159,8 +159,7 @@ export function winnerLabel(state: WizardState): string {
 export function tiesLabel(state: WizardState): string {
   const forward = state.basics.direction === 'FORWARD';
   if (state.award.ties === 'RANDOM') return 'Picked at random';
-  if (state.award.ties === 'REBID')
-    return forward ? 'Tied bidders bid again' : 'Tied suppliers ask again';
+  if (state.award.ties === 'REBID') return 'Tied participants compete in another round';
   return forward ? 'Earliest bid wins' : 'Earliest ask wins';
 }
 

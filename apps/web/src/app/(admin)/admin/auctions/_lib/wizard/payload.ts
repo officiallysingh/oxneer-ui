@@ -216,8 +216,9 @@ export function buildPolicyPayload(state: WizardState, policyTypeOrder: string[]
     });
   }
 
+  // Only sealed bids can tie: open and clock offers must beat the best price.
   const tieType = TIE_POLICY_TYPE[award.ties];
-  if (tieType) {
+  if (tieType && offer.mechanism === 'SEALED') {
     policies.push({ id: objectId(), type: tieType, ...TIE_POLICY_TEXT[tieType] });
   }
 

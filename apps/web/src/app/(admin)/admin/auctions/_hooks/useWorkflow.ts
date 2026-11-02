@@ -83,19 +83,15 @@ export function useWorkflow(auctionId: string) {
     }
   };
 
-  /** Swaps a step with its neighbour inside its own phase. Pre-auction steps
+  /** Saves one phase's steps in the given order (step ids). Pre-auction steps
    *  always come before post-auction ones. */
-  const move = async (step: AuctionWorkflowStep, dir: -1 | 1) => {
-    const phase = isPostStep(step) ? post : pre;
-    const index = phase.findIndex((item) => item.id === step.id);
-    const target = index + dir;
-    if (index < 0 || target < 0 || target >= phase.length) return;
-    const reordered = [...phase];
-    [reordered[index], reordered[target]] = [reordered[target]!, reordered[index]!];
-    const all = isPostStep(step) ? [...pre, ...reordered] : [...reordered, ...post];
+  const arrange = async (postPhase: boolean, ids: string[]) => {
+    const all = postPhase
+      ? [...pre.map((step) => step.id), ...ids]
+      : [...ids, ...post.map((step) => step.id)];
     const order: Record<string, number> = {};
-    all.forEach((item, i) => {
-      order[item.id] = i + 1;
+    all.forEach((id, i) => {
+      order[id] = i + 1;
     });
     try {
       await auctionsApi.reorderWorkflowSteps(auctionId, order);
@@ -118,7 +114,7 @@ export function useWorkflow(auctionId: string) {
     update,
     addBankBefore,
     remove,
-    move,
+    arrange,
   };
 }
 

@@ -40,7 +40,7 @@ export const WIZARD_STEPS: readonly WizardStepMeta[] = [
     id: 5,
     label: 'Award',
     lead: () =>
-      'Three policies run at the close: who wins, how ties break, and the winning price. Then the winner completes the steps after the auction.',
+      'Policies run at the close: who wins and the winning price, plus how ties break for sealed bids. Then the winner completes the steps after the auction.',
   },
   {
     id: 6,

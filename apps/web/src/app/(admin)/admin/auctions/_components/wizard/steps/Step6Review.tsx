@@ -60,7 +60,11 @@ function checklistRows(state: WizardState, workflowCount: number, postWorkflowCo
     },
     {
       step: 5,
-      summary: `Who wins, Ties and Winning price policies · ${postWorkflowCount} workflow step${
+      summary: `${
+        offer.mechanism === 'SEALED'
+          ? 'Who wins, Ties and Winning price'
+          : 'Who wins and Winning price'
+      } policies · ${postWorkflowCount} workflow step${
         postWorkflowCount === 1 ? '' : 's'
       } after the auction`,
     },

@@ -175,7 +175,7 @@ export function buildRules(
     title: 'Award',
     lines: [
       `Who wins: ${winnerBase(state).toLowerCase()}.`,
-      `Ties: ${tiesLabel(state).toLowerCase()}.`,
+      ...(offer.mechanism === 'SEALED' ? [`Ties: ${tiesLabel(state).toLowerCase()}.`] : []),
       `Winning price: ${winnerLabel(state).split(' · ')[1] ?? 'own price'}.`,
       `If nothing is awarded: ${noSaleLabel(state).toLowerCase()}.`,
       award.confirmation === 'MANUAL'

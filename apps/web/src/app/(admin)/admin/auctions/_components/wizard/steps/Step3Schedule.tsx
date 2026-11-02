@@ -86,7 +86,7 @@ export function Step3Schedule({
   lastWindowLabel?: string;
   errors: Record<string, string>;
 }) {
-  const [softCloseOpen, setSoftCloseOpen] = useState(false);
+  const [softCloseOpen, setSoftCloseOpen] = useState(true);
   const computedEnd = useMemo(() => endTimeFor(form), [form]);
   const clock = mechanism === 'CLOCK';
   const sealed = mechanism === 'SEALED';

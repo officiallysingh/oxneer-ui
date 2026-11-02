@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Banknote, Flag, Info, Scale, Trophy } from 'lucide-react';
+import { Banknote, Flag, Scale, Trophy } from 'lucide-react';
 import { Button } from '@repo/ui';
 import { useWorkflow } from '../../../_hooks/useWorkflow';
 import { paymentStepData, resolveStr } from '../../../_components/PolicyShared';
@@ -59,9 +59,6 @@ export function Step5Award({
   const paymentHeads = useMemo(
     () => (postPayment ? paymentStepData(postPayment).heads : []),
     [postPayment],
-  );
-  const hasPostBank = workflow.post.some(
-    (step) => resolveStr(step.type) === 'BANK_DETAIL_FORM_STEP',
   );
 
   useEffect(() => {
@@ -168,7 +165,7 @@ export function Step5Award({
     form.ties === 'RANDOM'
       ? 'Picked at random'
       : form.ties === 'REBID'
-        ? `Tied ${who} ${bidWord} again`
+        ? 'Tied participants compete in another round'
         : `Earliest ${bidWord} wins`;
 
   const toggle = (key: 'winner' | 'ties' | 'price') =>
@@ -265,75 +262,72 @@ export function Step5Award({
           )}
         </PolicyRow>
 
-        <PolicyRow
-          title="Ties"
-          icon={Scale}
-          phase="Post auction"
-          summary={[{ text: tieSummary }]}
-          due={{ main: 'At close', sub: 'right after Who wins' }}
-          open={expanded === 'ties'}
-          onToggle={() => toggle('ties')}
-        >
-          <div className="grid gap-4 px-4 py-4 md:grid-cols-[168px_minmax(0,1fr)]">
-            <div>
-              <p className="text-xs font-semibold text-foreground">If the winning {bidWord}s tie</p>
-              <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
-                Pick how to break it.
-              </p>
+        {/* Only sealed offers can tie: open and clock offers must beat the best price. */}
+        {mechanism === 'SEALED' && (
+          <PolicyRow
+            title="Ties"
+            icon={Scale}
+            phase="Post auction"
+            summary={[{ text: tieSummary }]}
+            due={{ main: 'At close', sub: 'right after Who wins' }}
+            open={expanded === 'ties'}
+            onToggle={() => toggle('ties')}
+          >
+            <div className="grid gap-4 px-4 py-4 md:grid-cols-[168px_minmax(0,1fr)]">
+              <div>
+                <p className="text-xs font-semibold text-foreground">
+                  If the winning {bidWord}s tie
+                </p>
+                <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+                  Pick how to break it.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <ChoiceCardGroup
+                  label="Tie-break"
+                  value={form.ties}
+                  onChange={(ties) => onChange({ ties })}
+                  options={[
+                    {
+                      value: 'EARLIEST',
+                      title: `The earliest ${bidWord} wins`,
+                      description: 'Rewards whoever committed first. Most common.',
+                    },
+                    {
+                      value: 'RANDOM',
+                      title: 'Pick one at random',
+                      description: `Every tied ${one} has the same chance.`,
+                    },
+                    {
+                      value: 'REBID',
+                      title: 'Tied participants compete in another round',
+                      description: `A short sealed round just for the tied ${who}.`,
+                    },
+                  ]}
+                />
+                <p className="flex items-start gap-2 rounded-md border border-info/30 bg-info/10 px-3 py-2 text-[11px] leading-snug text-foreground">
+                  <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-info" aria-hidden />
+                  Ties are possible here, because sealed {bidWord}s are hidden from each other.
+                </p>
+              </div>
             </div>
-            <div className="space-y-2">
-              <ChoiceCardGroup
-                label="Tie-break"
-                value={form.ties}
-                onChange={(ties) => onChange({ ties })}
-                options={[
-                  {
-                    value: 'EARLIEST',
-                    title: `The earliest ${bidWord} wins`,
-                    description: 'Rewards whoever committed first. Most common.',
-                  },
-                  {
-                    value: 'RANDOM',
-                    title: 'Pick one at random',
-                    description: `Every tied ${one} has the same chance.`,
-                  },
-                  {
-                    value: 'REBID',
-                    title: `Tied ${who} ${bidWord} again`,
-                    description: 'A short extra round just for them.',
-                    disabled: true,
-                    badge: <MutedBadge>Needs MULTI_ROUND</MutedBadge>,
-                  },
-                ]}
-              />
-              <p className="flex items-start gap-2 rounded-md border border-info/30 bg-info/10 px-3 py-2 text-[11px] leading-snug text-foreground">
-                <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-info" aria-hidden />
-                {mechanism === 'CLOCK'
-                  ? `In a clock auction this decides the winner if the last ${who} drop out on the same tick.`
-                  : showTie
-                    ? mechanism === 'SEALED'
-                      ? `Ties are possible here, because sealed ${bidWord}s are hidden from each other.`
-                      : `Ties are possible here, because ${who} can’t see the best price.`
-                    : `Every ${bidWord} must beat the best price on show, so two ${bidWord}s can’t be equal. This rule only matters if you change what ${who} see.`}
-              </p>
-            </div>
-          </div>
-          {showTie && (
             <ExampleTable
               rows={tieExample.rows}
               note={
                 form.ties === 'RANDOM'
                   ? `${One} B or C is picked at random, each with a 50% chance.`
-                  : `${One} B ${forward ? 'bid' : 'asked'} ${formatMoney(
-                      tieExample.rows[1]!.bid,
-                      currencyUnit,
-                    )} at ${tieExample.rows[1]!.placed}, before C, so B wins the tie.`
+                  : form.ties === 'REBID'
+                    ? `${One}s B and C compete in another round. The best ${bidWord} in that round wins.`
+                    : `${One} B ${forward ? 'bid' : 'asked'} ${formatMoney(
+                        tieExample.rows[1]!.bid,
+                        currencyUnit,
+                      )} at ${tieExample.rows[1]!.placed}, before C, so B wins the tie.`
               }
               direction={direction}
               currency={currencyUnit}
             />
-          )}
-        </PolicyRow>
+          </PolicyRow>
+        )}
 
         <PolicyRow
           title="Winning price"
@@ -450,43 +444,6 @@ export function Step5Award({
         currencyUnit={currencyUnit}
         openingPrice={openingPrice}
         forward={forward}
-        hints={(add) => (
-          <>
-            {!forward && !hasPostBank && !workflow.loading && (
-              <div className="flex flex-wrap items-center gap-2 rounded-md border border-info/30 bg-info/10 px-3 py-2 text-[11px] leading-snug text-foreground">
-                <Info className="h-3.5 w-3.5 shrink-0 text-info" aria-hidden />
-                <span className="flex-1">
-                  In a reverse auction the platform pays the winning supplier, so they need to give
-                  bank details.
-                </span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-7 text-[11px]"
-                  onClick={() => add('BANK_DETAIL_FORM_STEP')}
-                >
-                  Add bank details
-                </Button>
-              </div>
-            )}
-            {forward && !postPayment && !workflow.loading && (
-              <div className="flex flex-wrap items-center gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-[11px] leading-snug text-foreground">
-                <Info className="h-3.5 w-3.5 shrink-0 text-warning" aria-hidden />
-                <span className="flex-1">No step collects the winning amount yet.</span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-7 text-[11px]"
-                  onClick={() => add('PAYMENT_STEP')}
-                >
-                  Add a payment step
-                </Button>
-              </div>
-            )}
-          </>
-        )}
       />
     </div>
   );

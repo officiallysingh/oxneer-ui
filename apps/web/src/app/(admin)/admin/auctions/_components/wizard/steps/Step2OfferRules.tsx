@@ -2,7 +2,7 @@
 
 import { useId, useState } from 'react';
 import { AlertTriangle, ChevronDown, ChevronUp, Info, Plus, Trash2 } from 'lucide-react';
-import { Button, ChipCombobox, Combobox, Switch, cn, type ComboboxOption } from '@repo/ui';
+import { Button, Combobox, Switch, cn, type ComboboxOption } from '@repo/ui';
 import { ISSUE_ANCHOR } from '../../../_lib/wizard/validation';
 import type { OfferState, PriceWindow, ScheduleState } from '../../../_lib/wizard/types';
 import {
@@ -26,10 +26,97 @@ import {
   windowSummary,
 } from '../../../_lib/wizard/summary';
 
-const JUMP_SUGGESTIONS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '15', '20'];
+const JUMPS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+const JUMP_PRESETS = [3, 5, 10];
 const SWATCH = ['bg-primary/45', 'bg-primary/70', 'bg-primary'];
 
-const stepsLabel = (value: string) => `${value} ${value === '1' ? 'step' : 'steps'}`;
+/** Toggle chips for the step multiples a bid may jump (×1 to ×10), with
+ *  presets that select a whole 1–n range. Saved values above ×10 stay as
+ *  extra chips so they can still be switched off. */
+function JumpPicker({
+  label,
+  windowLabel,
+  values,
+  hint,
+  stepAmount,
+  currencyUnit,
+  onChange,
+}: {
+  label: string;
+  windowLabel: string;
+  values: number[];
+  hint: string;
+  stepAmount: number;
+  currencyUnit: string;
+  onChange: (values: number[]) => void;
+}) {
+  const labelId = useId();
+  const chips = [...new Set([...JUMPS, ...values])].sort((a, b) => a - b);
+  const toggle = (jump: number) =>
+    onChange(
+      (values.includes(jump) ? values.filter((value) => value !== jump) : [...values, jump]).sort(
+        (a, b) => a - b,
+      ),
+    );
+  const range = (max: number) => JUMPS.filter((jump) => jump <= max);
+  const isRange = (max: number) =>
+    values.length === max && range(max).every((jump) => values.includes(jump));
+
+  return (
+    <div role="group" aria-labelledby={labelId} className="space-y-1.5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span id={labelId} className="text-xs font-medium text-foreground">
+          {label}
+        </span>
+        <div className="flex items-center gap-1" role="group" aria-label={`${windowLabel} presets`}>
+          {JUMP_PRESETS.map((max) => (
+            <button
+              key={max}
+              type="button"
+              aria-pressed={isRange(max)}
+              aria-label={`Allow ×1 to ×${max}`}
+              onClick={() => onChange(range(max))}
+              className={cn(
+                'rounded px-2 py-0.5 text-[11px] font-semibold tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                isRange(max) ? 'bg-primary/15 text-foreground' : 'text-primary hover:bg-primary/10',
+              )}
+            >
+              1–{max}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {chips.map((jump) => {
+          const on = values.includes(jump);
+          return (
+            <button
+              key={jump}
+              type="button"
+              aria-pressed={on}
+              aria-label={`${windowLabel}: ×${jump}, ${formatMoney(jump * stepAmount, currencyUnit)}`}
+              title={formatMoney(jump * stepAmount, currencyUnit)}
+              onClick={() => toggle(jump)}
+              className={cn(
+                'h-9 min-w-[44px] rounded-md border px-2.5 text-xs font-medium tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                on
+                  ? 'border-primary bg-primary/25 text-foreground'
+                  : 'border-input bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground',
+              )}
+            >
+              ×{jump}
+            </button>
+          );
+        })}
+      </div>
+      <p
+        className={cn('text-[11px]', values.length ? 'text-muted-foreground' : 'text-destructive')}
+      >
+        {values.length ? hint : 'Pick at least one.'}
+      </p>
+    </div>
+  );
+}
 
 function windowMinutes(window: PriceWindow): number {
   const { hours, minutes } = parseDuration(window.duration);
@@ -180,12 +267,6 @@ function WindowEditor({
     },
   ];
 
-  const jumpOption = (value: string): ComboboxOption => ({
-    value,
-    label: stepsLabel(value),
-    description: `${formatMoney(Number(value) * stepAmount, currencyUnit)} a ${noun}`,
-  });
-
   return (
     <div className="rounded-md border border-border bg-background">
       <div className="flex flex-wrap items-center gap-2 border-b border-border/60 px-3 py-2">
@@ -261,40 +342,26 @@ function WindowEditor({
         </div>
 
         {window.type === 'STEP' && (
-          <div className="grid gap-3 sm:grid-cols-[150px_minmax(0,1fr)]">
-            <Field label="One step" htmlFor={`${id}-step`}>
-              <MoneyField
-                id={`${id}-step`}
-                value={window.value}
-                currency={symbol}
-                onChange={(value) => onChange({ value })}
-              />
-            </Field>
-            <Field
+          <div className="space-y-3">
+            <div className="max-w-[150px]">
+              <Field label="One step" htmlFor={`${id}-step`}>
+                <MoneyField
+                  id={`${id}-step`}
+                  value={window.value}
+                  currency={symbol}
+                  onChange={(value) => onChange({ value })}
+                />
+              </Field>
+            </div>
+            <JumpPicker
               label={`${forward ? 'Bidders' : 'Suppliers'} may jump`}
-              htmlFor={`${id}-jumps`}
-              hint={`Add each number of steps one ${noun} may move the price, one at a time: pick from the list, or type a number and press Enter. A${forward ? '' : 'n'} ${noun} of 3 steps moves the price by ${formatMoney(3 * stepAmount, currencyUnit)}.`}
-            >
-              <ChipCombobox
-                id={`${id}-jumps`}
-                aria-label={`Window ${n} jumps`}
-                values={window.steps.map(String)}
-                options={JUMP_SUGGESTIONS.map(jumpOption)}
-                chipLabel={stepsLabel}
-                placeholder="Pick or type a number"
-                create={(query) => {
-                  if (!/^\d+$/.test(query) || !(Number(query) > 0)) return null;
-                  const value = String(Number(query));
-                  return { ...jumpOption(value), label: `Add “${stepsLabel(value)}”` };
-                }}
-                emptyText={(query) =>
-                  query
-                    ? 'Type one number at a time, like 4.'
-                    : 'Every suggestion is already added.'
-                }
-                onChange={(values) => onChange({ steps: values.map(Number).sort((a, b) => a - b) })}
-              />
-            </Field>
+              windowLabel={`Window ${n}`}
+              values={window.steps}
+              hint={`Pick every number of steps one ${noun} may move the price. A${forward ? '' : 'n'} ${noun} of ×3 moves it by ${formatMoney(3 * stepAmount, currencyUnit)}.`}
+              stepAmount={stepAmount}
+              currencyUnit={currencyUnit}
+              onChange={(steps) => onChange({ steps })}
+            />
           </div>
         )}
 

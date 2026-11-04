@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { auctionsApi, type PolicyItemRQ } from '@repo/api';
 import { toast } from '@repo/ui';
@@ -59,6 +59,30 @@ export interface WizardProgress {
 
 const ALL_STEPS = new Set([1, 2, 3, 4, 5, 6, 7]);
 
+/** The API writes a setup step makes, keyed by what each one sends. */
+type WriteKind = 'basics' | 'policies' | 'schedule';
+
+const ALL_WRITES: WriteKind[] = ['basics', 'policies', 'schedule'];
+
+const WRITE_INPUT: Record<WriteKind, (state: WizardState) => string> = {
+  // Basics also carries the offer's visibility settings.
+  basics: (state) => JSON.stringify([state.basics, state.offer]),
+  // Policies are built from every section.
+  policies: (state) => JSON.stringify(state),
+  schedule: (state) => JSON.stringify(schedulePayload(state)),
+};
+
+const STEP_WRITES: Record<number, WriteKind[]> = {
+  1: ['basics'],
+  2: ['basics', 'policies'],
+  3: ['schedule'],
+  4: ['policies'],
+  5: ['policies'],
+};
+
+const snapshotWrites = (state: WizardState, kinds: WriteKind[]) =>
+  Object.fromEntries(kinds.map((kind) => [kind, WRITE_INPUT[kind](state)]));
+
 export function useAuctionWizardController(config: AuctionWizardConfig) {
   const router = useRouter();
   const { mode } = config;
@@ -89,6 +113,22 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
     unit: config.unit,
     onCreated: setAuctionId,
   });
+
+  // What each write last sent, so Next can skip the save when nothing changed
+  // (e.g. the admin went back a step just to look). An existing auction starts
+  // out matching what was loaded.
+  const savedWrites = useRef<Partial<Record<WriteKind, string>>>(
+    mode === 'edit' ? snapshotWrites(config.initialState, ALL_WRITES) : {},
+  );
+  const recordSaved = (saved: WizardState, kinds: WriteKind[]) => {
+    Object.assign(savedWrites.current, snapshotWrites(saved, kinds));
+  };
+  const pendingWrites = (target: number) =>
+    (STEP_WRITES[target] ?? []).filter(
+      (kind) =>
+        !(kind === 'schedule' && !schedulePayload(state)) &&
+        savedWrites.current[kind] !== WRITE_INPUT[kind](state),
+    );
 
   // Problems in the saved workflow steps (e.g. a payment with no Bank details
   // before it). Loaded here on every step change so the rail is always right,
@@ -217,15 +257,20 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
       return;
     }
 
+    const writes = pendingWrites(step);
+    if (!writes.length) {
+      // Already saved as it is: move on without another round trip.
+      markReviewed(step);
+      goToStep(next);
+      return;
+    }
+
     setBusy('step');
     try {
-      if (step === 1) await persistence.persistBasics(state);
-      if (step === 2) {
-        await persistence.persistBasics(state);
-        await persistence.persistPolicies(state);
-      }
-      if (step === 3 && schedulePayload(state)) await persistence.persistSchedule(state);
-      if (step === 4 || step === 5) await persistence.persistPolicies(state);
+      if (writes.includes('basics')) await persistence.persistBasics(state);
+      if (writes.includes('policies')) await persistence.persistPolicies(state);
+      if (writes.includes('schedule')) await persistence.persistSchedule(state);
+      recordSaved(state, writes);
       setSavedAt(new Date());
       markReviewed(step);
       goToStep(next);
@@ -254,10 +299,18 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
     }
     setBusy('save');
     try {
+      const saved: WriteKind[] = ['basics'];
       await persistence.persistBasics(state);
       // Clock and sealed rules aside, broken windows can't be written as policies yet.
-      if (!validateStep(2, state).windows) await persistence.persistPolicies(state);
-      if (schedulePayload(state)) await persistence.persistSchedule(state);
+      if (!validateStep(2, state).windows) {
+        await persistence.persistPolicies(state);
+        saved.push('policies');
+      }
+      if (schedulePayload(state)) {
+        await persistence.persistSchedule(state);
+        saved.push('schedule');
+      }
+      recordSaved(state, saved);
       setSavedAt(new Date());
       toast.success(mode === 'edit' ? 'Changes saved.' : 'Draft saved.');
     } catch (err) {
@@ -291,6 +344,7 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
     setErrors({});
     try {
       await persistence.publish(state);
+      recordSaved(state, ALL_WRITES);
       setPublished(true);
       setPublishedAt(new Date().toISOString());
       setSavedAt(new Date());

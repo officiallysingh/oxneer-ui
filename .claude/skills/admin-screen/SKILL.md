@@ -1,11 +1,11 @@
 ---
 name: admin-screen
-description: Use when building a new admin screen or feature in apps/web/src/app/(admin)/admin (list page, detail/view page, create/edit form, or details sheet). Encodes the Oxneer admin feature recipe based on the users screen.
+description: Use when building a new admin screen or feature in apps/web/src/app/(admin)/admin (list page, detail/view page, create/edit form, or details sheet).
 ---
 
 # Building an Oxneer admin screen
 
-Read `DESIGN.md` (sections 6–8) first. The reference implementation is `apps/web/src/app/(admin)/admin/users/`. Open its files and mirror them; don't invent new patterns.
+Read `DESIGN.md` (sections 6–8 and 10) first. The reference implementation is `apps/web/src/app/(admin)/admin/users/`. Open its files and mirror them; don't invent new patterns.
 
 ## 1. Scaffold the feature folder
 
@@ -61,4 +61,4 @@ Add the route to `apps/web/src/components/admin/nav-config.ts`.
 - [ ] Dark and light both look right
 - [ ] Keyboard: tab order, focus ring, Esc closes sheets and dialogs
 - [ ] `npm run typecheck` and `npm run lint` pass
-- [ ] If the dev server is running, screenshot the page at desktop and mobile width and fix what you see
+- [ ] Use the `run-web` skill to screenshot the page at desktop and mobile width and fix what you see

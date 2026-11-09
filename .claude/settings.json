@@ -1,17 +1,23 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
     "allow": [
       "Bash(npx tsc *)",
       "Bash(npx eslint *)",
+      "Bash(npx prettier *)",
+      "Bash(npx jest *)",
+      "Bash(npm run typecheck*)",
+      "Bash(npm run lint*)",
+      "Bash(npm run test*)",
+      "Bash(npm run format:check*)",
+      "Bash(npm run e2e*)",
+      "Bash(node .claude/hooks/check-ui-rules.js *)",
       "Read",
       "Grep",
       "Glob",
       "Edit(/**)",
-      "Read(//c/Users/bally/AppData/Local/Temp/claude/**)",
-      "Edit(//c/Users/bally/AppData/Local/Temp/claude/**)",
       "Bash(cat *)",
       "Bash(grep *)",
-      "Bash(find *)",
       "Bash(ls *)",
       "Bash(wc *)",
       "Bash(head *)",
@@ -20,9 +26,38 @@
       "Bash(git status*)",
       "Bash(git diff*)",
       "Bash(git log*)",
+      "Bash(git show*)",
+      "Bash(git blame*)",
+      "Bash(git ls-files*)",
       "PowerShell(Get-ChildItem *)",
-      "PowerShell(Get-Content *)"
-    ]
+      "PowerShell(Get-Content *)",
+      "PowerShell(npx tsc *)",
+      "PowerShell(npx eslint *)",
+      "PowerShell(npx prettier *)",
+      "PowerShell(npx jest *)",
+      "PowerShell(npm run typecheck*)",
+      "PowerShell(npm run lint*)",
+      "PowerShell(npm run test*)",
+      "PowerShell(npm run format:check*)",
+      "PowerShell(npm run e2e*)",
+      "PowerShell(node .claude/hooks/check-ui-rules.js *)",
+      "PowerShell(git status*)",
+      "PowerShell(git diff*)",
+      "PowerShell(git log*)",
+      "PowerShell(git show*)",
+      "PowerShell(git blame*)",
+      "PowerShell(git ls-files*)",
+      "mcp__context7",
+      "mcp__shadcn",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_resize",
+      "mcp__playwright__browser_console_messages",
+      "mcp__playwright__browser_network_requests",
+      "mcp__playwright__browser_wait_for",
+      "mcp__playwright__browser_close"
+    ],
+    "deny": ["Read(**/.env)", "Read(**/.env.*)"]
   },
   "hooks": {
     "PostToolUse": [
@@ -34,6 +69,12 @@
             "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/format.js\"",
             "timeout": 30,
             "statusMessage": "Formatting with prettier"
+          },
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-ui-rules.js\"",
+            "timeout": 10,
+            "statusMessage": "Checking UI rules"
           }
         ]
       }

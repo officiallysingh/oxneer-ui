@@ -26,6 +26,11 @@ import type {
 } from '../_lib/wizard/types';
 import { collectIssues, validateStep, type ReviewIssue } from '../_lib/wizard/validation';
 import { collectWorkflowIssues } from '../_lib/wizard/stepDraft';
+import {
+  buildOfferRules,
+  buildPostAuctionPolicies,
+  buildPreAuctionPolicies,
+} from '../_lib/wizard/payload';
 import { useAuctionLookups } from './useAuctionLookups';
 import { schedulePayload, useWizardPersistence } from './useWizardPersistence';
 
@@ -60,24 +65,26 @@ export interface WizardProgress {
 const ALL_STEPS = new Set([1, 2, 3, 4, 5, 6, 7]);
 
 /** The API writes a setup step makes, keyed by what each one sends. */
-type WriteKind = 'basics' | 'policies' | 'schedule';
+type WriteKind = 'basics' | 'offerRules' | 'schedule' | 'preRules' | 'postRules';
 
-const ALL_WRITES: WriteKind[] = ['basics', 'policies', 'schedule'];
+const ALL_WRITES: WriteKind[] = ['basics', 'offerRules', 'schedule', 'preRules', 'postRules'];
 
 const WRITE_INPUT: Record<WriteKind, (state: WizardState) => string> = {
-  // Basics also carries the offer's visibility settings.
-  basics: (state) => JSON.stringify([state.basics, state.offer]),
-  // Policies are built from every section.
-  policies: (state) => JSON.stringify(state),
+  basics: (state) => JSON.stringify(state.basics),
+  // Mechanism, both visibilities and the price progression.
+  offerRules: (state) => JSON.stringify(buildOfferRules(state.offer)),
   schedule: (state) => JSON.stringify(schedulePayload(state)),
+  // Workflow steps are saved by the step editor, so only the policies count here.
+  preRules: (state) => JSON.stringify(buildPreAuctionPolicies(state)),
+  postRules: (state) => JSON.stringify(buildPostAuctionPolicies(state)),
 };
 
 const STEP_WRITES: Record<number, WriteKind[]> = {
   1: ['basics'],
-  2: ['basics', 'policies'],
+  2: ['offerRules'],
   3: ['schedule'],
-  4: ['policies'],
-  5: ['policies'],
+  4: ['preRules'],
+  5: ['postRules'],
 };
 
 const snapshotWrites = (state: WizardState, kinds: WriteKind[]) =>
@@ -104,13 +111,20 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
   const [postWorkflowCount, setPostWorkflowCount] = useState(config.workflowCounts?.post ?? 0);
   const [inviteStats, setInviteStats] = useState<InviteStats | null>(null);
 
-  const { roundingModes, formats, unitTypes, directions, accessibilityTypes, policyTypeOrder } =
-    useAuctionLookups(config.auctionType);
+  const {
+    roundingModes,
+    formats,
+    unitTypes,
+    directions,
+    accessibilityTypes,
+    currencies,
+    timeZones,
+  } = useAuctionLookups();
   const persistence = useWizardPersistence({
     initialAuctionId: config.auctionId,
-    policyTypeOrder,
-    savedPolicies: config.savedPolicies,
     unit: config.unit,
+    // The edit route passes the saved start time only when a schedule exists.
+    scheduled: mode === 'edit' && Boolean(config.startTimeFallback),
     onCreated: setAuctionId,
   });
 
@@ -268,8 +282,10 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
     setBusy('step');
     try {
       if (writes.includes('basics')) await persistence.persistBasics(state);
-      if (writes.includes('policies')) await persistence.persistPolicies(state);
+      if (writes.includes('offerRules')) await persistence.persistOfferRules(state);
       if (writes.includes('schedule')) await persistence.persistSchedule(state);
+      if (writes.includes('preRules')) await persistence.persistPreAuctionRules(state);
+      if (writes.includes('postRules')) await persistence.persistPostAuctionRules(state);
       recordSaved(state, writes);
       setSavedAt(new Date());
       markReviewed(step);
@@ -301,14 +317,38 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
     try {
       const saved: WriteKind[] = ['basics'];
       await persistence.persistBasics(state);
-      // Clock and sealed rules aside, broken windows can't be written as policies yet.
-      if (!validateStep(2, state).windows) {
-        await persistence.persistPolicies(state);
-        saved.push('policies');
+      // Offer rules go in only when they're complete; sealed has no stored form yet.
+      const offerRulesSaved =
+        !validateStep(2, state).windows && Boolean(buildOfferRules(state.offer));
+      if (offerRulesSaved) {
+        await persistence.persistOfferRules(state);
+        saved.push('offerRules');
       }
-      if (schedulePayload(state)) {
+      // The schedule needs saved offer rules and open bidding, and is set once.
+      if (
+        offerRulesSaved &&
+        state.offer.mechanism === 'OPEN' &&
+        !persistence.isScheduled() &&
+        !Object.keys(validateStep(3, state)).length &&
+        schedulePayload(state)
+      ) {
         await persistence.persistSchedule(state);
         saved.push('schedule');
+      }
+      // Participation and Award go in when they're valid and changed since the last save.
+      if (
+        !Object.keys(validateStep(4, state)).length &&
+        savedWrites.current.preRules !== WRITE_INPUT.preRules(state)
+      ) {
+        await persistence.persistPreAuctionRules(state);
+        saved.push('preRules');
+      }
+      if (
+        !Object.keys(validateStep(5, state)).length &&
+        savedWrites.current.postRules !== WRITE_INPUT.postRules(state)
+      ) {
+        await persistence.persistPostAuctionRules(state);
+        saved.push('postRules');
       }
       recordSaved(state, saved);
       setSavedAt(new Date());
@@ -382,6 +422,8 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
     unitTypes,
     directions,
     accessibilityTypes,
+    currencies,
+    timeZones,
     workflowCount,
     postWorkflowCount,
     inviteStats,

@@ -8,26 +8,31 @@ import {
   type AuctionScheduleRQ,
   type AuctionUnitType,
   type PolicyItemRQ,
+  type WorkflowStepPhase,
 } from '@repo/api';
 import {
   AUCTION_TYPE,
-  buildPolicyPayload,
+  buildOfferRules,
+  buildPostAuctionPolicies,
+  buildPreAuctionPolicies,
+  buildReservePricePolicy,
   buildUnit,
-  mergePolicyPayload,
-  offerVisibilityValue,
-  participantVisibilityValue,
+  isClearingPolicy,
+  isParticipationPolicy,
+  isWizardPhasePolicy,
+  workflowStepPhase,
 } from '../_lib/wizard/payload';
-import { endTimeFor } from '../_lib/wizard/summary';
+import { resolveStr } from '@/components/common/admin/format';
 import type { SelectedListing, WizardState } from '../_lib/wizard/types';
+import { zonedInputToOffsetIso } from '../_lib/wizard/zonedTime';
 
 export interface PersistenceOptions {
   /** Null until the create flow saves Basics for the first time. */
   initialAuctionId: string | null;
-  policyTypeOrder: string[];
-  /** Edit only: policies already on the auction, merged rather than replaced. */
-  savedPolicies?: PolicyItemRQ[];
   /** Edit only: keeps legacy MULTI_UNIT / LOT units in their original shape. */
   unit?: { id?: string; rawType: string; supported: boolean };
+  /** Edit only: the auction already has a schedule, which the API sets once. */
+  scheduled?: boolean;
   onCreated?: (id: string) => void;
 }
 
@@ -51,25 +56,51 @@ async function unitSubCategories(items: SelectedListing[]): Promise<string[]> {
   return [...new Set(ids.filter((id): id is string => Boolean(id)))];
 }
 
+/** Body for `PUT /{id}/schedule`, or null while the times are incomplete.
+ *  Times are read in the auction's time zone; soft close goes with it, and
+ *  only for open bidding. */
 export function schedulePayload(state: WizardState): AuctionScheduleRQ | null {
-  const start = new Date(state.schedule.startTime);
-  const closing = endTimeFor(state.schedule);
-  const end = closing ? new Date(closing) : null;
-  if (Number.isNaN(start.getTime()) || !end || Number.isNaN(end.getTime())) return null;
-  return { startTime: start.toISOString(), endTime: end.toISOString() };
+  const { schedule, offer, basics } = state;
+  const startTime = zonedInputToOffsetIso(schedule.startTime, basics.timeZone);
+  if (!startTime) return null;
+
+  let end: Pick<AuctionScheduleRQ, 'endMode' | 'offerDuration' | 'endTime'>;
+  if (schedule.endMode === 'FIXED') {
+    const endTime = zonedInputToOffsetIso(schedule.endTime, basics.timeZone);
+    if (!endTime) return null;
+    end = { endMode: 'TIME_RANGE', endTime };
+  } else {
+    const hours = parseInt(schedule.durationHours, 10) || 0;
+    const minutes = parseInt(schedule.durationMinutes, 10) || 0;
+    if (hours * 60 + minutes <= 0) return null;
+    end = { endMode: 'DURATION', offerDuration: `PT${hours}H${minutes}M` };
+  }
+
+  const extendMinutes = parseInt(schedule.extendMinutes, 10) || 0;
+  const limit = parseInt(schedule.extensionLimit, 10) || 0;
+  const softClose =
+    schedule.softCloseEnabled && offer.mechanism === 'OPEN' && extendMinutes >= 1
+      ? {
+          reference: schedule.extensionReference,
+          duration: `PT${extendMinutes}M`,
+          // No limit is sent as no `limit` at all.
+          ...(schedule.limitEnabled && limit >= 1 ? { limit } : {}),
+        }
+      : undefined;
+
+  return { startTime, ...end, ...(softClose ? { softClose } : {}) };
 }
 
 /** Every API write the wizard makes. Create and edit share it: the only
  *  difference is whether the auction exists yet, and which policies it already has. */
 export function useWizardPersistence({
   initialAuctionId,
-  policyTypeOrder,
-  savedPolicies = [],
   unit,
+  scheduled = false,
   onCreated,
 }: PersistenceOptions) {
   const auctionIdRef = useRef(initialAuctionId);
-  const savedPoliciesRef = useRef(savedPolicies);
+  const scheduledRef = useRef(scheduled);
 
   const requireId = () => {
     if (!auctionIdRef.current) throw new Error('Save Basics and unit first.');
@@ -78,10 +109,10 @@ export function useWizardPersistence({
 
   /** Creates the draft on first save and updates it afterwards. */
   const persistBasics = async (state: WizardState): Promise<string> => {
-    const { basics, offer } = state;
-    const monetaryOptions = {
-      currencyUnit: basics.currencyUnit,
-      precision: parseInt(basics.precision, 10) || 0,
+    const { basics } = state;
+    const regionalSettings = {
+      currency: basics.currencyUnit,
+      timeZone: basics.timeZone,
       roundingMode: basics.roundingMode,
     };
     const builtUnit = buildUnit(basics, unit?.id);
@@ -93,40 +124,37 @@ export function useWizardPersistence({
       title: basics.title.trim(),
       description: basics.description.trim() || undefined,
       referenceId: basics.referenceId.trim() || undefined,
-      monetaryOptions,
-      unit: builtUnit,
-      // Leave an existing auction's subcategories alone if none can be worked out.
-      ...(subCategories.length ? { subCategories } : {}),
+      direction: basics.direction,
+      accessibility: basics.accessibility,
+      regionalSettings,
     };
 
-    if (!auctionIdRef.current && !subCategories.length) {
-      throw new Error(
-        'The selected listing has no subcategory, so the auction can’t be filed. Pick a listing with a subcategory.',
-      );
-    }
-
     if (auctionIdRef.current) {
+      // Visibilities and the mechanism belong to Offer rules, saved by persistOfferRules.
       await auctionsApi.updateAuction(auctionIdRef.current, {
         ...common,
-        accessibility: basics.accessibility,
-        direction: basics.direction,
-        participantVisibility: participantVisibilityValue(offer.participantVisibility),
-        offerVisibility: offerVisibilityValue(offer.offerVisibility),
+        unit: builtUnit,
+        // Leave an existing auction's subcategories alone if none can be worked out.
+        ...(subCategories.length ? { subCategories } : {}),
       });
       return auctionIdRef.current;
     }
 
+    if (!subCategories.length) {
+      throw new Error(
+        'The selected listing has no subcategory, so the auction can’t be filed. Pick a listing with a subcategory.',
+      );
+    }
+    if (!builtUnit) throw new Error('Add a listing and an opening price first.');
+
+    // Step 1 creates the auction, its unit and the optional reserve price in one call.
+    const reservePricePolicy = buildReservePricePolicy(basics);
     const payload: AuctionCreationRQ = {
       ...common,
       type: AUCTION_TYPE,
-      format: 'SIMPLE',
-      protocol: {
-        accessibility: basics.accessibility,
-        direction: basics.direction,
-        dimension: 'ONE_DIMENSIONAL',
-        participantVisibility: participantVisibilityValue(offer.participantVisibility),
-        offerVisibility: offerVisibilityValue(offer.offerVisibility),
-      },
+      subCategories,
+      unit: builtUnit,
+      ...(reservePricePolicy ? { reservePricePolicy } : {}),
     };
     const id = await auctionsApi.createAuction(payload);
     auctionIdRef.current = id;
@@ -134,24 +162,150 @@ export function useWizardPersistence({
     return id;
   };
 
-  const persistPolicies = async (state: WizardState) => {
-    const merged = mergePolicyPayload(
-      savedPoliciesRef.current,
-      buildPolicyPayload(state, policyTypeOrder),
+  /** Setup step 2. The first save goes to `POST /{id}/offer-rules`, which the
+   *  API accepts once. After that the mechanism and visibilities are updated on
+   *  the auction, and the saved price progression is changed in place when its
+   *  windows keep their types, or replaced when windows are added, removed or
+   *  change type (the update API can only change existing children). */
+  const persistOfferRules = async (state: WizardState) => {
+    const id = requireId();
+    const rules = buildOfferRules(state.offer);
+    if (!rules) {
+      throw new Error('Sealed bidding can’t be saved yet. Choose open bidding or a clock.');
+    }
+
+    const saved = (await auctionsApi.getAuctionPolicies(id)).find(
+      (policy) => resolveStr(policy.type) === 'PRICE_PROGRESSION_POLICY',
     );
-    await auctionsApi.setAuctionPolicies(requireId(), merged);
-    savedPoliciesRef.current = merged;
+    if (!saved?.id) {
+      await auctionsApi.setOfferRules(id, rules);
+      return;
+    }
+
+    const next = rules.priceProgressionPolicy;
+    const savedChildren = [...(saved.policies ?? [])].sort(
+      (a, b) => (a.order ?? 0) - (b.order ?? 0),
+    );
+    const nextChildren = next.policies ?? [];
+    const sameShape =
+      savedChildren.length === nextChildren.length &&
+      savedChildren.every((child, index) => resolveStr(child.type) === nextChildren[index]?.type);
+
+    if (sameShape) {
+      await auctionsApi.updateAuction(id, {
+        offerMechanism: rules.offerMechanism,
+        participantVisibility: rules.participantVisibility,
+        offerVisibility: rules.offerVisibility,
+      });
+      await auctionsApi.updateAuctionPolicy(id, saved.id, {
+        ...next,
+        order: saved.order,
+        policies: nextChildren.map((child, index) => ({ ...child, id: savedChildren[index]!.id })),
+      });
+      return;
+    }
+
+    // Remove the old progression first, so a mechanism change never leaves
+    // rules on the auction that don't fit the new one.
+    await auctionsApi.deleteAuctionPolicy(id, saved.id);
+    await auctionsApi.updateAuction(id, {
+      offerMechanism: rules.offerMechanism,
+      participantVisibility: rules.participantVisibility,
+      offerVisibility: rules.offerVisibility,
+    });
+    await auctionsApi.addAuctionPolicy(id, next);
   };
 
+  /** Brings one phase's wizard-owned policies on the auction in line with
+   *  `desired`. While the phase is still empty (no policy and no workflow step)
+   *  the setup call `setup` sends them in one go, as the API intends; after
+   *  that, or when there is no usable setup call, each policy is updated,
+   *  added or removed on its own. Workflow steps are saved by the step editor
+   *  as the admin makes them, so they're never sent here. */
+  const syncPhasePolicies = async (
+    desired: PolicyItemRQ[],
+    phase: {
+      isPhasePolicy: (policy: PolicyItemRQ) => boolean;
+      stepPhase: WorkflowStepPhase;
+      setup?: (policies: PolicyItemRQ[]) => Promise<void>;
+    },
+  ) => {
+    const id = requireId();
+    const [policies, workflow] = await Promise.all([
+      auctionsApi.getAuctionPolicies(id),
+      auctionsApi.getAuctionWorkflow(id),
+    ]);
+    const saved = policies.filter(phase.isPhasePolicy);
+    const phaseHasSteps = workflow.some((step) => workflowStepPhase(step) === phase.stepPhase);
+
+    if (phase.setup && !saved.length && !phaseHasSteps) {
+      if (desired.length) await phase.setup(desired);
+      return;
+    }
+
+    const savedOfType = (type?: string) =>
+      saved.find((policy) => resolveStr(policy.type) === type && policy.id);
+    const wanted = new Set(desired.map((policy) => policy.type));
+    for (const policy of saved) {
+      if (policy.id && isWizardPhasePolicy(policy) && !wanted.has(resolveStr(policy.type))) {
+        await auctionsApi.deleteAuctionPolicy(id, policy.id);
+      }
+    }
+    for (const policy of desired) {
+      const existing = savedOfType(policy.type);
+      if (existing?.id) {
+        // An update never moves a policy, so it keeps its saved order.
+        await auctionsApi.updateAuctionPolicy(id, existing.id, {
+          ...policy,
+          order: existing.order,
+        });
+      } else {
+        // Without an order it goes last in its phase.
+        await auctionsApi.addAuctionPolicy(id, { ...policy, order: undefined });
+      }
+    }
+  };
+
+  /** Setup step 4: minimum participants, through `POST /{id}/pre-auction-rules`
+   *  while nothing is set before the auction yet. */
+  const persistPreAuctionRules = (state: WizardState) =>
+    syncPhasePolicies(buildPreAuctionPolicies(state), {
+      isPhasePolicy: isParticipationPolicy,
+      stepPhase: 'PRE_AUCTION',
+      setup: (policies) => auctionsApi.setPreAuctionRules(requireId(), { policies, steps: [] }),
+    });
+
+  /** Setup step 5: who wins and what they pay. `POST /{id}/post-auction-rules`
+   *  needs a payment step in the same request, and the step editor saves
+   *  payment steps on their own, so the policies go through the policy API. */
+  const persistPostAuctionRules = (state: WizardState) =>
+    syncPhasePolicies(buildPostAuctionPolicies(state), {
+      isPhasePolicy: isClearingPolicy,
+      stepPhase: 'POST_AUCTION',
+    });
+
+  /** Setup step 3. The API sets a schedule once (it fails with
+   *  AUCTION_ALREADY_SCHEDULED afterwards) and has no reschedule call yet, so a
+   *  saved schedule can't be changed from here. */
   const persistSchedule = async (state: WizardState) => {
+    if (scheduledRef.current) {
+      throw new Error(
+        'The schedule is already saved, and it can’t be changed yet. Rescheduling isn’t available.',
+      );
+    }
     const payload = schedulePayload(state);
-    if (payload) await auctionsApi.scheduleAuction(requireId(), payload);
+    if (!payload) return;
+    await auctionsApi.scheduleAuction(requireId(), payload);
+    scheduledRef.current = true;
   };
 
   const persistAll = async (state: WizardState) => {
     await persistBasics(state);
-    await persistPolicies(state);
-    await persistSchedule(state);
+    await persistOfferRules(state);
+    await persistPreAuctionRules(state);
+    await persistPostAuctionRules(state);
+    // Publishing an auction that is already scheduled keeps that schedule.
+    if (!scheduledRef.current) await persistSchedule(state);
   };
 
   const publish = async (state: WizardState) => {
@@ -159,5 +313,15 @@ export function useWizardPersistence({
     await auctionsApi.publishAuction(requireId());
   };
 
-  return { persistBasics, persistPolicies, persistSchedule, persistAll, publish };
+  return {
+    /** True once the auction has a schedule, which can't be changed afterwards. */
+    isScheduled: () => scheduledRef.current,
+    persistBasics,
+    persistOfferRules,
+    persistPreAuctionRules,
+    persistPostAuctionRules,
+    persistSchedule,
+    persistAll,
+    publish,
+  };
 }

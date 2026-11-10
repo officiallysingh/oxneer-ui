@@ -116,7 +116,8 @@ export function buildAuctionColumns({
       cell: ({ row }) => {
         const status = resolveStr(row.original.status);
         const canDelete = status === 'DRAFT' || status === 'SCHEDULED';
-        const canCancel = status === 'SCHEDULED' || status === 'PUBLISHED' || status === 'LIVE';
+        // The API cancels published auctions only (AUCTION_CANCEL_NOT_ALLOWED otherwise).
+        const canCancel = status === 'PUBLISHED';
         return (
           <div className="flex items-center gap-0.5 justify-end">
             <Tip label="View">

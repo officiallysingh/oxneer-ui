@@ -1,16 +1,31 @@
-import type { AuctionUnitBody, PolicyItemRQ } from '@repo/api';
-import { resolveStr } from '@/components/common/admin/format';
-import { POLICY_DEFAULTS } from '../../_components/PolicyShared';
 import type {
+  AuctionUnitBody,
+  AuctionWorkflowStep,
+  OfferMechanism,
+  OfferRulesCreationRQ,
+  OfferVisibility,
+  ParticipantVisibility,
+  PolicyItemRQ,
+  ReservePricePolicyRQ,
+  ReservePriceVisibility,
+  WorkflowStepPhase,
+} from '@repo/api';
+import { resolveStr } from '@/components/common/admin/format';
+import { POLICY_DEFAULTS, paymentStepData } from '../../_components/PolicyShared';
+import type {
+  AuctionMechanism,
   BasicsState,
+  OfferState,
   OfferVisibilityChoice,
   ParticipantVisibilityChoice,
   ParticipationState,
   PriceWindow,
+  ReserveVisibility,
   WizardState,
 } from './types';
 
-export const AUCTION_TYPE = 'OFFER_BASE_STEP_PRICED_ATOMIC_UNIT_AUCTION';
+/** The wizard builds simple (one unit, one round) auctions only. */
+export const AUCTION_TYPE = 'SIMPLE';
 
 export function buildMinimumParticipantsPolicy(form: ParticipationState): PolicyItemRQ | null {
   if (!form.minimumEnabled) return null;
@@ -36,22 +51,47 @@ export function buildMinimumParticipantsPolicy(form: ParticipationState): Policy
   };
 }
 
-/** UI choices the design adds ahead of the backend enum. Unknown values fall
- *  back to the closest enum the creation payload accepts. */
-export function participantVisibilityValue(choice: ParticipantVisibilityChoice): string {
-  if (choice === 'REAL') return 'PUBLIC';
-  return 'ALIAS';
+const PARTICIPANT_VISIBILITY: Record<ParticipantVisibilityChoice, ParticipantVisibility> = {
+  REAL: 'PUBLIC',
+  ALIAS: 'ALIAS',
+  HIDDEN: 'HIDDEN',
+};
+
+const OFFER_VISIBILITY: Record<OfferVisibilityChoice, OfferVisibility> = {
+  FULL: 'FULL',
+  RANK: 'RANK',
+  NOTHING: 'HIDDEN',
+};
+
+const OFFER_MECHANISM: Record<AuctionMechanism, OfferMechanism> = {
+  OPEN: 'OPEN',
+  CLOCK: 'CLOCKED',
+  SEALED: 'SEALED',
+};
+
+export function participantVisibilityValue(
+  choice: ParticipantVisibilityChoice,
+): ParticipantVisibility {
+  return PARTICIPANT_VISIBILITY[choice] ?? 'ALIAS';
 }
 
-export function offerVisibilityValue(choice: OfferVisibilityChoice): string {
-  if (choice === 'RANK') return 'RANK';
-  if (choice === 'NOTHING') return 'PRICE';
-  return 'FULL';
+export function offerVisibilityValue(choice: OfferVisibilityChoice): OfferVisibility {
+  return OFFER_VISIBILITY[choice] ?? 'FULL';
+}
+
+export function offerMechanismValue(mechanism: AuctionMechanism): OfferMechanism {
+  return OFFER_MECHANISM[mechanism];
 }
 
 export function buildUnit(basics: BasicsState, unitId?: string): AuctionUnitBody | undefined {
   const openingPrice = parseFloat(basics.openingPrice);
   if (Number.isNaN(openingPrice)) return undefined;
+  const toItem = (item: BasicsState['items'][number]) => ({
+    id: item.id,
+    name: item.name,
+    ...(item.description ? { description: item.description } : {}),
+    quantity: parseInt(item.quantity, 10) || 1,
+  });
 
   if (basics.unitType === 'SINGLE_UNIT') {
     const item = basics.items[0];
@@ -59,13 +99,9 @@ export function buildUnit(basics: BasicsState, unitId?: string): AuctionUnitBody
     return {
       ...(unitId ? { id: unitId } : {}),
       type: 'SINGLE_UNIT',
+      name: basics.unitName.trim() || item.name,
       openingPrice,
-      item: {
-        id: item.id,
-        name: basics.unitName.trim() || item.name,
-        description: item.description,
-        quantity: parseInt(item.quantity, 10) || 1,
-      },
+      item: toItem(item),
     };
   }
 
@@ -73,17 +109,35 @@ export function buildUnit(basics: BasicsState, unitId?: string): AuctionUnitBody
   return {
     ...(unitId ? { id: unitId } : {}),
     type: 'BUNDLE',
+    name: basics.unitName.trim() || basics.items[0]!.name,
     openingPrice,
-    items: basics.items.map((item) => ({
-      id: item.id,
-      quantity: parseInt(item.quantity, 10) || 1,
-    })),
+    items: basics.items.map(toItem),
   };
 }
 
-function objectId(): string {
-  const chars = '0123456789abcdef';
-  return Array.from({ length: 24 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+const RESERVE_VISIBILITY: Record<ReserveVisibility, ReservePriceVisibility> = {
+  HIDDEN: 'HIDDEN',
+  SHOWN: 'VISIBLE',
+  MET_ONLY: 'VISIBLE_ONCE_MET',
+};
+
+/** The admin enters the reserve as a price; the API stores it as a margin on
+ *  the opening price (added when forward, subtracted when reverse), so the
+ *  amount sent is the distance between the two. Validation keeps it on the
+ *  right side of the opening price. */
+export function buildReservePricePolicy(basics: BasicsState): ReservePricePolicyRQ | undefined {
+  if (!basics.reserveEnabled) return undefined;
+  const opening = parseFloat(basics.openingPrice);
+  const reserve = parseFloat(basics.reserveAmount);
+  if (Number.isNaN(opening) || Number.isNaN(reserve)) return undefined;
+  const margin = basics.direction === 'FORWARD' ? reserve - opening : opening - reserve;
+  return {
+    type: 'RESERVE_PRICE_POLICY',
+    name: basics.direction === 'FORWARD' ? 'Reserve price' : 'Maximum price',
+    basis: 'AMOUNT_BASED',
+    value: Math.max(0, margin),
+    visibility: RESERVE_VISIBILITY[basics.reserveVisibility],
+  };
 }
 
 const WINDOW_POLICY_TYPE: Record<string, string> = {
@@ -118,7 +172,6 @@ function priceWindowPolicy(window: PriceWindow, index: number, last: boolean): P
   if (window.type === 'CLOCK') {
     const defaults = POLICY_DEFAULTS.CLOCK_BASED_PRICE_CHANGE_POLICY;
     return {
-      id: objectId(),
       type: 'CLOCK_BASED_PRICE_CHANGE_POLICY',
       name: defaults?.name,
       description: defaults?.description,
@@ -132,72 +185,80 @@ function priceWindowPolicy(window: PriceWindow, index: number, last: boolean): P
   }
   const type = WINDOW_POLICY_TYPE[window.type] ?? WINDOW_POLICY_TYPE.STEP!;
   const defaults = POLICY_DEFAULTS[type];
-  const item: PolicyItemRQ = {
-    id: objectId(),
+  const base: PolicyItemRQ = {
     type,
     name: defaults?.name,
     description: defaults?.description,
     order: index + 1,
     windowDuration,
-    value: parseFloat(window.value) || 0,
   };
+  // A range is a band of percentages: the API reads `min` and `max`, not `value`.
+  if (window.type === 'RANGE') {
+    return {
+      ...base,
+      min: parseFloat(window.value) || 0,
+      max: parseFloat(window.maxValue) || 0,
+    };
+  }
+  const item: PolicyItemRQ = { ...base, value: parseFloat(window.value) || 0 };
   if (window.type === 'STEP' && window.steps.length) item.steps = window.steps;
-  if (window.type === 'RANGE') item.maxValue = parseFloat(window.maxValue) || 0;
   return item;
 }
 
-export function buildPolicyPayload(state: WizardState, policyTypeOrder: string[]): PolicyItemRQ[] {
-  // No-sale handling and result confirmation have no backend fields yet, so
-  // they stay in wizard state (and the review copy).
-  const policies: PolicyItemRQ[] = [];
-  const { offer, schedule, award } = state;
-
-  const minimumPolicy = buildMinimumParticipantsPolicy(state.participation);
-  if (minimumPolicy) {
-    policies.push({ ...minimumPolicy, id: objectId(), order: 1 });
-  }
-
-  // Soft close only applies to open bidding: nobody can react to a late sealed
-  // bid, and a clock auction ends when the last rival drops out.
-  if (schedule.softCloseEnabled && offer.mechanism === 'OPEN') {
-    const extension = POLICY_DEFAULTS.EXTENSION_POLICY;
-    policies.push({
-      id: objectId(),
-      type: 'EXTENSION_POLICY',
-      name: extension?.name,
-      description: extension?.description,
-      reference: schedule.extensionReference,
-      duration: `PT${parseInt(schedule.extendMinutes, 10) || 0}M`,
-      limit: schedule.limitEnabled ? parseInt(schedule.extensionLimit, 10) || 0 : 0,
-    });
-  }
-
-  // Open bidding uses step/percentage windows and a clock auction uses clock
-  // windows. Sealed has no price progression, and the backend has no sealed
-  // representation yet, so an existing progression is left untouched.
+/** The price progression for the chosen mechanism: step/percentage windows for
+ *  open bidding, clock windows for a clock auction. Sealed has none. */
+export function buildPriceProgressionPolicy(offer: OfferState): PolicyItemRQ | null {
   const windows =
     offer.mechanism === 'OPEN'
       ? offer.windows
       : offer.mechanism === 'CLOCK'
         ? offer.clockWindows
         : [];
-  if (windows.length) {
-    const progression = POLICY_DEFAULTS.PRICE_PROGRESSION_POLICY;
-    policies.push({
-      id: objectId(),
-      type: 'PRICE_PROGRESSION_POLICY',
-      name: progression?.name,
-      description: progression?.description,
-      policies: windows.map((window, index) =>
-        priceWindowPolicy(window, index, index === windows.length - 1),
-      ),
-    });
-  }
+  if (!windows.length) return null;
+  const progression = POLICY_DEFAULTS.PRICE_PROGRESSION_POLICY;
+  return {
+    type: 'PRICE_PROGRESSION_POLICY',
+    name: progression?.name,
+    description: progression?.description,
+    policies: windows.map((window, index) =>
+      priceWindowPolicy(window, index, index === windows.length - 1),
+    ),
+  };
+}
 
-  const winner = POLICY_DEFAULTS[award.winnerType];
+/** Body for `POST /{id}/offer-rules`, or null when the rules can't be stored:
+ *  the API requires a price progression, which a sealed auction doesn't have. */
+export function buildOfferRules(offer: OfferState): OfferRulesCreationRQ | null {
+  const priceProgressionPolicy = buildPriceProgressionPolicy(offer);
+  if (!priceProgressionPolicy) return null;
+  return {
+    offerMechanism: offerMechanismValue(offer.mechanism),
+    participantVisibility: participantVisibilityValue(offer.participantVisibility),
+    offerVisibility: offerVisibilityValue(offer.offerVisibility),
+    priceProgressionPolicy,
+  };
+}
+
+const withOrders = (policies: PolicyItemRQ[]) =>
+  policies.map((policy, index) => ({ ...policy, order: index + 1 }));
+
+/** Setup step 4: the PARTICIPATION policies the wizard owns (minimum participants). */
+export function buildPreAuctionPolicies(state: WizardState): PolicyItemRQ[] {
+  const minimum = buildMinimumParticipantsPolicy(state.participation);
+  return withOrders(minimum ? [minimum] : []);
+}
+
+/** Setup step 5: the CLEARING policies the wizard owns, in screen order: who
+ *  wins, what they pay, and (sealed only) how ties are broken. No-sale handling
+ *  and result confirmation have no backend fields yet, so they stay in wizard
+ *  state. The reserve price is set at creation, not here. */
+export function buildPostAuctionPolicies(state: WizardState): PolicyItemRQ[] {
+  const { offer, award } = state;
+  const policies: PolicyItemRQ[] = [];
+
   if (award.winnerType) {
+    const winner = POLICY_DEFAULTS[award.winnerType];
     policies.push({
-      id: objectId(),
       type: award.winnerType,
       name: winner?.name,
       description: winner?.description,
@@ -205,10 +266,9 @@ export function buildPolicyPayload(state: WizardState, policyTypeOrder: string[]
     });
   }
 
-  const winnerPrice = POLICY_DEFAULTS[award.winnerPriceType];
   if (award.winnerPriceType) {
+    const winnerPrice = POLICY_DEFAULTS[award.winnerPriceType];
     policies.push({
-      id: objectId(),
       type: award.winnerPriceType,
       name: winnerPrice?.name,
       description: winnerPrice?.description,
@@ -219,62 +279,50 @@ export function buildPolicyPayload(state: WizardState, policyTypeOrder: string[]
   // Only sealed bids can tie: open and clock offers must beat the best price.
   const tieType = TIE_POLICY_TYPE[award.ties];
   if (tieType && offer.mechanism === 'SEALED') {
-    policies.push({ id: objectId(), type: tieType, ...TIE_POLICY_TEXT[tieType] });
+    policies.push({ type: tieType, ...TIE_POLICY_TEXT[tieType] });
   }
 
-  const rank = (type: unknown) => {
-    const index = policyTypeOrder.indexOf(String(type));
-    return index === -1 ? Number.MAX_SAFE_INTEGER : index;
-  };
-
-  return policies
-    .sort((a, b) => rank(a.type) - rank(b.type))
-    .map((item, index) => ({
-      ...item,
-      order: index + 1,
-      policies: item.policies?.map((child, childIndex) => ({
-        ...child,
-        order: childIndex + 1,
-      })),
-    }));
+  return withOrders(policies);
 }
 
-/** Policies the simple wizard owns. Everything else (participation forms,
- *  preconditions, custom organisation policies) is preserved when editing. */
-export function isManagedPolicy(policy: PolicyItemRQ): boolean {
-  const type = resolveStr(policy.type);
+const policyTypeOf = (policy: PolicyItemRQ) => resolveStr(policy.type);
+const policyPhaseOf = (policy: PolicyItemRQ) => resolveStr(policy.phase);
+
+/** Saved policies in the PARTICIPATION phase. */
+export function isParticipationPolicy(policy: PolicyItemRQ): boolean {
   return (
-    type === 'MINIMUM_PARTICIPANTS_REQUIREMENT_POLICY' ||
-    type === 'EXTENSION_POLICY' ||
-    type === 'PRICE_PROGRESSION_POLICY' ||
+    policyPhaseOf(policy) === 'PARTICIPATION' ||
+    policyTypeOf(policy) === 'MINIMUM_PARTICIPANTS_REQUIREMENT_POLICY'
+  );
+}
+
+/** Saved policies in the CLEARING phase, apart from the reserve price (set at creation). */
+export function isClearingPolicy(policy: PolicyItemRQ): boolean {
+  const type = policyTypeOf(policy);
+  if (type === 'RESERVE_PRICE_POLICY') return false;
+  return (
+    policyPhaseOf(policy) === 'CLEARING' ||
     type.includes('WINNER_DETERMINATION') ||
     type.includes('WINNER_PRICE_DETERMINATION') ||
     type.includes('TIE_BREAKING')
   );
 }
 
-/** Replaces the policies the wizard can edit while keeping any custom or
- *  unsupported policies already saved on the auction. */
-export function mergePolicyPayload(existing: PolicyItemRQ[], next: PolicyItemRQ[]): PolicyItemRQ[] {
-  const nextHasProgression = next.some(
-    (policy) => resolveStr(policy.type) === 'PRICE_PROGRESSION_POLICY',
+/** Policies the wizard may remove when the admin switches them off. Anything
+ *  else in the phase (custom organisation policies) is left alone. */
+export function isWizardPhasePolicy(policy: PolicyItemRQ): boolean {
+  const type = policyTypeOf(policy);
+  return (
+    type === 'MINIMUM_PARTICIPANTS_REQUIREMENT_POLICY' ||
+    type.includes('WINNER_DETERMINATION') ||
+    type.includes('WINNER_PRICE_DETERMINATION') ||
+    type.includes('TIE_BREAKING')
   );
-  const preserved = existing.filter((policy) => {
-    if (!isManagedPolicy(policy)) return true;
-    // A sealed auction keeps its original progression wrapper because the
-    // simple editor has nothing to rebuild it from.
-    return resolveStr(policy.type) === 'PRICE_PROGRESSION_POLICY' && !nextHasProgression;
-  });
+}
 
-  const rank = (policy: PolicyItemRQ) => policy.order ?? Number.MAX_SAFE_INTEGER;
-  return [...next, ...preserved]
-    .sort((a, b) => rank(a) - rank(b))
-    .map((policy, index) => ({
-      ...policy,
-      order: index + 1,
-      policies: policy.policies?.map((child, childIndex) => ({
-        ...child,
-        order: childIndex + 1,
-      })),
-    }));
+/** The workflow phase of a saved step. Steps without one (terms, participation
+ *  form) are always before the auction; a payment carries it in its policy. */
+export function workflowStepPhase(step: AuctionWorkflowStep): WorkflowStepPhase {
+  const phase = resolveStr(step.phase) || paymentStepData(step).phase;
+  return phase === 'POST_AUCTION' ? 'POST_AUCTION' : 'PRE_AUCTION';
 }

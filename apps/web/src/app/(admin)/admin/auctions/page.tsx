@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { auctionsApi, masterApi, AuctionVM, CategoryVM } from '@repo/api';
+import { auctionsApi, getApiErrorMessage, masterApi, AuctionVM, CategoryVM } from '@repo/api';
 import { Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@repo/ui';
 import { DataTable } from '@/components/common/data-table';
@@ -214,8 +214,9 @@ export default function AuctionsPage() {
       setAuctions((prev) =>
         prev.map((a) => (a.id === auction.id ? { ...a, status: 'PUBLISHED' } : a)),
       );
-    } catch {
-      setError('Failed to publish auction.');
+    } catch (err) {
+      // e.g. AUCTION_SETUP_INCOMPLETE names the setup steps still missing.
+      setError(getApiErrorMessage(err, 'Failed to publish auction.'));
     } finally {
       setPublishingId(null);
     }
@@ -227,8 +228,8 @@ export default function AuctionsPage() {
     try {
       await auctionsApi.cancelAuction(id);
       setAuctions((prev) => prev.map((a) => (a.id === id ? { ...a, status: 'CANCELLED' } : a)));
-    } catch {
-      setError('Failed to cancel auction.');
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Failed to cancel auction.'));
     } finally {
       setCancellingId(null);
     }

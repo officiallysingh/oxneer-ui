@@ -7,7 +7,8 @@ import type {
   WizardState,
 } from './types';
 import { STEP_LABELS } from './steps';
-import { endTimeFor, formatMoney, parseDuration } from './summary';
+import { endTimeFor, parseDuration } from './summary';
+import { zonedInputToDate } from './zonedTime';
 
 export { STEP_LABELS };
 
@@ -18,7 +19,9 @@ export function validateBasics(basics: BasicsState): Record<string, string> {
   else if (title.length < 5) errors.title = 'Title must be at least 5 characters.';
   else if (title.length > 100) errors.title = 'Title must be at most 100 characters.';
 
-  if (!basics.unitName.trim()) errors.unitName = 'Name the unit bidders will see.';
+  const unitName = basics.unitName.trim();
+  if (!unitName) errors.unitName = 'Name the unit bidders will see.';
+  else if (unitName.length < 3) errors.unitName = 'The unit name must be at least 3 characters.';
   if (!basics.items.length) errors.items = 'Add at least one listing.';
   if (basics.unitType === 'SINGLE_UNIT' && basics.items.length > 1) {
     errors.items = 'A Single Unit can only contain one listing. Switch to a Bundle for more.';
@@ -31,15 +34,17 @@ export function validateBasics(basics: BasicsState): Record<string, string> {
 
   if (basics.reserveEnabled) {
     const reserve = parseFloat(basics.reserveAmount);
+    const forward = basics.direction === 'FORWARD';
     if (!basics.reserveAmount || Number.isNaN(reserve) || reserve <= 0) {
       errors.reserveAmount = 'Enter a reserve above zero, or switch the reserve off.';
+    } else if (openingPrice > 0 && forward && reserve < openingPrice) {
+      // The API stores the reserve as a margin added to the opening price.
+      errors.reserveAmount = 'The reserve can’t be below the opening price.';
+    } else if (openingPrice > 0 && !forward && reserve > openingPrice) {
+      errors.reserveAmount = 'The maximum price can’t be above the starting price.';
     }
   }
 
-  const precision = parseInt(basics.precision, 10);
-  if (Number.isNaN(precision) || precision < 0 || precision > 3) {
-    errors.general = 'Precision must be between 0 and 3.';
-  }
   return errors;
 }
 
@@ -101,18 +106,27 @@ export function validateOffer(offer: OfferState): Record<string, string> {
   return errors;
 }
 
+/** The schedule API takes open auctions only for now (OFFER_MECHANISM_NOT_SUPPORTED). */
+const SCHEDULE_OPEN_ONLY =
+  'Only open bidding can be scheduled for now. Clock auctions can’t be scheduled yet.';
+
 export function validateSchedule(
   schedule: ScheduleState,
   {
     allowPastStart = false,
     softClose = true,
+    timeZone,
   }: {
     allowPastStart?: boolean;
     /** False for clock and sealed auctions. */ softClose?: boolean;
+    /** The auction's time zone; the inputs are wall-clock times in it. */
+    timeZone?: string;
   } = {},
 ): Record<string, string> {
   const errors: Record<string, string> = {};
-  const start = schedule.startTime ? new Date(schedule.startTime) : null;
+  const toDate = (value: string) =>
+    timeZone ? zonedInputToDate(value, timeZone) : value ? new Date(value) : null;
+  const start = schedule.startTime ? toDate(schedule.startTime) : null;
   if (!start || Number.isNaN(start.getTime())) {
     errors.startTime = 'Pick when bidding opens.';
   } else if (!allowPastStart && start.getTime() <= Date.now()) {
@@ -120,7 +134,7 @@ export function validateSchedule(
   }
 
   const closing = endTimeFor(schedule);
-  const end = closing ? new Date(closing) : null;
+  const end = closing ? toDate(closing) : null;
   if (!end || Number.isNaN(end.getTime())) {
     errors.endTime = 'Set when bidding closes.';
   } else if (start && !Number.isNaN(start.getTime()) && end <= start) {
@@ -174,11 +188,17 @@ export function validateStep(
       return validateBasics(state.basics);
     case 2:
       return validateOffer(state.offer);
-    case 3:
-      return validateSchedule(state.schedule, {
+    case 3: {
+      const errors = validateSchedule(state.schedule, {
         allowPastStart: options.published,
         softClose: state.offer.mechanism === 'OPEN',
+        timeZone: state.basics.timeZone,
       });
+      if (!options.published && state.offer.mechanism !== 'OPEN') {
+        errors.general = SCHEDULE_OPEN_ONLY;
+      }
+      return errors;
+    }
     case 4:
       return validateParticipation(state.participation);
     case 5: {
@@ -253,22 +273,12 @@ export function collectIssues(
 
   const basics = validateBasics(state.basics);
   if (basics.title) add(1, 'must-fix', 'Add an auction title.');
-  if (basics.unitName) add(1, 'must-fix', 'Name the unit.');
+  if (basics.unitName) add(1, 'must-fix', basics.unitName);
   if (basics.items) add(1, 'must-fix', basics.items);
   if (basics.openingPrice) {
     add(1, 'must-fix', `Set the ${forward ? 'opening' : 'starting'} price.`);
   }
-  if (basics.reserveAmount) add(1, 'must-fix', 'Enter a reserve above zero, or switch it off.');
-  const opening = parseFloat(state.basics.openingPrice);
-  const reserve = parseFloat(state.basics.reserveAmount);
-  if (state.basics.reserveEnabled && opening > 0 && reserve > 0) {
-    const money = formatMoney(reserve, state.basics.currencyUnit);
-    if (forward && reserve < opening) {
-      add(1, 'check', `The reserve (${money}) is below the opening price, so it has no effect.`);
-    } else if (!forward && reserve > opening) {
-      add(1, 'check', `The reserve (${money}) is above the starting price, so it has no effect.`);
-    }
-  }
+  if (basics.reserveAmount) add(1, 'must-fix', basics.reserveAmount);
 
   const offer = validateOffer(state.offer);
   if (offer.windows) {
@@ -305,7 +315,11 @@ export function collectIssues(
   const schedule = validateSchedule(state.schedule, {
     allowPastStart: published,
     softClose: state.offer.mechanism === 'OPEN',
+    timeZone: state.basics.timeZone,
   });
+  if (!published && state.offer.mechanism === 'CLOCK') {
+    add(3, 'must-fix', SCHEDULE_OPEN_ONLY, 2, ISSUE_ANCHOR.mechanism);
+  }
   if (schedule.startTime) add(3, 'must-fix', 'Set a start time in the future.');
   if (schedule.endTime) add(3, 'must-fix', schedule.endTime);
   if (schedule.general) add(3, 'must-fix', schedule.general);

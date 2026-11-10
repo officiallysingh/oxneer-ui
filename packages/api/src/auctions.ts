@@ -18,6 +18,7 @@ export interface AuctionMonetaryOptions {
 export interface AuctionSchedule {
   startTime?: string;
   endTime?: string;
+  endMode?: 'DURATION' | 'TIME_RANGE' | Record<string, string>;
 }
 
 /** Generic before/after-auction phase, now carried by every workflow step type
@@ -87,9 +88,12 @@ export interface AuctionItemBody {
 export interface AuctionUnitBody {
   id?: string; // present when updating an existing unit
   type: AuctionUnitType;
+  /** What participants see as the thing on offer (3–255 characters). */
+  name: string;
   openingPrice: number;
   item?: AuctionItemBody; // SINGLE_UNIT
-  items?: AuctionUnitItemBody[]; // BUNDLE / MULTI_UNIT / LOT
+  /** BUNDLE items carry the listing name too; the API requires it on every item. */
+  items?: (AuctionUnitItemBody | AuctionItemBody)[]; // BUNDLE / MULTI_UNIT / LOT
 }
 
 export interface AuctionUnit {
@@ -120,6 +124,12 @@ export interface AuctionVM {
   referenceId?: string;
   protocol?: AuctionProtocol;
   monetaryOptions?: AuctionMonetaryOptions;
+  /** Currency, time zone and rounding (replaces `monetaryOptions`). */
+  regionalSettings?: {
+    currency?: string | Record<string, string>;
+    timeZone?: string | Record<string, string>;
+    roundingMode?: string | Record<string, string>;
+  };
   schedule?: AuctionSchedule;
   /** Raw top-level times as returned by the API — also folded into `schedule`
    *  by {@link auctionsApi.withSchedule}. */
@@ -171,17 +181,77 @@ export interface PaginatedAuctions {
   };
 }
 
+/** Currency, time zone and rounding used for every price and deadline. The
+ *  number of decimals follows the currency. */
+export interface AuctionRegionalSettings {
+  currency: string;
+  timeZone: string;
+  roundingMode: string;
+}
+
+export type ReservePriceBasis = 'PERCENTAGE_BASED' | 'AMOUNT_BASED';
+export type ReservePriceVisibility = 'HIDDEN' | 'VISIBLE' | 'VISIBLE_ONCE_MET';
+
+/** Reserve = opening price plus (forward) or minus (reverse) a margin. */
+export interface ReservePricePolicyRQ {
+  type: 'RESERVE_PRICE_POLICY';
+  name?: string;
+  description?: string;
+  basis: ReservePriceBasis;
+  /** The margin: a percent of the opening price, or an amount. Zero or more. */
+  value: number;
+  visibility: ReservePriceVisibility;
+}
+
+/** How offers are made: participants beat the standing price (OPEN), the
+ *  platform moves it on a clock (CLOCKED), or hidden offers open at the end (SEALED). */
+export type OfferMechanism = 'OPEN' | 'CLOCKED' | 'SEALED';
+export type ParticipantVisibility = 'PUBLIC' | 'ALIAS' | 'HIDDEN';
+export type OfferVisibility = 'FULL' | 'PRICE' | 'RANK' | 'HIDDEN';
+
+/** Step 2 (Offer rules): `POST /api/v1/auctions/{id}/offer-rules`. Accepted
+ *  once per auction; later changes go through the update and policy APIs. */
+export interface OfferRulesCreationRQ {
+  offerMechanism: OfferMechanism;
+  participantVisibility: ParticipantVisibility;
+  offerVisibility: OfferVisibility;
+  /** A PRICE_PROGRESSION_POLICY with at least one child price rule. */
+  priceProgressionPolicy: PolicyItemRQ;
+}
+
+/** Setup step 4: `POST /{id}/pre-auction-rules`. At least one policy or step;
+ *  orders run 1..n in each list, and each type appears once. */
+export interface PreAuctionRulesCreationRQ {
+  /** PARTICIPATION policies, e.g. MINIMUM_PARTICIPANTS_REQUIREMENT_POLICY. */
+  policies?: PolicyItemRQ[];
+  /** PRE_AUCTION workflow steps. */
+  steps?: AddWorkflowStepRQ[];
+}
+
+/** Setup step 5: `POST /{id}/post-auction-rules`. Submitted whole: both
+ *  KTH_PRICE_WINNER_DETERMINATION_POLICY and KTH_WINNER_PRICE_DETERMINATION_POLICY,
+ *  and at least one PAYMENT_STEP. */
+export interface PostAuctionRulesCreationRQ {
+  /** CLEARING policies, not the reserve price. */
+  policies: PolicyItemRQ[];
+  /** POST_AUCTION workflow steps. */
+  steps: AddWorkflowStepRQ[];
+}
+
+/** Step 1 (Basics and unit): `POST /api/v1/auctions`. */
 export interface AuctionCreationRQ {
-  type: string;
-  format: string;
-  protocol: AuctionProtocol;
+  type: 'SIMPLE' | 'MULTI_STAGE' | 'MULTI_ROUND';
   title: string;
   description?: string;
   referenceId?: string;
-  monetaryOptions: AuctionMonetaryOptions;
+  direction: string;
+  accessibility: string;
+  regionalSettings: AuctionRegionalSettings;
+  /** At least one; the auction is filed under them. */
+  subCategories: string[];
   tags?: string[];
-  subCategories?: string[];
-  unit?: AuctionUnitBody;
+  unit: AuctionUnitBody;
+  reservePricePolicy?: ReservePricePolicyRQ;
 }
 
 export interface AuctionUpdationRQ {
@@ -190,18 +260,36 @@ export interface AuctionUpdationRQ {
   referenceId?: string;
   accessibility?: string;
   direction?: string;
+  offerMechanism?: OfferMechanism;
   participantVisibility?: string;
   offerVisibility?: string;
-  monetaryOptions?: Partial<AuctionMonetaryOptions>;
+  regionalSettings?: AuctionRegionalSettings;
   unit?: AuctionUnitBody;
   subCategories?: string[];
   tags?: string[];
 }
 
+/** Soft close: a late offer extends the close. Open auctions only. */
+export interface SoftCloseRQ {
+  reference: 'FROM_AUCTION_END_TIME' | 'FROM_LATEST_OFFER_TIME';
+  /** ISO-8601 duration a late offer adds, at least PT1M. */
+  duration: string;
+  /** Maximum extensions, at least 1. Omit for no limit. */
+  limit?: number;
+}
+
+/** Setup step 3: `PUT /api/v1/auctions/{id}/schedule`. Accepted once, while the
+ *  auction is a draft with offer rules (open bidding only for now). */
 export interface AuctionScheduleRQ {
+  /** Offset date-time in the auction's time zone, in the future. */
   startTime: string;
-  endTime: string;
-  publish?: boolean;
+  /** DURATION runs for `offerDuration`; TIME_RANGE closes at `endTime`. */
+  endMode: 'DURATION' | 'TIME_RANGE';
+  /** ISO-8601 duration, e.g. "PT2H". Required for DURATION. */
+  offerDuration?: string;
+  /** Offset date-time. Required for TIME_RANGE. */
+  endTime?: string;
+  softClose?: SoftCloseRQ;
 }
 
 /** Invites participants to a restricted-access auction by email or phone number. */
@@ -255,7 +343,11 @@ export interface PolicyItemRQ {
   limit?: number;
   windowDuration?: string;
   steps?: number[];
-  /** PERCENTAGE_RANGE_BASED_OFFER_PRICE_POLICY upper bound. */
+  /** PERCENTAGE_RANGE_BASED_OFFER_PRICE_POLICY lower bound (percent). */
+  min?: number;
+  /** PERCENTAGE_RANGE_BASED_OFFER_PRICE_POLICY upper bound (percent), above `min`. */
+  max?: number;
+  /** @deprecated Older range policies; the API now reads `max`. */
   maxValue?: number;
   /** CLOCK_BASED_PRICE_CHANGE_POLICY: the price where the clock stops. */
   thresholdPrice?: number;
@@ -370,6 +462,34 @@ export type AddWorkflowStepRQ =
 
 export type AuctionPoliciesRQ = PolicyItemRQ[];
 
+/** `GET /model/currencies` */
+export interface CurrencyOption {
+  value: string;
+  label: string;
+  symbol: string;
+  decimals: number;
+}
+
+/** `GET /model/time-zones` */
+export interface TimeZoneOption {
+  /** IANA id, e.g. "Asia/Kolkata". */
+  value: string;
+  /** e.g. "(UTC+05:30) India Standard Time · Asia/Kolkata". */
+  label: string;
+  offset: string;
+}
+
+/** `GET /model/monetary-rounding-modes` */
+export interface RoundingModeOption {
+  value: string;
+  label: string;
+  summary?: string;
+  description?: string;
+  useWhen?: string;
+  recommended?: boolean;
+  examples?: unknown[];
+}
+
 /** Model endpoints return arrays of single-key objects: [{ "KEY": "Label" }, ...] */
 export type AuctionModelEntry = Record<string, string>;
 
@@ -407,6 +527,29 @@ export const auctionsApi = {
 
   updateAuction: async (id: string, data: AuctionUpdationRQ): Promise<void> => {
     await apiClient.patch(`/api/v1/auctions/${id}`, data);
+  },
+
+  /** Setup step 2. Fails with OFFER_RULES_ALREADY_SET once a price progression exists. */
+  setOfferRules: async (id: string, data: OfferRulesCreationRQ): Promise<void> => {
+    await apiClient.post(`/api/v1/auctions/${id}/offer-rules`, data);
+  },
+
+  /** Setup step 4. Accepted once, while the auction has no PARTICIPATION policy
+   *  and no PRE_AUCTION workflow step (PRE_AUCTION_RULES_ALREADY_SET otherwise). */
+  setPreAuctionRules: async (id: string, data: PreAuctionRulesCreationRQ): Promise<void> => {
+    await apiClient.post(`/api/v1/auctions/${id}/pre-auction-rules`, data);
+  },
+
+  /** Setup step 5. Accepted once, while the auction has no CLEARING policy
+   *  (other than the reserve price) and no POST_AUCTION step. Must hold both
+   *  winner policies and a PAYMENT_STEP. */
+  setPostAuctionRules: async (id: string, data: PostAuctionRulesCreationRQ): Promise<void> => {
+    await apiClient.post(`/api/v1/auctions/${id}/post-auction-rules`, data);
+  },
+
+  /** Adds one policy to the auction (it goes last in its phase unless `order` says otherwise). */
+  addAuctionPolicy: async (id: string, policy: PolicyItemRQ): Promise<void> => {
+    await apiClient.post(`/api/v1/auctions/${id}/policies/add`, policy);
   },
 
   /** The raw payload carries `startTime`/`endTime` at the top level — fold them
@@ -582,11 +725,24 @@ export const auctionsApi = {
     return parseModelOptions(response.data);
   },
 
+  /** Auction types (SIMPLE, MULTI_ROUND, MULTI_STAGE), sent as `type` on create. */
   getFormats: async (): Promise<{ value: string; label: string }[]> => {
     const response = await apiClient.get<AuctionModelEntry[]>(
-      '/api/v1/auctions/model/auction/formats',
+      '/api/v1/auctions/model/auction/types',
     );
     return parseModelOptions(response.data);
+  },
+
+  /** Currencies an auction can be priced in. */
+  getCurrencies: async (): Promise<CurrencyOption[]> => {
+    const response = await apiClient.get<CurrencyOption[]>('/api/v1/auctions/model/currencies');
+    return response.data;
+  },
+
+  /** Time zones an auction can be scheduled in. */
+  getTimeZones: async (): Promise<TimeZoneOption[]> => {
+    const response = await apiClient.get<TimeZoneOption[]>('/api/v1/auctions/model/time-zones');
+    return response.data;
   },
 
   getDimensionTypes: async (): Promise<{ value: string; label: string }[]> => {
@@ -610,9 +766,10 @@ export const auctionsApi = {
     return parseModelOptions(response.data);
   },
 
-  getPolicyTypes: async (auctionType: string): Promise<{ value: string; label: string }[]> => {
+  /** Every policy type, in the order the backend lists them. */
+  getPolicyTypes: async (): Promise<{ value: string; label: string }[]> => {
     const response = await apiClient.get<AuctionModelEntry[]>(
-      `/api/v1/auctions/model/policies/types/${encodeURIComponent(auctionType)}`,
+      '/api/v1/auctions/model/policies/types',
     );
     return parseModelOptions(response.data);
   },
@@ -620,10 +777,6 @@ export const auctionsApi = {
   getAuctionPolicies: async (id: string): Promise<AuctionPoliciesRQ> => {
     const response = await apiClient.get<AuctionPoliciesRQ>(`/api/v1/auctions/${id}/policies`);
     return response.data;
-  },
-
-  setAuctionPolicies: async (id: string, data: AuctionPoliciesRQ): Promise<void> => {
-    await apiClient.post(`/api/v1/auctions/${id}/policies`, data);
   },
 
   /** Evaluates a draft policy that hasn't been saved yet (e.g. while editing in a form). */
@@ -693,11 +846,19 @@ export const auctionsApi = {
     );
   },
 
-  getRoundingModeTypes: async (): Promise<{ value: string; label: string }[]> => {
-    const response = await apiClient.get<AuctionModelEntry[]>(
-      '/api/v1/auctions/model/monetary-rounding-mode-types',
+  /** Rounding modes for money. `label` is the API's one-line summary, so the
+   *  wizard's tooltip stays short; the full option is in `option`. */
+  getRoundingModeTypes: async (): Promise<
+    { value: string; label: string; option: RoundingModeOption }[]
+  > => {
+    const response = await apiClient.get<RoundingModeOption[]>(
+      '/api/v1/auctions/model/monetary-rounding-modes',
     );
-    return parseModelOptions(response.data);
+    return response.data.map((option) => ({
+      value: option.value,
+      label: option.summary || option.description || option.label,
+      option,
+    }));
   },
 
   getParticipantVisibilityTypes: async (): Promise<{ value: string; label: string }[]> => {

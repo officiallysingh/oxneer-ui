@@ -1,7 +1,8 @@
 import type { AuctionVM, AuctionUnitVM, PolicyItemRQ } from '@repo/api';
 import { resolveStr } from '@/components/common/admin/format';
 import type { BasicsState, OfferState, PriceWindow, SelectedListing, WizardState } from './types';
-import { initialWizardState, localInput } from './types';
+import { initialWizardState } from './types';
+import { dateToZonedInput } from './zonedTime';
 
 export interface EditWizardSnapshot {
   state: WizardState;
@@ -119,8 +120,9 @@ function mapWindows(policies: PolicyItemRQ[]): PriceWindow[] {
       id: policy.id ?? `window-${index + 1}`,
       type: mappedType,
       duration: policy.windowDuration ?? 'PT0S',
-      value: String(policy.value ?? ''),
-      maxValue: String(policy.maxValue ?? ''),
+      // Range windows store their band as min/max.
+      value: String(policy.value ?? policy.min ?? ''),
+      maxValue: String(policy.max ?? policy.maxValue ?? ''),
       steps: policy.steps ?? [],
       clockEveryMinutes:
         mappedType === 'CLOCK'
@@ -158,26 +160,34 @@ function participantVisibilityChoice(value: string): OfferState['participantVisi
 function mapSchedule(
   auction: AuctionVM,
   policies: PolicyItemRQ[],
+  timeZone: string,
 ): Pick<WizardState, 'schedule'>['schedule'] {
   const rawStart = auction.schedule?.startTime ?? auction.startTime;
   const rawEnd = auction.schedule?.endTime ?? auction.endTime;
   const start = parseDate(rawStart);
   const end = parseDate(rawEnd);
   const fallback = initialWizardState.schedule;
+  // Inputs show wall-clock time in the auction's own time zone.
+  const show = (date: Date) => dateToZonedInput(date, timeZone);
 
   const totalMinutes =
     start && end ? Math.max(0, Math.round((end.getTime() - start.getTime()) / 60000)) : 0;
 
-  const extension = policies.find((policy) => policyType(policy).includes('EXTENSION'));
+  // Saved as SOFT_CLOSE_POLICY; older auctions have EXTENSION_POLICY.
+  const extension = policies.find((policy) => {
+    const type = policyType(policy);
+    return type.includes('SOFT_CLOSE') || type.includes('EXTENSION');
+  });
   const extensionMinutes = extension?.duration?.match(/(\d+)M/)?.[1];
+  const endMode = resolveStr(auction.schedule?.endMode);
 
   return {
-    startTime: start ? localInput(start) : fallback.startTime,
-    endMode: end ? 'FIXED' : 'DURATION',
+    startTime: start ? show(start) : fallback.startTime,
+    endMode: endMode === 'DURATION' ? 'DURATION' : end ? 'FIXED' : 'DURATION',
     durationHours:
       totalMinutes > 0 ? String(Math.floor(totalMinutes / 60)) : fallback.durationHours,
     durationMinutes: totalMinutes > 0 ? String(totalMinutes % 60) : fallback.durationMinutes,
-    endTime: end ? localInput(end) : fallback.endTime,
+    endTime: end ? show(end) : fallback.endTime,
     softCloseEnabled: Boolean(extension),
     extendMinutes: extensionMinutes ?? fallback.extendMinutes,
     extensionReference:
@@ -224,6 +234,8 @@ export function mapAuctionToWizardState(
   const clock = type.includes('CLOCK') || windows.some((window) => window.type === 'CLOCK');
   const protocol = auction.protocol;
   const monetary = auction.monetaryOptions;
+  const regional = auction.regionalSettings;
+  const timeZone = resolveStr(regional?.timeZone) || initialWizardState.basics.timeZone;
   const rawStart = auction.schedule?.startTime ?? auction.startTime ?? '';
 
   const state: WizardState = {
@@ -234,9 +246,16 @@ export function mapAuctionToWizardState(
       title: auction.title ?? '',
       description: auction.description ?? '',
       referenceId: auction.referenceId ?? '',
-      currencyUnit: resolveStr(monetary?.currencyUnit) || initialWizardState.basics.currencyUnit,
+      currencyUnit:
+        resolveStr(regional?.currency) ||
+        resolveStr(monetary?.currencyUnit) ||
+        initialWizardState.basics.currencyUnit,
+      timeZone,
       precision: String(monetary?.precision ?? initialWizardState.basics.precision),
-      roundingMode: resolveStr(monetary?.roundingMode) || initialWizardState.basics.roundingMode,
+      roundingMode:
+        resolveStr(regional?.roundingMode) ||
+        resolveStr(monetary?.roundingMode) ||
+        initialWizardState.basics.roundingMode,
       reserveEnabled: Boolean(reserve),
       reserveAmount: reserve ? String(reserve.value ?? '') : '',
       ...mapUnit(unit, auction.title ?? ''),
@@ -251,7 +270,7 @@ export function mapAuctionToWizardState(
         resolveStr(protocol?.participantVisibility),
       ),
     },
-    schedule: mapSchedule(auction, policies),
+    schedule: mapSchedule(auction, policies, timeZone),
     participation: {
       ...initialWizardState.participation,
       minimumEnabled: Boolean(minimum),

@@ -7,6 +7,7 @@ import type { ListingSummaryVM } from '@repo/api';
 import { ListingPicker } from '../basics/ListingPicker';
 import { ListingViewDialog } from '../../../../listings/_components/ListingViewDialog';
 import type { SelectOption } from '../../../_components/AuctionShared';
+import type { CurrencySelectOption } from '../../../_hooks/useAuctionLookups';
 import type { BasicsState, SelectedListing } from '../../../_lib/wizard/types';
 import {
   ChoiceCardGroup,
@@ -37,8 +38,7 @@ const TIME_ZONES = [
   { value: 'America/New_York', label: 'EST: America/New_York' },
 ];
 
-/** Rounding modes as /model/monetary-rounding-mode-types sends them (key →
- *  description), used only if that call fails. */
+/** Rounding modes with their descriptions, used only if /model/monetary-rounding-modes fails. */
 const FALLBACK_ROUNDING: SelectOption[] = [
   {
     value: 'UP',
@@ -140,13 +140,19 @@ export function Step1BasicsUnit({
   directions,
   accessibilityTypes,
   roundingModes,
+  currencies,
+  timeZones,
   errors,
 }: {
-  /** Rounding modes from /model/monetary-rounding-mode-types. */
+  /** Rounding modes from /model/monetary-rounding-modes. */
   roundingModes: SelectOption[];
+  /** Currencies from /model/currencies. */
+  currencies: CurrencySelectOption[];
+  /** Time zones from /model/time-zones. */
+  timeZones: SelectOption[];
   form: BasicsState;
   onChange: (patch: Partial<BasicsState>) => void;
-  /** Auction formats from /model/auction/formats. */
+  /** Auction types from /model/auction/types. */
   formats: SelectOption[];
   /** Unit types from /model/unit-types. */
   unitTypes: SelectOption[];
@@ -159,7 +165,11 @@ export function Step1BasicsUnit({
   const [viewListingId, setViewListingId] = useState<string | null>(null);
   const isForward = form.direction === 'FORWARD';
   const isSingle = form.unitType === 'SINGLE_UNIT';
-  const symbol = currencySymbol(form.currencyUnit);
+  const currencyOptions = currencies.length ? currencies : CURRENCIES;
+  const timeZoneOptions = timeZones.length ? timeZones : TIME_ZONES;
+  const symbol =
+    currencies.find((currency) => currency.value === form.currencyUnit)?.symbol ||
+    currencySymbol(form.currencyUnit);
   const openingLabel = isForward ? 'Opening price' : 'Starting price';
   const reserveLabel = isForward ? 'Reserve price' : 'Maximum price';
   const who = isForward ? 'bidders' : 'suppliers';
@@ -408,7 +418,7 @@ export function Step1BasicsUnit({
                 onChange={(e) => onChange({ currencyUnit: e.target.value })}
                 className={selectClass}
               >
-                {CURRENCIES.map((currency) => (
+                {currencyOptions.map((currency) => (
                   <option key={currency.value} value={currency.value}>
                     {currency.label}
                   </option>
@@ -422,7 +432,7 @@ export function Step1BasicsUnit({
                 onChange={(e) => onChange({ timeZone: e.target.value })}
                 className={selectClass}
               >
-                {TIME_ZONES.map((zone) => (
+                {timeZoneOptions.map((zone) => (
                   <option key={zone.value} value={zone.value}>
                     {zone.label}
                   </option>
@@ -702,7 +712,7 @@ export function Step1BasicsUnit({
                             ? `${who} do not see it`
                             : form.reserveVisibility === 'SHOWN'
                               ? `${who} see the amount`
-                              : `${who} see only whether it is met`
+                              : `${who} see it once it is met`
                         }`
                       : 'Add the amount you want to protect.'}
                   </p>
@@ -715,7 +725,11 @@ export function Step1BasicsUnit({
                     {[
                       ['HIDDEN', 'Hidden', `${Who} do not see it.`],
                       ['SHOWN', 'Shown', `${Who} see the amount.`],
-                      ['MET_ONLY', 'Only "reserve met"', `${Who} see whether it has been reached.`],
+                      [
+                        'MET_ONLY',
+                        'Shown once met',
+                        `${Who} see it only after ${isForward ? 'a bid' : 'an ask'} reaches it.`,
+                      ],
                     ].map(([value, title, description]) => (
                       <button
                         key={value}

@@ -33,6 +33,8 @@ function SetupStep() {
           directions={wizard.directions}
           accessibilityTypes={wizard.accessibilityTypes}
           roundingModes={wizard.roundingModes}
+          currencies={wizard.currencies}
+          timeZones={wizard.timeZones}
           errors={errors}
         />
       );

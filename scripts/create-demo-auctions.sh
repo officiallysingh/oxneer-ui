@@ -13,16 +13,39 @@ set -euo pipefail
 #   MANAGED_TYPE_ID=xxx LISTING_ID=yyy ./scripts/create-demo-auctions.sh
 #
 # Optional:
-#   NUM_AUCTIONS=5 PUBLISH=false ACCESSIBILITY=PRIVATE ./scripts/create-demo-auctions.sh
+#   NUM_AUCTIONS=6 PUBLISH=false ./scripts/create-demo-auctions.sh
+#
+#   ACCESSIBILITY  MIXED (default: odd auctions PUBLIC, even PRIVATE), PUBLIC or PRIVATE
+#   INVITE_EMAILS  comma-separated emails to invite to each PRIVATE auction once it is
+#                  published (the backend only accepts invitations on published auctions).
+#                  Each invite sends a real email, so leave it empty unless you want that.
+#                  e.g. INVITE_EMAILS="buyer1@example.com,buyer2@example.com"
 
 BASE_URL="${BASE_URL:-http://localhost:8090}"
 API="$BASE_URL/api/v1"
-NUM_AUCTIONS="${NUM_AUCTIONS:-5}"
+NUM_AUCTIONS="${NUM_AUCTIONS:-6}"
 MANAGED_TYPE_ID="${MANAGED_TYPE_ID:-}"
 LISTING_ID="${LISTING_ID:-}"
 SUBCATEGORY_ID="${SUBCATEGORY_ID:-}"
 PUBLISH="${PUBLISH:-true}"
-ACCESSIBILITY="${ACCESSIBILITY:-PUBLIC}"
+ACCESSIBILITY="${ACCESSIBILITY:-MIXED}"
+INVITE_EMAILS="${INVITE_EMAILS:-}"
+
+case "$ACCESSIBILITY" in
+  MIXED|PUBLIC|PRIVATE) ;;
+  *) printf "\033[1;31m[FAIL]\033[0m  ACCESSIBILITY must be MIXED, PUBLIC or PRIVATE (got %s)\n" "$ACCESSIBILITY"; exit 1 ;;
+esac
+
+# PUBLIC or PRIVATE for auction number $1 (1-based).
+accessibility_for() {
+  if [ "$ACCESSIBILITY" != "MIXED" ]; then
+    echo "$ACCESSIBILITY"
+  elif [ $(( $1 % 2 )) -eq 1 ]; then
+    echo "PUBLIC"
+  else
+    echo "PRIVATE"
+  fi
+}
 COOKIE_JAR="/tmp/oxneer-cookies.txt"
 rm -f "$COOKIE_JAR"
 
@@ -134,6 +157,7 @@ PRICES=(89999 159999 74999 64999 89999)
 
 # ── Create auctions ─────────────────────────────────────────────────────────
 CREATED_IDS=()
+CREATED_ACCESS=()
 FAILURES=0
 
 for i in $(seq 1 "$NUM_AUCTIONS"); do
@@ -143,18 +167,24 @@ for i in $(seq 1 "$NUM_AUCTIONS"); do
   tags="${TAGS[$idx]}"
   price="${PRICES[$idx]}"
   ref_id="DEMO-$(printf '%04d' $i)"
+  access=$(accessibility_for "$i")
+  if [ "$access" = "PRIVATE" ]; then
+    label="Private"
+  else
+    label="Public"
+  fi
 
   echo ""
-  info "[$i/$NUM_AUCTIONS] Creating: $title"
+  info "[$i/$NUM_AUCTIONS] Creating $access auction: $title"
 
   # Create auction
   api POST "$API/auctions" '{
     "type": "SIMPLE",
-    "title": "'"$title"' (DEMO-'"$(printf '%04d' $i)"')",
+    "title": "'"$title"' ('"$label"' '"$ref_id"')",
     "description": "'"$description"'",
     "referenceId": "'"$ref_id"'",
     "direction": "FORWARD",
-    "accessibility": "'"$ACCESSIBILITY"'",
+    "accessibility": "'"$access"'",
     "regionalSettings": {
       "currency": "INR",
       "timeZone": "Asia/Kolkata",
@@ -325,12 +355,29 @@ for i in $(seq 1 "$NUM_AUCTIONS"); do
     }
   }' || step_failed=1
 
+  published=0
   if [ "$step_failed" -eq 0 ] && [ "$PUBLISH" = "true" ]; then
-    step "Published" PUT "auctions/$AUCTION_ID/publish" || step_failed=1
+    step "Published" PUT "auctions/$AUCTION_ID/publish" && published=1 || step_failed=1
+  fi
+
+  # Private auctions are invitation-only; invite the configured users once published
+  if [ "$access" = "PRIVATE" ] && [ -n "$INVITE_EMAILS" ]; then
+    if [ "$published" -eq 1 ]; then
+      IFS=',' read -ra emails <<< "$INVITE_EMAILS"
+      for email in "${emails[@]}"; do
+        email="${email// /}"
+        [ -n "$email" ] || continue
+        step "Invited $email" POST "auctions/$AUCTION_ID/participants/invitations" \
+          '{"emailId":"'"$email"'","forceReInvite":false}' || step_failed=1
+      done
+    else
+      warn "  Skipped invitations: the auction is not published"
+    fi
   fi
 
   [ "$step_failed" -eq 0 ] || FAILURES=$((FAILURES + 1))
   CREATED_IDS+=("$AUCTION_ID")
+  CREATED_ACCESS+=("$access")
 done
 
 # ── Summary ─────────────────────────────────────────────────────────────────
@@ -344,7 +391,7 @@ printf "║  SubCategory: %-46s ║\n" "$SUBCATEGORY_ID"
 echo "╠══════════════════════════════════════════════════════════════╣"
 echo "║  Auction IDs:                                              ║"
 for j in "${!CREATED_IDS[@]}"; do
-  printf "║    %2d. %-51s ║\n" "$((j+1))" "${CREATED_IDS[$j]}"
+  printf "║    %2d. %-8s %-42s ║\n" "$((j+1))" "${CREATED_ACCESS[$j]}" "${CREATED_IDS[$j]}"
 done
 echo "╠══════════════════════════════════════════════════════════════╣"
 printf "║  Admin:  %-48s ║\n" "$BASE_URL/api/v1/auctions"

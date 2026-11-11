@@ -21,211 +21,217 @@ import {
 import { formatMoney } from '../../../_lib/wizard/summary';
 import { PRESETS } from '../../../_lib/wizard/steps';
 
-const CURRENCIES = [
-  { value: 'INR', label: 'INR: Indian rupee (₹)' },
-  { value: 'USD', label: 'USD: US dollar ($)' },
-  { value: 'EUR', label: 'EUR: Euro (€)' },
-  { value: 'GBP', label: 'GBP: British pound (£)' },
-  { value: 'AED', label: 'AED: UAE dirham (د.إ)' },
-  { value: 'SGD', label: 'SGD: Singapore dollar (S$)' },
+// Currencies and time zones are configured on the server and come from
+// /model/currencies and /model/time-zones. These short lists are used only if
+// those calls fail.
+const FALLBACK_CURRENCIES: CurrencySelectOption[] = [
+  { value: 'INR', label: 'Indian rupee', symbol: '₹', decimals: 2 },
+  { value: 'USD', label: 'US dollar', symbol: '$', decimals: 2 },
+  { value: 'EUR', label: 'Euro', symbol: '€', decimals: 2 },
+  { value: 'AED', label: 'UAE dirham', symbol: 'AED', decimals: 2 },
 ];
 
-const TIME_ZONES = [
+const FALLBACK_TIME_ZONES: SelectOption[] = [
   { value: 'Asia/Kolkata', label: 'IST: Asia/Kolkata' },
+  { value: 'UTC', label: 'UTC' },
   { value: 'Asia/Dubai', label: 'GST: Asia/Dubai' },
   { value: 'Asia/Singapore', label: 'SGT: Asia/Singapore' },
-  { value: 'Europe/London', label: 'GMT: Europe/London' },
-  { value: 'America/New_York', label: 'EST: America/New_York' },
 ];
 
-/** Rounding modes with their descriptions, used only if /model/monetary-rounding-modes fails. */
-const FALLBACK_ROUNDING: SelectOption[] = [
-  {
-    value: 'UP',
-    label:
-      'Rounding mode to round away from zero. Always increments the digit prior to a non-zero discarded fraction. Note that this rounding mode never decreases the magnitude of the calculated value.',
-  },
-  {
-    value: 'DOWN',
-    label:
-      'Rounding mode to round towards zero. Never increments the digit prior to a discarded fraction (i.e., truncates). Note that this rounding mode never increases the magnitude of the calculated value.',
-  },
-  {
-    value: 'CEILING',
-    label:
-      'Rounding mode to round towards positive infinity. If the result is positive, behaves as for RoundingMode.UP; if negative, behaves as for RoundingMode.DOWN. Note that this rounding mode never decreases the calculated value.',
-  },
-  {
-    value: 'FLOOR',
-    label:
-      'Rounding mode to round towards negative infinity. If the result is positive, behave as for RoundingMode.DOWN; if negative, behave as for RoundingMode.UP. Note that this rounding mode never increases the calculated value.',
-  },
+/** A rounding mode: `value` is the java.math.RoundingMode name the API takes. */
+interface RoundingChoice {
+  value: string;
+  label: string;
+  summary: string;
+  description: string;
+  useWhen: string;
+  recommended: boolean;
+  /** A calculated amount and what it rounds to, at two decimal places. */
+  examples: { calculated: string; rounded: string }[];
+}
+
+// The rounding modes offered, fixed in the UI.
+const ROUNDING_MODES: RoundingChoice[] = [
   {
     value: 'HALF_UP',
-    label:
-      'Rounding mode to round towards "nearest neighbor" unless both neighbors are equidistant, in which case round up. Behaves as for RoundingMode.UP if the discarded fraction is ≥ 0.5; otherwise, behaves as for RoundingMode.DOWN.',
-  },
-  {
-    value: 'HALF_DOWN',
-    label:
-      'Rounding mode to round towards "nearest neighbor" unless both neighbors are equidistant, in which case round down. Behaves as for RoundingMode.UP if the discarded fraction is > 0.5; otherwise, behaves as for RoundingMode.DOWN.',
+    label: 'Nearest, halves up',
+    summary: 'Standard rounding. A half goes up.',
+    description: 'Rounds to the nearest unit. When the dropped part is exactly half, it rounds up.',
+    useWhen: 'Most auctions: fees, deposits and percentage prices.',
+    recommended: true,
+    examples: [
+      { calculated: '24.671', rounded: '24.67' },
+      { calculated: '24.675', rounded: '24.68' },
+      { calculated: '24.685', rounded: '24.69' },
+    ],
   },
   {
     value: 'HALF_EVEN',
-    label:
-      'Rounding mode to round towards the "nearest neighbor" unless both neighbors are equidistant, in which case, round towards the even neighbor. Behaves as for RoundingMode.HALF_UP if the digit to the left of the discarded fraction is odd; behaves as for RoundingMode.HALF_DOWN if it\'s even.',
+    label: 'Nearest, halves to even',
+    summary: 'Banker’s rounding. Fairest over many amounts.',
+    description:
+      'Rounds to the nearest unit. An exact half goes to the even digit, so totals don’t drift.',
+    useWhen: 'Many small amounts added up, like charges across many participants.',
+    recommended: false,
+    examples: [
+      { calculated: '24.671', rounded: '24.67' },
+      { calculated: '24.675', rounded: '24.68' },
+      { calculated: '24.685', rounded: '24.68' },
+    ],
+  },
+  {
+    value: 'UP',
+    label: 'Always up',
+    summary: 'Any leftover fraction rounds up.',
+    description: 'Never rounds down: any amount beyond the last unit goes up to the next one.',
+    useWhen: 'An amount must never fall short, like a minimum deposit you collect.',
+    recommended: false,
+    examples: [
+      { calculated: '24.671', rounded: '24.68' },
+      { calculated: '24.675', rounded: '24.68' },
+      { calculated: '24.685', rounded: '24.69' },
+    ],
+  },
+  {
+    value: 'DOWN',
+    label: 'Always down',
+    summary: 'Drops the leftover fraction.',
+    description: 'Never rounds up: anything beyond the last unit is dropped.',
+    useWhen: 'An amount must never be overcharged, like a refund or a cap.',
+    recommended: false,
+    examples: [
+      { calculated: '24.671', rounded: '24.67' },
+      { calculated: '24.675', rounded: '24.67' },
+      { calculated: '24.685', rounded: '24.68' },
+    ],
   },
 ];
 
-/** Shown before the model lists load, or if they can't be fetched. */
-const FALLBACK_DIRECTIONS: SelectOption[] = [
-  { value: 'FORWARD', label: 'Forward/Ascending Price - Sell side' },
-  { value: 'REVERSE', label: 'Reverse/Descending Price - Buy side' },
+// Fixed enums: `value` is what the API takes; the copy is the design's.
+interface Choice<V extends string> {
+  value: V;
+  title: string;
+  description: string;
+  code?: string;
+  /** Not built yet: shown, but can't be picked. */
+  later?: boolean;
+}
+
+const AUCTION_TYPES: Choice<string>[] = [
+  {
+    value: 'SIMPLE',
+    title: 'Simple',
+    code: 'SIMPLE',
+    description: 'One unit, one round. For example, selling a used car.',
+  },
+  {
+    value: 'MULTI_ROUND',
+    title: 'Multi-round',
+    code: 'MULTI_ROUND',
+    description: 'One round per unit: parallel, sequential or staggered.',
+    later: true,
+  },
+  {
+    value: 'MULTI_STAGE',
+    title: 'Multi-stage',
+    code: 'MULTI_STAGE',
+    description: 'Stages with their own rules, such as a sealed qualifier and then a live auction.',
+    later: true,
+  },
 ];
-const FALLBACK_ACCESSIBILITY: SelectOption[] = [
-  { value: 'PUBLIC', label: 'Public - Any registered user can view and participate' },
+
+const DIRECTIONS: Choice<BasicsState['direction']>[] = [
+  {
+    value: 'FORWARD',
+    title: 'Forward (selling)',
+    description: 'Buyers bid the price up. The highest bid wins.',
+  },
+  {
+    value: 'REVERSE',
+    title: 'Reverse (buying)',
+    description: 'Suppliers bid the price down. The lowest ask wins.',
+  },
+];
+
+const ACCESSIBILITY: Choice<BasicsState['accessibility']>[] = [
+  { value: 'PUBLIC', title: 'Public', description: 'Any registered user can join.' },
   {
     value: 'PRIVATE',
-    label:
-      'Private - Only registered user which are invited by Auctioneer can view and participate',
+    title: 'Private',
+    description: 'Only people you invite, once it’s published.',
   },
 ];
-const FALLBACK_FORMATS: SelectOption[] = [
-  { value: 'SIMPLE', label: 'Simple' },
-  { value: 'MULTI_ROUND', label: 'Multi Round' },
-  { value: 'MULTI_STAGE', label: 'Multi Stage' },
-];
-const FALLBACK_UNIT_TYPES: SelectOption[] = [
-  { value: 'SINGLE_UNIT', label: 'Single Item (Atomic)' },
-  { value: 'BUNDLE', label: 'Bundle of identical or different items (Atomic)' },
-  { value: 'MULTI_UNIT', label: 'Multiple identical items' },
-];
 
-/** The simple wizard builds one-round auctions of atomic units only. */
-const SUPPORTED_FORMATS = ['SIMPLE'];
-const SUPPORTED_UNIT_TYPES: BasicsState['unitType'][] = ['SINGLE_UNIT', 'BUNDLE'];
-const SUPPORTED_DIRECTIONS: BasicsState['direction'][] = ['FORWARD', 'REVERSE'];
-const SUPPORTED_ACCESSIBILITY: BasicsState['accessibility'][] = ['PUBLIC', 'PRIVATE'];
-
-/** The server labels read "Public - Any registered user…"; keep the part after the dash. */
-function labelDetail(label: string): string {
-  const detail = label.split(' - ').slice(1).join(' - ').trim();
-  return detail ? detail.charAt(0).toUpperCase() + detail.slice(1) : label;
-}
-
-/** "MULTI_ROUND" → "Multi round", for types the server adds that we have no copy for. */
-function titleFromCode(code: string): string {
-  const words = code.toLowerCase().split('_').filter(Boolean).join(' ');
-  return words.charAt(0).toUpperCase() + words.slice(1);
-}
-
-function currencySymbol(code: string): string {
-  return (
+function unitTypes(forward: boolean): Choice<string>[] {
+  const soldOrBought = forward ? 'sold' : 'bought';
+  return [
     {
-      INR: '₹',
-      USD: '$',
-      EUR: '€',
-      GBP: '£',
-      AED: 'د.إ',
-      SGD: 'S$',
-    }[code] ?? code
-  );
+      value: 'SINGLE_UNIT',
+      title: 'Single Unit',
+      description: `One item and its quantity, ${soldOrBought} as a whole.`,
+    },
+    {
+      value: 'BUNDLE',
+      title: 'Bundle',
+      description: `One or more items, each with its quantity, ${soldOrBought} as a whole.`,
+    },
+    {
+      value: 'MULTI_UNIT',
+      title: 'Multi Unit',
+      description: `${forward ? 'Bidders' : 'Suppliers'} choose a quantity and a price per piece.`,
+      later: true,
+    },
+  ];
 }
+
+/** "INR: Indian rupee (₹)", unless the API's label already reads that way. */
+function currencyLabel(currency: CurrencySelectOption): string {
+  if (currency.label.startsWith(currency.value)) return currency.label;
+  const symbol =
+    currency.symbol && currency.symbol !== currency.value ? ` (${currency.symbol})` : '';
+  return `${currency.value}: ${currency.label}${symbol}`;
+}
+
+const decimalsText = (decimals: number) =>
+  decimals === 0 ? 'no decimal places' : `${decimals} decimal places`;
 
 export function Step1BasicsUnit({
   form,
   onChange,
-  formats,
-  unitTypes,
-  directions,
-  accessibilityTypes,
-  roundingModes,
   currencies,
   timeZones,
   errors,
 }: {
-  /** Rounding modes from /model/monetary-rounding-modes. */
-  roundingModes: SelectOption[];
+  form: BasicsState;
+  onChange: (patch: Partial<BasicsState>) => void;
   /** Currencies from /model/currencies. */
   currencies: CurrencySelectOption[];
   /** Time zones from /model/time-zones. */
   timeZones: SelectOption[];
-  form: BasicsState;
-  onChange: (patch: Partial<BasicsState>) => void;
-  /** Auction types from /model/auction/types. */
-  formats: SelectOption[];
-  /** Unit types from /model/unit-types. */
-  unitTypes: SelectOption[];
-  /** Directions from /model/direction-types. */
-  directions: SelectOption[];
-  /** Who can join, from /model/accessibility-types. */
-  accessibilityTypes: SelectOption[];
   errors: Record<string, string>;
 }) {
   const [viewListingId, setViewListingId] = useState<string | null>(null);
   const isForward = form.direction === 'FORWARD';
   const isSingle = form.unitType === 'SINGLE_UNIT';
-  const currencyOptions = currencies.length ? currencies : CURRENCIES;
-  const timeZoneOptions = timeZones.length ? timeZones : TIME_ZONES;
-  const symbol =
-    currencies.find((currency) => currency.value === form.currencyUnit)?.symbol ||
-    currencySymbol(form.currencyUnit);
+  const currencyOptions = currencies.length ? currencies : FALLBACK_CURRENCIES;
+  const timeZoneOptions = timeZones.length ? timeZones : FALLBACK_TIME_ZONES;
+  const currency = currencyOptions.find((option) => option.value === form.currencyUnit);
+  const symbol = currency?.symbol || form.currencyUnit;
+  const decimals = currency?.decimals ?? 2;
   const openingLabel = isForward ? 'Opening price' : 'Starting price';
   const reserveLabel = isForward ? 'Reserve price' : 'Maximum price';
   const who = isForward ? 'bidders' : 'suppliers';
   const Who = isForward ? 'Bidders' : 'Suppliers';
-  const soldOrBought = isForward ? 'sold' : 'bought';
-
-  // The server decides which formats and unit types exist; the design's
-  // wording is used for the ones we know, and the server's label otherwise.
-  const formatCopy: Record<string, { title: string; description: string }> = {
-    SIMPLE: {
-      title: 'Simple',
-      description: isForward
-        ? 'One unit, one round. For example, selling a used car.'
-        : 'One unit, one round. For example, buying school uniforms.',
-    },
-    MULTI_ROUND: {
-      title: 'Multi-round',
-      description: 'One round per unit: parallel, sequential or staggered.',
-    },
-    MULTI_STAGE: {
-      title: 'Multi-stage',
-      description:
-        'Stages with their own rules, such as a sealed qualifier and then a live auction.',
-    },
-  };
-  const unitCopy: Record<string, { title: string; description: string }> = {
-    SINGLE_UNIT: {
-      title: 'Single Unit',
-      description: `One item and its quantity, ${soldOrBought} as a whole.`,
-    },
-    BUNDLE: {
-      title: 'Bundle',
-      description: `One or more items, each with its quantity, ${soldOrBought} as a whole.`,
-    },
-    MULTI_UNIT: {
-      title: 'Multi Unit',
-      description: `${Who} choose a quantity and a price per piece.`,
-    },
-  };
-  // Direction descriptions come straight from /model/direction-types.
-  const directionTitle: Record<string, string> = {
-    FORWARD: 'Forward (selling)',
-    REVERSE: 'Reverse (buying)',
-  };
-  const accessibilityCopy: Record<string, { title: string; description: string }> = {
-    PUBLIC: { title: 'Public', description: 'Any registered user can join.' },
-    PRIVATE: { title: 'Private', description: 'Only people you invite, once it’s published.' },
-  };
-  const directionOptions = directions.length ? directions : FALLBACK_DIRECTIONS;
-  const accessibilityOptions = accessibilityTypes.length
-    ? accessibilityTypes
-    : FALLBACK_ACCESSIBILITY;
-  const roundingOptions = roundingModes.length ? roundingModes : FALLBACK_ROUNDING;
-  const formatOptions = formats.length ? formats : FALLBACK_FORMATS;
-  const unitOptions = unitTypes.length ? unitTypes : FALLBACK_UNIT_TYPES;
   const comingLater = <span className="text-[10px] font-medium text-warning">Coming later</span>;
+  const choiceOptions = <V extends string>(choices: Choice<V>[]) =>
+    choices.map((choice) => ({
+      value: choice.value,
+      title: choice.title,
+      code: choice.code,
+      description: choice.description,
+      disabled: Boolean(choice.later),
+      badge: choice.later ? comingLater : undefined,
+    }));
 
   const totalQuantity = useMemo(
     () => form.items.reduce((sum, item) => sum + (parseInt(item.quantity, 10) || 1), 0),
@@ -282,18 +288,7 @@ export function Step1BasicsUnit({
             value={form.format}
             // Only SIMPLE is supported, and it's already selected.
             onChange={() => {}}
-            options={formatOptions.map((option) => {
-              const supported = SUPPORTED_FORMATS.includes(option.value);
-              const copy = formatCopy[option.value];
-              return {
-                value: option.value,
-                title: copy?.title ?? titleFromCode(option.value),
-                code: option.value,
-                description: copy?.description ?? option.label,
-                disabled: !supported,
-                badge: supported ? undefined : comingLater,
-              };
-            })}
+            options={choiceOptions(AUCTION_TYPES)}
           />
         </WizardRow>
 
@@ -306,18 +301,7 @@ export function Step1BasicsUnit({
             columns={2}
             value={form.direction}
             onChange={(direction) => onChange({ direction: direction as BasicsState['direction'] })}
-            options={directionOptions.map((option) => {
-              const supported = SUPPORTED_DIRECTIONS.includes(
-                option.value as BasicsState['direction'],
-              );
-              return {
-                value: option.value,
-                title: directionTitle[option.value] ?? titleFromCode(option.value),
-                description: option.label,
-                disabled: !supported,
-                badge: supported ? undefined : comingLater,
-              };
-            })}
+            options={choiceOptions(DIRECTIONS)}
           />
         </WizardRow>
 
@@ -361,7 +345,7 @@ export function Step1BasicsUnit({
                 value={form.referenceId}
                 onChange={(e) => onChange({ referenceId: e.target.value })}
                 placeholder="e.g. AXN_0001"
-                className={`${inputClass} font-mono`}
+                className={cn(inputClass, 'font-mono')}
               />
             </Field>
           </div>
@@ -377,7 +361,7 @@ export function Step1BasicsUnit({
                   ? 'What bidders should know before they join'
                   : 'What suppliers should know before they join'
               }
-              className={`${inputClass} resize-y`}
+              className={cn(inputClass, 'resize-y')}
             />
           </Field>
         </WizardRow>
@@ -393,37 +377,33 @@ export function Step1BasicsUnit({
             onChange={(accessibility) =>
               onChange({ accessibility: accessibility as BasicsState['accessibility'] })
             }
-            options={accessibilityOptions.map((option) => {
-              const supported = SUPPORTED_ACCESSIBILITY.includes(
-                option.value as BasicsState['accessibility'],
-              );
-              const copy = accessibilityCopy[option.value];
-              return {
-                value: option.value,
-                title: copy?.title ?? titleFromCode(option.value),
-                description: copy?.description ?? labelDetail(option.label),
-                disabled: !supported,
-                badge: supported ? undefined : comingLater,
-              };
-            })}
+            options={choiceOptions(ACCESSIBILITY)}
           />
         </WizardRow>
 
-        <WizardRow label="Money and time" description="Used for every price and deadline.">
+        <WizardRow
+          label="Regional settings"
+          description="Currency, time zone and how calculated amounts are rounded."
+        >
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Currency" htmlFor="currency">
               <select
                 id="currency"
                 value={form.currencyUnit}
                 onChange={(e) => onChange({ currencyUnit: e.target.value })}
+                aria-describedby="currency-hint"
                 className={selectClass}
               >
-                {currencyOptions.map((currency) => (
-                  <option key={currency.value} value={currency.value}>
-                    {currency.label}
+                {currencyOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {currencyLabel(option)}
                   </option>
                 ))}
               </select>
+              <p id="currency-hint" className="mt-1.5 text-[11px] text-muted-foreground">
+                {form.currencyUnit} amounts use {decimalsText(decimals)}. Set by the currency, so
+                prices, fees and payments always match what can be charged.
+              </p>
             </Field>
             <Field label="Time zone" htmlFor="timezone">
               <select
@@ -445,47 +425,73 @@ export function Step1BasicsUnit({
               id="rounding-label"
               className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
             >
-              Rounding
+              Rounding mode
             </p>
             <div
               role="radiogroup"
               aria-labelledby="rounding-label"
               aria-describedby="rounding-hint"
-              className="flex flex-wrap gap-2"
+              className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4"
             >
-              {roundingOptions.map((mode) => {
+              {ROUNDING_MODES.map((mode) => {
                 const selected = form.roundingMode === mode.value;
+                const card = (
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => onChange({ roundingMode: mode.value })}
+                    className={cn(
+                      'flex h-full w-full flex-col items-start gap-1 rounded-md border px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                      selected
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border bg-background hover:border-primary/40',
+                    )}
+                  >
+                    <span className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-xs font-semibold text-foreground">{mode.label}</span>
+                      {mode.recommended && (
+                        <span className="rounded-full bg-success/15 px-1.5 py-0.5 text-[10px] font-medium text-success">
+                          Recommended
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">{mode.summary}</span>
+                  </button>
+                );
+                // Hovering or focusing a mode shows what it does and when to use it.
                 return (
-                  // The chip shows the API key; hovering or focusing it shows
-                  // the key and the API's description of what it does.
                   <Tooltip key={mode.value}>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        role="radio"
-                        aria-checked={selected}
-                        onClick={() => onChange({ roundingMode: mode.value })}
-                        className={cn(
-                          'h-9 rounded-md border px-3 font-mono text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                          selected
-                            ? 'border-primary bg-primary/25 text-foreground'
-                            : 'border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground',
-                        )}
-                      >
-                        {mode.value}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs text-xs leading-relaxed">
-                      <p className="font-mono font-semibold">{mode.value}</p>
-                      <p className="mt-1">{mode.label}</p>
+                    <TooltipTrigger asChild>{card}</TooltipTrigger>
+                    <TooltipContent className="max-w-xs space-y-1.5 text-xs leading-relaxed">
+                      <p className="font-semibold">{mode.label}</p>
+                      <p>{mode.description}</p>
+                      <table className="w-full font-mono tabular-nums">
+                        <thead>
+                          <tr className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                            <th className="text-left font-medium">Calculated</th>
+                            <th className="text-right font-medium">Rounded</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {mode.examples.map((example) => (
+                            <tr key={example.calculated}>
+                              <td>{example.calculated}</td>
+                              <td className="text-right font-semibold">{example.rounded}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <p className="text-muted-foreground">{mode.useWhen}</p>
                     </TooltipContent>
                   </Tooltip>
                 );
               })}
             </div>
             <p id="rounding-hint" className="text-[11px] text-muted-foreground">
-              How amounts with too many decimals are rounded, for example a percentage step. Hover a
-              choice to see what it does.
+              Applies to every amount the platform works out, such as percentage prices, fees and
+              deposits. Amounts are kept to {decimalsText(decimals)}, as the currency sets. Hover
+              over an option for an example.
             </p>
           </div>
         </WizardRow>
@@ -520,19 +526,7 @@ export function Step1BasicsUnit({
                   : { unitType },
               );
             }}
-            options={unitOptions.map((option) => {
-              const supported = SUPPORTED_UNIT_TYPES.includes(
-                option.value as BasicsState['unitType'],
-              );
-              const copy = unitCopy[option.value];
-              return {
-                value: option.value,
-                title: copy?.title ?? titleFromCode(option.value),
-                description: copy?.description ?? option.label,
-                disabled: !supported,
-                badge: supported ? undefined : comingLater,
-              };
-            })}
+            options={choiceOptions(unitTypes(isForward))}
           />
         </WizardRow>
 
@@ -737,18 +731,20 @@ export function Step1BasicsUnit({
                         onClick={() =>
                           onChange({ reserveVisibility: value as BasicsState['reserveVisibility'] })
                         }
-                        className={`flex w-full items-start gap-2 border-b border-border px-3 py-2 text-left last:border-b-0 ${
+                        className={cn(
+                          'flex w-full items-start gap-2 border-b border-border px-3 py-2 text-left last:border-b-0',
                           form.reserveVisibility === value
                             ? 'bg-primary/5 shadow-[inset_3px_0_0_hsl(var(--primary))]'
-                            : 'bg-background hover:bg-muted/30'
-                        }`}
+                            : 'bg-background hover:bg-muted/30',
+                        )}
                       >
                         <span
-                          className={`mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border ${
+                          className={cn(
+                            'mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border',
                             form.reserveVisibility === value
                               ? 'border-primary'
-                              : 'border-muted-foreground/50'
-                          }`}
+                              : 'border-muted-foreground/50',
+                          )}
                         >
                           {form.reserveVisibility === value && (
                             <span className="h-2 w-2 rounded-full bg-primary" />

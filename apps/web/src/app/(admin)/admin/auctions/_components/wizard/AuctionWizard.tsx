@@ -28,11 +28,6 @@ function SetupStep() {
         <Step1BasicsUnit
           form={basics}
           onChange={wizard.patchBasics}
-          formats={wizard.formats}
-          unitTypes={wizard.unitTypes}
-          directions={wizard.directions}
-          accessibilityTypes={wizard.accessibilityTypes}
-          roundingModes={wizard.roundingModes}
           currencies={wizard.currencies}
           timeZones={wizard.timeZones}
           errors={errors}
@@ -73,6 +68,7 @@ function SetupStep() {
       return auctionId ? (
         <Step4Participation
           auctionId={auctionId}
+          workflowDrafts={wizard.workflowDrafts}
           form={state.participation}
           onChange={wizard.patchParticipation}
           isPrivate={wizard.isPrivate}
@@ -88,6 +84,7 @@ function SetupStep() {
       return auctionId ? (
         <Step5Award
           auctionId={auctionId}
+          workflowDrafts={wizard.workflowDrafts}
           form={state.award}
           onChange={wizard.patchAward}
           direction={basics.direction}

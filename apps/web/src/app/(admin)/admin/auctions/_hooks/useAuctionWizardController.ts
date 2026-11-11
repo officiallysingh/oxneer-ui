@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { auctionsApi, type PolicyItemRQ } from '@repo/api';
+import { auctionsApi, type PolicyItemRQ, type WorkflowStepPhase } from '@repo/api';
 import { toast } from '@repo/ui';
 import { parseApiError } from '@/lib/api-errors';
+import { resolveStr } from '@/components/common/admin/format';
 import {
   SETUP_STEPS,
   STEP_LABELS,
@@ -30,8 +31,13 @@ import {
   buildOfferRules,
   buildPostAuctionPolicies,
   buildPreAuctionPolicies,
+  isClearingPolicy,
+  isParticipationPolicy,
 } from '../_lib/wizard/payload';
+import { EMPTY_PENDING_STEPS, type PendingSteps } from '../_lib/wizard/pendingSteps';
+import { isPostStep } from '../_lib/wizard/workflow';
 import { useAuctionLookups } from './useAuctionLookups';
+import type { WorkflowDrafts } from './useWorkflow';
 import { schedulePayload, useWizardPersistence } from './useWizardPersistence';
 
 export interface AuctionWizardConfig {
@@ -69,14 +75,22 @@ type WriteKind = 'basics' | 'offerRules' | 'schedule' | 'preRules' | 'postRules'
 
 const ALL_WRITES: WriteKind[] = ['basics', 'offerRules', 'schedule', 'preRules', 'postRules'];
 
-const WRITE_INPUT: Record<WriteKind, (state: WizardState) => string> = {
+const WRITE_INPUT: Record<WriteKind, (state: WizardState, drafts: PendingSteps) => string> = {
   basics: (state) => JSON.stringify(state.basics),
   // Mechanism, both visibilities and the price progression.
   offerRules: (state) => JSON.stringify(buildOfferRules(state.offer)),
   schedule: (state) => JSON.stringify(schedulePayload(state)),
-  // Workflow steps are saved by the step editor, so only the policies count here.
-  preRules: (state) => JSON.stringify(buildPreAuctionPolicies(state)),
-  postRules: (state) => JSON.stringify(buildPostAuctionPolicies(state)),
+  // Policies plus the phase's draft steps; saved steps change through the step editor.
+  preRules: (state, drafts) =>
+    JSON.stringify([
+      buildPreAuctionPolicies(state),
+      drafts.PRE_AUCTION.map((step) => step.request),
+    ]),
+  postRules: (state, drafts) =>
+    JSON.stringify([
+      buildPostAuctionPolicies(state),
+      drafts.POST_AUCTION.map((step) => step.request),
+    ]),
 };
 
 const STEP_WRITES: Record<number, WriteKind[]> = {
@@ -87,8 +101,11 @@ const STEP_WRITES: Record<number, WriteKind[]> = {
   5: ['postRules'],
 };
 
-const snapshotWrites = (state: WizardState, kinds: WriteKind[]) =>
-  Object.fromEntries(kinds.map((kind) => [kind, WRITE_INPUT[kind](state)]));
+const snapshotWrites = (
+  state: WizardState,
+  kinds: WriteKind[],
+  drafts: PendingSteps = EMPTY_PENDING_STEPS,
+) => Object.fromEntries(kinds.map((kind) => [kind, WRITE_INPUT[kind](state, drafts)]));
 
 export function useAuctionWizardController(config: AuctionWizardConfig) {
   const router = useRouter();
@@ -111,15 +128,7 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
   const [postWorkflowCount, setPostWorkflowCount] = useState(config.workflowCounts?.post ?? 0);
   const [inviteStats, setInviteStats] = useState<InviteStats | null>(null);
 
-  const {
-    roundingModes,
-    formats,
-    unitTypes,
-    directions,
-    accessibilityTypes,
-    currencies,
-    timeZones,
-  } = useAuctionLookups();
+  const { currencies, timeZones } = useAuctionLookups();
   const persistence = useWizardPersistence({
     initialAuctionId: config.auctionId,
     unit: config.unit,
@@ -128,26 +137,60 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
     onCreated: setAuctionId,
   });
 
+  // Participation and Award are each saved whole by one setup call. Until a
+  // phase's call is made, its workflow steps are drafts kept here.
+  const [pendingSteps, setPendingSteps] = useState<PendingSteps>(EMPTY_PENDING_STEPS);
+  const [phaseSaved, setPhaseSaved] = useState<Record<WorkflowStepPhase, boolean>>(() => {
+    const policies = config.savedPolicies ?? [];
+    return {
+      PRE_AUCTION: (config.workflowCounts?.pre ?? 0) > 0 || policies.some(isParticipationPolicy),
+      POST_AUCTION: (config.workflowCounts?.post ?? 0) > 0 || policies.some(isClearingPolicy),
+    };
+  });
+  /** Drafts as they stand once `saved` phases are stored (theirs are dropped). */
+  const draftsAfter = (saved: Partial<Record<WorkflowStepPhase, boolean>>): PendingSteps => ({
+    PRE_AUCTION: saved.PRE_AUCTION ? [] : pendingSteps.PRE_AUCTION,
+    POST_AUCTION: saved.POST_AUCTION ? [] : pendingSteps.POST_AUCTION,
+  });
+  const markPhasesSaved = (saved: Partial<Record<WorkflowStepPhase, boolean>>) => {
+    if (!saved.PRE_AUCTION && !saved.POST_AUCTION) return;
+    setPhaseSaved((prev) => ({
+      PRE_AUCTION: prev.PRE_AUCTION || Boolean(saved.PRE_AUCTION),
+      POST_AUCTION: prev.POST_AUCTION || Boolean(saved.POST_AUCTION),
+    }));
+    setPendingSteps(draftsAfter(saved));
+  };
+  const workflowDrafts = useMemo<WorkflowDrafts>(
+    () => ({
+      draft: { PRE_AUCTION: !phaseSaved.PRE_AUCTION, POST_AUCTION: !phaseSaved.POST_AUCTION },
+      steps: pendingSteps,
+      onChange: setPendingSteps,
+    }),
+    [phaseSaved, pendingSteps],
+  );
+
   // What each write last sent, so Next can skip the save when nothing changed
   // (e.g. the admin went back a step just to look). An existing auction starts
   // out matching what was loaded.
   const savedWrites = useRef<Partial<Record<WriteKind, string>>>(
     mode === 'edit' ? snapshotWrites(config.initialState, ALL_WRITES) : {},
   );
-  const recordSaved = (saved: WizardState, kinds: WriteKind[]) => {
-    Object.assign(savedWrites.current, snapshotWrites(saved, kinds));
+  const recordSaved = (saved: WizardState, kinds: WriteKind[], drafts = pendingSteps) => {
+    Object.assign(savedWrites.current, snapshotWrites(saved, kinds, drafts));
   };
   const pendingWrites = (target: number) =>
     (STEP_WRITES[target] ?? []).filter(
       (kind) =>
         !(kind === 'schedule' && !schedulePayload(state)) &&
-        savedWrites.current[kind] !== WRITE_INPUT[kind](state),
+        savedWrites.current[kind] !== WRITE_INPUT[kind](state, pendingSteps),
     );
 
   // Problems in the saved workflow steps (e.g. a payment with no Bank details
   // before it). Loaded here on every step change so the rail is always right,
   // and pushed straight in by Participation and Award after each change.
   const [workflowIssues, setWorkflowIssues] = useState<ReviewIssue[]>([]);
+  const draftsRef = useRef(workflowDrafts);
+  draftsRef.current = workflowDrafts;
   useEffect(() => {
     if (!auctionId) return;
     let active = true;
@@ -156,7 +199,16 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
       .then((steps) => {
         if (!active) return;
         const sorted = [...steps].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-        setWorkflowIssues(collectWorkflowIssues(sorted));
+        // Draft phases are checked as drafted, not as saved (they have nothing saved).
+        const { draft, steps: pending } = draftsRef.current;
+        setWorkflowIssues(
+          collectWorkflowIssues([
+            ...(draft.PRE_AUCTION
+              ? pending.PRE_AUCTION
+              : sorted.filter((item) => !isPostStep(item))),
+            ...(draft.POST_AUCTION ? pending.POST_AUCTION : sorted.filter(isPostStep)),
+          ]),
+        );
       })
       .catch(() => {
         // Keep the last known issues; the step screens show load errors themselves.
@@ -284,9 +336,21 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
       if (writes.includes('basics')) await persistence.persistBasics(state);
       if (writes.includes('offerRules')) await persistence.persistOfferRules(state);
       if (writes.includes('schedule')) await persistence.persistSchedule(state);
-      if (writes.includes('preRules')) await persistence.persistPreAuctionRules(state);
-      if (writes.includes('postRules')) await persistence.persistPostAuctionRules(state);
-      recordSaved(state, writes);
+      const savedPhases: Partial<Record<WorkflowStepPhase, boolean>> = {};
+      if (writes.includes('preRules')) {
+        savedPhases.PRE_AUCTION = await persistence.persistPreAuctionRules(
+          state,
+          pendingSteps.PRE_AUCTION,
+        );
+      }
+      if (writes.includes('postRules')) {
+        savedPhases.POST_AUCTION = await persistence.persistPostAuctionRules(
+          state,
+          pendingSteps.POST_AUCTION,
+        );
+      }
+      recordSaved(state, writes, draftsAfter(savedPhases));
+      markPhasesSaved(savedPhases);
       setSavedAt(new Date());
       markReviewed(step);
       goToStep(next);
@@ -335,22 +399,36 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
         await persistence.persistSchedule(state);
         saved.push('schedule');
       }
-      // Participation and Award go in when they're valid and changed since the last save.
+      // Participation and Award go in when they're valid and changed since the
+      // last save. Award's first save needs the winner's payment step (the API
+      // takes it whole), so until there is one it stays a draft.
+      const savedPhases: Partial<Record<WorkflowStepPhase, boolean>> = {};
       if (
         !Object.keys(validateStep(4, state)).length &&
-        savedWrites.current.preRules !== WRITE_INPUT.preRules(state)
+        savedWrites.current.preRules !== WRITE_INPUT.preRules(state, pendingSteps)
       ) {
-        await persistence.persistPreAuctionRules(state);
+        savedPhases.PRE_AUCTION = await persistence.persistPreAuctionRules(
+          state,
+          pendingSteps.PRE_AUCTION,
+        );
         saved.push('preRules');
       }
+      const awardReady =
+        phaseSaved.POST_AUCTION ||
+        pendingSteps.POST_AUCTION.some((item) => resolveStr(item.type) === 'PAYMENT_STEP');
       if (
+        awardReady &&
         !Object.keys(validateStep(5, state)).length &&
-        savedWrites.current.postRules !== WRITE_INPUT.postRules(state)
+        savedWrites.current.postRules !== WRITE_INPUT.postRules(state, pendingSteps)
       ) {
-        await persistence.persistPostAuctionRules(state);
+        savedPhases.POST_AUCTION = await persistence.persistPostAuctionRules(
+          state,
+          pendingSteps.POST_AUCTION,
+        );
         saved.push('postRules');
       }
-      recordSaved(state, saved);
+      recordSaved(state, saved, draftsAfter(savedPhases));
+      markPhasesSaved(savedPhases);
       setSavedAt(new Date());
       toast.success(mode === 'edit' ? 'Changes saved.' : 'Draft saved.');
     } catch (err) {
@@ -383,8 +461,10 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
     setBusy('publish');
     setErrors({});
     try {
-      await persistence.publish(state);
-      recordSaved(state, ALL_WRITES);
+      const savedPhases = await persistence.publish(state, pendingSteps);
+      const phases = { PRE_AUCTION: savedPhases.pre, POST_AUCTION: savedPhases.post };
+      recordSaved(state, ALL_WRITES, draftsAfter(phases));
+      markPhasesSaved(phases);
       setPublished(true);
       setPublishedAt(new Date().toISOString());
       setSavedAt(new Date());
@@ -417,16 +497,12 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
     isPrivate,
     savedAt,
     busy,
-    roundingModes,
-    formats,
-    unitTypes,
-    directions,
-    accessibilityTypes,
     currencies,
     timeZones,
     workflowCount,
     postWorkflowCount,
     inviteStats,
+    workflowDrafts,
     unitNotice:
       config.unit && !config.unit.supported && config.unit.rawType
         ? config.unit.rawType.replace(/_/g, ' ').toLowerCase()

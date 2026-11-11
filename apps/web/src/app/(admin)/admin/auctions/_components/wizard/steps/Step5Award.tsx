@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Banknote, Flag, Scale, Trophy } from 'lucide-react';
 import { Button } from '@repo/ui';
-import { useWorkflow } from '../../../_hooks/useWorkflow';
+import { useWorkflow, type WorkflowDrafts } from '../../../_hooks/useWorkflow';
 import { paymentStepData, resolveStr } from '../../../_components/PolicyShared';
 import type { AwardState, OfferVisibilityChoice } from '../../../_lib/wizard/types';
 import { ChoiceCardGroup, MutedBadge } from '../ui/wizard-ui';
@@ -19,6 +19,7 @@ import { StepList } from '../workflow/StepList';
 
 export function Step5Award({
   auctionId,
+  workflowDrafts,
   form,
   onChange,
   direction,
@@ -36,6 +37,8 @@ export function Step5Award({
   onWorkflowIssuesChange,
 }: {
   auctionId: string;
+  /** Steps kept as drafts until Award is saved with post-auction-rules. */
+  workflowDrafts: WorkflowDrafts;
   form: AwardState;
   onChange: (patch: Partial<AwardState>) => void;
   direction: 'FORWARD' | 'REVERSE';
@@ -54,7 +57,7 @@ export function Step5Award({
   onWorkflowIssuesChange: (issues: ReviewIssue[]) => void;
 }) {
   const [expanded, setExpanded] = useState<'winner' | 'ties' | 'price' | null>(null);
-  const workflow = useWorkflow(auctionId);
+  const workflow = useWorkflow(auctionId, workflowDrafts);
   const postPayment = workflow.post.find((step) => resolveStr(step.type) === 'PAYMENT_STEP');
   const paymentHeads = useMemo(
     () => (postPayment ? paymentStepData(postPayment).heads : []),

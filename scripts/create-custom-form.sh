@@ -94,7 +94,7 @@ if [ -n "$FORM_ID" ]; then
   echo "  MANAGED_TYPE_ID=$FORM_ID"
   echo ""
   echo "  Use it with create-demo-auctions.sh:"
-  echo "    MANAGED_TYPE_ID=$FORM_id LISTING_ID=<id> bash scripts/create-demo-auctions.sh"
+  echo "    MANAGED_TYPE_ID=$FORM_ID LISTING_ID=<id> bash scripts/create-demo-auctions.sh"
   echo "══════════════════════════════════════════════════════════════"
   echo ""
 else

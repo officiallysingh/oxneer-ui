@@ -38,7 +38,7 @@ interface MetadataFormProps {
   onSubmit: (values: MetadataFormValues, original?: MetadataFormValues) => Promise<void>;
   /** Where Back/Cancel/Skip and post-submit navigation should return to. */
   backHref: string;
-  /** When set, the Type field is locked to this value and rendered read-only. */
+  /** When set, the type is always this value and the Type field is hidden. */
   fixedType?: string;
 }
 
@@ -268,14 +268,13 @@ export function MetadataForm({
               )}
             </div>
 
-            <div className="space-y-1.5">
-              <Label>Type</Label>
-              {fixedType ? (
-                <div className="w-full rounded-md border border-input bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
-                  {typeOptions.find((t) => t.key === fixedType)?.value ?? fixedType}
-                </div>
-              ) : (
+            {/* A screen scoped to one type (custom forms, listing catalogs) sets it
+                itself, so there's nothing to choose and the field is hidden. */}
+            {!fixedType && (
+              <div className="space-y-1.5">
+                <Label htmlFor="mt-type">Type</Label>
                 <select
+                  id="mt-type"
                   value={form.type}
                   onChange={(e) => set('type', e.target.value)}
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -286,8 +285,8 @@ export function MetadataForm({
                     </option>
                   ))}
                 </select>
-              )}
-            </div>
+              </div>
+            )}
 
             <div className="space-y-1.5">
               <Label>

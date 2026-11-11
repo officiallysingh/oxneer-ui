@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { AlertTriangle, CalendarClock, Info, Users } from 'lucide-react';
-import { useWorkflow } from '../../../_hooks/useWorkflow';
+import { useWorkflow, type WorkflowDrafts } from '../../../_hooks/useWorkflow';
 import type { ParticipationState } from '../../../_lib/wizard/types';
 import { dhm, effectiveDeadlines } from '../../../_lib/wizard/deadlines';
 import { formatDateTime, minimumCheckAt } from '../../../_lib/wizard/summary';
@@ -15,6 +15,7 @@ import { StepList } from '../workflow/StepList';
 
 export function Step4Participation({
   auctionId,
+  workflowDrafts,
   form,
   onChange,
   isPrivate,
@@ -26,6 +27,8 @@ export function Step4Participation({
   onWorkflowIssuesChange,
 }: {
   auctionId: string;
+  /** Steps kept as drafts until Participation is saved with pre-auction-rules. */
+  workflowDrafts: WorkflowDrafts;
   form: ParticipationState;
   onChange: (patch: Partial<ParticipationState>) => void;
   isPrivate: boolean;
@@ -37,7 +40,7 @@ export function Step4Participation({
   /** Problems in the saved steps, for the step rail and Review. */
   onWorkflowIssuesChange: (issues: ReviewIssue[]) => void;
 }) {
-  const workflow = useWorkflow(auctionId);
+  const workflow = useWorkflow(auctionId, workflowDrafts);
   const [minimumOpen, setMinimumOpen] = useState(false);
 
   useEffect(() => {

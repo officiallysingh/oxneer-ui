@@ -6,6 +6,7 @@ import { Button } from '@repo/ui';
 import { auctionsApi, type AuctionWorkflowStep } from '@repo/api';
 import { parseApiError } from '@/lib/api-errors';
 import { useAuctionWizard } from '../../../_context';
+import type { WorkflowDrafts } from '../../../_hooks/useWorkflow';
 import type { WizardState } from '../../../_lib/wizard/types';
 import { formatDateTime, formatMoney } from '../../../_lib/wizard/summary';
 import { isPostStep } from '../../../_lib/wizard/workflow';
@@ -72,8 +73,9 @@ function checklistRows(state: WizardState, workflowCount: number, postWorkflowCo
 }
 
 /** Workflow steps for the timeline. Steps are edited in 4 and 5, so this
- *  reloads whenever the review screen opens. */
-function useWorkflowSteps(auctionId: string | null) {
+ *  reloads whenever the review screen opens. A phase not saved yet shows its
+ *  draft steps, which publishing saves. */
+function useWorkflowSteps(auctionId: string | null, drafts: WorkflowDrafts) {
   const [steps, setSteps] = useState<AuctionWorkflowStep[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -96,8 +98,17 @@ function useWorkflowSteps(auctionId: string | null) {
     void load();
   }, [load]);
 
-  const pre = useMemo(() => steps.filter((step) => !isPostStep(step)), [steps]);
-  const post = useMemo(() => steps.filter(isPostStep), [steps]);
+  const pre = useMemo<AuctionWorkflowStep[]>(
+    () =>
+      drafts.draft.PRE_AUCTION
+        ? drafts.steps.PRE_AUCTION
+        : steps.filter((step) => !isPostStep(step)),
+    [steps, drafts],
+  );
+  const post = useMemo<AuctionWorkflowStep[]>(
+    () => (drafts.draft.POST_AUCTION ? drafts.steps.POST_AUCTION : steps.filter(isPostStep)),
+    [steps, drafts],
+  );
   return { pre, post, loading, error };
 }
 
@@ -118,8 +129,9 @@ export function Step6Review() {
     errors,
     goToStep,
     publish,
+    workflowDrafts,
   } = useAuctionWizard();
-  const workflow = useWorkflowSteps(auctionId);
+  const workflow = useWorkflowSteps(auctionId, workflowDrafts);
   const publishing = busy === 'publish';
   // `issues` already includes problems in the saved steps (see the controller).
   const allIssues = issues;

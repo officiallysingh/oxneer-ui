@@ -7,6 +7,7 @@ import {
   type AuctionCreationRQ,
   type AuctionScheduleRQ,
   type AuctionUnitType,
+  type AddWorkflowStepRQ,
   type PolicyItemRQ,
   type WorkflowStepPhase,
 } from '@repo/api';
@@ -25,6 +26,16 @@ import {
 import { resolveStr } from '@/components/common/admin/format';
 import type { SelectedListing, WizardState } from '../_lib/wizard/types';
 import { zonedInputToOffsetIso } from '../_lib/wizard/zonedTime';
+import {
+  EMPTY_PENDING_STEPS,
+  pendingRequests,
+  type PendingStep,
+  type PendingSteps,
+} from '../_lib/wizard/pendingSteps';
+
+/** The API saves Award whole: who wins, what they pay and the winner's payment. */
+export const AWARD_NEEDS_PAYMENT =
+  'Add a payment step for the winner. Award is saved together with it.';
 
 export interface PersistenceOptions {
   /** Null until the create flow saves Basics for the first time. */
@@ -216,31 +227,33 @@ export function useWizardPersistence({
     await auctionsApi.addAuctionPolicy(id, next);
   };
 
-  /** Brings one phase's wizard-owned policies on the auction in line with
-   *  `desired`. While the phase is still empty (no policy and no workflow step)
-   *  the setup call `setup` sends them in one go, as the API intends; after
-   *  that, or when there is no usable setup call, each policy is updated,
-   *  added or removed on its own. Workflow steps are saved by the step editor
-   *  as the admin makes them, so they're never sent here. */
-  const syncPhasePolicies = async (
+  /** Saves one phase (Participation or Award): its wizard-owned policies and
+   *  its draft workflow steps. While nothing is saved in the phase yet, both go
+   *  in one setup call, as the API intends (it accepts that call once). After
+   *  that, policies are updated, added or removed one by one, and new steps are
+   *  saved by the step editor as they're made. Returns true once the phase is
+   *  saved, so the caller can stop keeping its steps as drafts. */
+  const persistPhase = async (
     desired: PolicyItemRQ[],
+    drafts: PendingStep[],
     phase: {
       isPhasePolicy: (policy: PolicyItemRQ) => boolean;
       stepPhase: WorkflowStepPhase;
-      setup?: (policies: PolicyItemRQ[]) => Promise<void>;
+      setup: (policies: PolicyItemRQ[], steps: AddWorkflowStepRQ[]) => Promise<void>;
     },
-  ) => {
+  ): Promise<boolean> => {
     const id = requireId();
     const [policies, workflow] = await Promise.all([
       auctionsApi.getAuctionPolicies(id),
       auctionsApi.getAuctionWorkflow(id),
     ]);
     const saved = policies.filter(phase.isPhasePolicy);
-    const phaseHasSteps = workflow.some((step) => workflowStepPhase(step) === phase.stepPhase);
+    const savedSteps = workflow.filter((step) => workflowStepPhase(step) === phase.stepPhase);
 
-    if (phase.setup && !saved.length && !phaseHasSteps) {
-      if (desired.length) await phase.setup(desired);
-      return;
+    if (!saved.length && !savedSteps.length) {
+      if (!desired.length && !drafts.length) return false;
+      await phase.setup(desired, pendingRequests(drafts));
+      return true;
     }
 
     const savedOfType = (type?: string) =>
@@ -264,24 +277,42 @@ export function useWizardPersistence({
         await auctionsApi.addAuctionPolicy(id, { ...policy, order: undefined });
       }
     }
+    // Only when the phase was saved elsewhere meanwhile: drafts go after its steps.
+    for (const request of pendingRequests(drafts)) {
+      await auctionsApi.addWorkflowStep(id, {
+        ...request,
+        order: savedSteps.length + (request.order ?? 1),
+      });
+    }
+    return true;
   };
 
-  /** Setup step 4: minimum participants, through `POST /{id}/pre-auction-rules`
-   *  while nothing is set before the auction yet. */
-  const persistPreAuctionRules = (state: WizardState) =>
-    syncPhasePolicies(buildPreAuctionPolicies(state), {
+  /** Setup step 4, `POST /{id}/pre-auction-rules`: minimum participants and the
+   *  steps participants complete to join. */
+  const persistPreAuctionRules = (state: WizardState, drafts: PendingStep[] = []) =>
+    persistPhase(buildPreAuctionPolicies(state), drafts, {
       isPhasePolicy: isParticipationPolicy,
       stepPhase: 'PRE_AUCTION',
-      setup: (policies) => auctionsApi.setPreAuctionRules(requireId(), { policies, steps: [] }),
+      setup: (policies, steps) =>
+        auctionsApi.setPreAuctionRules(requireId(), {
+          ...(policies.length ? { policies } : {}),
+          ...(steps.length ? { steps } : {}),
+        }),
     });
 
-  /** Setup step 5: who wins and what they pay. `POST /{id}/post-auction-rules`
-   *  needs a payment step in the same request, and the step editor saves
-   *  payment steps on their own, so the policies go through the policy API. */
-  const persistPostAuctionRules = (state: WizardState) =>
-    syncPhasePolicies(buildPostAuctionPolicies(state), {
+  /** Setup step 5, `POST /{id}/post-auction-rules`: who wins, what they pay and
+   *  the winner's steps. The API takes the award whole, so the first save needs
+   *  a payment step for the winner. */
+  const persistPostAuctionRules = (state: WizardState, drafts: PendingStep[] = []) =>
+    persistPhase(buildPostAuctionPolicies(state), drafts, {
       isPhasePolicy: isClearingPolicy,
       stepPhase: 'POST_AUCTION',
+      setup: async (policies, steps) => {
+        if (!steps.some((step) => step.type === 'PAYMENT_STEP')) {
+          throw new Error(AWARD_NEEDS_PAYMENT);
+        }
+        await auctionsApi.setPostAuctionRules(requireId(), { policies, steps });
+      },
     });
 
   /** Setup step 3. The API sets a schedule once (it fails with
@@ -299,18 +330,25 @@ export function useWizardPersistence({
     scheduledRef.current = true;
   };
 
-  const persistAll = async (state: WizardState) => {
+  /** Saves every setup step. Returns which of Participation and Award are now
+   *  saved, so the caller can drop their draft steps. */
+  const persistAll = async (
+    state: WizardState,
+    drafts: PendingSteps = EMPTY_PENDING_STEPS,
+  ): Promise<{ pre: boolean; post: boolean }> => {
     await persistBasics(state);
     await persistOfferRules(state);
-    await persistPreAuctionRules(state);
-    await persistPostAuctionRules(state);
-    // Publishing an auction that is already scheduled keeps that schedule.
+    // Right after offer rules, which the schedule needs. A saved schedule is kept.
     if (!scheduledRef.current) await persistSchedule(state);
+    const pre = await persistPreAuctionRules(state, drafts.PRE_AUCTION);
+    const post = await persistPostAuctionRules(state, drafts.POST_AUCTION);
+    return { pre, post };
   };
 
-  const publish = async (state: WizardState) => {
-    await persistAll(state);
+  const publish = async (state: WizardState, drafts?: PendingSteps) => {
+    const saved = await persistAll(state, drafts);
     await auctionsApi.publishAuction(requireId());
+    return saved;
   };
 
   return {

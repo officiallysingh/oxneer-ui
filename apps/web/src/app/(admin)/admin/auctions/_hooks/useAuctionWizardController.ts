@@ -37,6 +37,7 @@ import {
 import { EMPTY_PENDING_STEPS, type PendingSteps } from '../_lib/wizard/pendingSteps';
 import { isPostStep } from '../_lib/wizard/workflow';
 import { useAuctionLookups } from './useAuctionLookups';
+import { useSetupSummary } from './useSetupSummary';
 import type { WorkflowDrafts } from './useWorkflow';
 import { schedulePayload, useWizardPersistence } from './useWizardPersistence';
 
@@ -123,6 +124,13 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
   const [published, setPublished] = useState(Boolean(config.published));
   const [publishedAt, setPublishedAt] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
+  // The server's summary of each setup step, for the step rail. Fresh after
+  // every save (Next, Save draft, Publish) and every step change, which also
+  // picks up workflow steps the step editor saved on its own.
+  const setupSummary = useSetupSummary(
+    auctionId,
+    `${step}|${savedAt?.getTime() ?? 0}|${published}`,
+  );
   const [busy, setBusy] = useState<'step' | 'save' | 'publish' | null>(null);
   const [workflowCount, setWorkflowCount] = useState(config.workflowCounts?.pre ?? 0);
   const [postWorkflowCount, setPostWorkflowCount] = useState(config.workflowCounts?.post ?? 0);
@@ -503,6 +511,7 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
     postWorkflowCount,
     inviteStats,
     workflowDrafts,
+    setupSummary,
     unitNotice:
       config.unit && !config.unit.supported && config.unit.rawType
         ? config.unit.rawType.replace(/_/g, ' ').toLowerCase()

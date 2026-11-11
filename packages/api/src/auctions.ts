@@ -462,6 +462,53 @@ export type AddWorkflowStepRQ =
 
 export type AuctionPoliciesRQ = PolicyItemRQ[];
 
+// ── Setup summary ───────────────────────────────────────────────────────────
+
+/** The setup screens that hold data, in screen order. */
+export type SetupStepKey =
+  | 'BASICS_AND_UNIT'
+  | 'OFFER_RULES'
+  | 'SCHEDULE_AND_CLOSING'
+  | 'PARTICIPATION'
+  | 'AWARD';
+
+export interface SetupFinding {
+  /** Stable code, e.g. "setup.award.winner.payment.required". */
+  code: string;
+  /** Default message, e.g. "Add how the winner pays". */
+  message: string;
+}
+
+/** One short sentence about a setting, policy or workflow step (no bullet). */
+export interface SetupPoint {
+  kind?: 'SETTING' | 'POLICY' | 'STEP';
+  /** Setting name, policy type or step type; absent for "no workflow steps". */
+  type?: string;
+  /** Policy or step id; absent when the point says something is not set up. */
+  id?: string;
+  /** The price progression holding a child policy. */
+  parentId?: string;
+  text: string;
+}
+
+export interface SetupStepSummary {
+  step: SetupStepKey;
+  name: string;
+  /** Publishing needs every step complete. */
+  complete: boolean;
+  /** What keeps the step incomplete. */
+  missing?: SetupFinding[];
+  /** Worth a look before publishing; never blocks it. */
+  warnings?: SetupFinding[];
+  points?: SetupPoint[];
+}
+
+export interface AuctionSetupSummary {
+  publishable: boolean;
+  /** Keyed by step, in screen order. */
+  steps: Partial<Record<SetupStepKey, SetupStepSummary>>;
+}
+
 /** `GET /model/currencies` */
 export interface CurrencyOption {
   value: string;
@@ -528,6 +575,23 @@ export const auctionsApi = {
 
   updateAuction: async (id: string, data: AuctionUpdationRQ): Promise<void> => {
     await apiClient.patch(`/api/v1/auctions/${id}`, data);
+  },
+
+  /** Whether each setup step is complete, what's missing, warnings and short
+   *  summary lines, plus whether the auction can be published. */
+  getSetupSummary: async (id: string): Promise<AuctionSetupSummary> => {
+    const response = await apiClient.get<AuctionSetupSummary>(
+      `/api/v1/auctions/${id}/setup-summary`,
+    );
+    return response.data;
+  },
+
+  /** The same summary for one setup step. */
+  getSetupStepSummary: async (id: string, step: SetupStepKey): Promise<SetupStepSummary> => {
+    const response = await apiClient.get<SetupStepSummary>(
+      `/api/v1/auctions/${id}/setup-summary/${step}`,
+    );
+    return response.data;
   },
 
   /** Setup step 2. Fails with OFFER_RULES_ALREADY_SET once a price progression exists. */

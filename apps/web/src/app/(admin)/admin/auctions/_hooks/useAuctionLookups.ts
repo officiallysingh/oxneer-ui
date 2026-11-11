@@ -1,8 +1,26 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { auctionsApi } from '@repo/api';
+import { auctionsApi, type RoundingModeOption } from '@repo/api';
 import type { SelectOption } from '../_components/AuctionShared';
+
+/** Rounding modes from /model/monetary-rounding-modes for `currency`, whose
+ *  worked examples follow that currency's decimal places. Reloads when the
+ *  currency changes; empty while loading or if the call fails. */
+export function useRoundingModes(currency: string): RoundingModeOption[] {
+  const [modes, setModes] = useState<RoundingModeOption[]>([]);
+  useEffect(() => {
+    let active = true;
+    auctionsApi
+      .getRoundingModes(currency || undefined)
+      .then((options) => active && setModes(options))
+      .catch(() => active && setModes([]));
+    return () => {
+      active = false;
+    };
+  }, [currency]);
+  return modes;
+}
 
 /** A currency the auction can be priced in. */
 export interface CurrencySelectOption extends SelectOption {
@@ -12,8 +30,9 @@ export interface CurrencySelectOption extends SelectOption {
 }
 
 /** The reference data that is configured on the server and may change:
- *  currencies and time zones. Everything else the wizard offers (auction type,
- *  direction, who can join, unit type, rounding mode) is a fixed enum kept in
+ *  currencies and time zones (rounding modes depend on the chosen currency, so
+ *  they load through `useRoundingModes`). Everything else the wizard offers
+ *  (auction type, direction, who can join, unit type) is a fixed enum kept in
  *  the UI. Each list falls back to empty, and the screens fall back to their
  *  built-in options. */
 export function useAuctionLookups() {

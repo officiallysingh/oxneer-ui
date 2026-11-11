@@ -195,18 +195,21 @@ export function StepList({
   };
   const has = (type: string, list = workflow.steps) =>
     list.some((step) => resolveStr(step.type) === type);
+  // Bank details may appear once per auction, across both phases (the API
+  // refuses a second one with WORKFLOW_STEP_ALREADY_EXISTS).
+  const bankInOtherPhase = !has('BANK_DETAIL_FORM_STEP', steps) && has('BANK_DETAIL_FORM_STEP');
   const canAdd = (type: WorkflowStepType) => {
     const allowed = allowedStepTypesAt(
       workflow.steps,
       insertionOrder(type),
       has('TNC_FORM_STEP'),
-      has('BANK_DETAIL_FORM_STEP', steps),
+      has('BANK_DETAIL_FORM_STEP'),
       has('PARTICIPATION_FORM_STEP'),
     );
     if (type === 'TNC_FORM_STEP') return allowed.tnc;
     if (type === 'PARTICIPATION_FORM_STEP') return allowed.participationForm;
     if (type === 'BANK_DETAIL_FORM_STEP') {
-      return pre ? allowed.bank : !has('BANK_DETAIL_FORM_STEP', steps);
+      return pre ? allowed.bank : !has('BANK_DETAIL_FORM_STEP');
     }
     if (type === 'PAYMENT_STEP') return pre ? allowed.prePayment : allowed.postPayment;
     return pre ? allowed.formPreAuction : allowed.formPostAuction;
@@ -478,6 +481,8 @@ export function StepList({
             {slots.map((slot) => {
               const filled = steps.filter((step) => typeOf(step) === slot.type);
               const allowed = canAdd(slot.type);
+              // Already collected in the other phase: nothing to add here.
+              const bankElsewhere = slot.type === 'BANK_DETAIL_FORM_STEP' && bankInOtherPhase;
               const SlotIcon = STEP_ICON[slot.type] ?? Pencil;
               const drafting = draft?.type === slot.type;
               return (
@@ -488,31 +493,47 @@ export function StepList({
                     <div
                       className={cn(
                         'flex flex-wrap items-center gap-3 rounded-md border border-dashed px-3 py-2.5',
-                        slot.warn ? 'border-warning/50 bg-warning/5' : 'border-border',
+                        slot.warn && !bankElsewhere
+                          ? 'border-warning/50 bg-warning/5'
+                          : 'border-border',
                       )}
                     >
                       <SlotIcon
                         className={cn(
                           'h-4 w-4 shrink-0',
-                          slot.warn ? 'text-warning' : 'text-muted-foreground',
+                          slot.warn && !bankElsewhere ? 'text-warning' : 'text-muted-foreground',
                         )}
                         aria-hidden
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-foreground">{slot.empty}</p>
-                        <p className="text-[11px] text-muted-foreground">{slot.text}</p>
+                        <p className="text-sm font-medium text-foreground">
+                          {bankElsewhere
+                            ? pre
+                              ? 'Bank details are collected after the auction'
+                              : 'Bank details are already collected before the auction'
+                            : slot.empty}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {bankElsewhere
+                            ? pre
+                              ? 'An auction asks for bank details once. To collect them before it starts, remove the step after the auction first.'
+                              : 'An auction asks for bank details once, and the same details are used for payouts and refunds.'
+                            : slot.text}
+                        </p>
                       </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={Boolean(draft) || !allowed}
-                        onClick={() => startNew(slot.type)}
-                        className="h-8 gap-1.5 text-xs"
-                      >
-                        <Plus className="h-3.5 w-3.5" aria-hidden />
-                        {slot.add}
-                      </Button>
+                      {!bankElsewhere && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={Boolean(draft) || !allowed}
+                          onClick={() => startNew(slot.type)}
+                          className="h-8 gap-1.5 text-xs"
+                        >
+                          <Plus className="h-3.5 w-3.5" aria-hidden />
+                          {slot.add}
+                        </Button>
+                      )}
                     </div>
                   )}
                   {slot.multi && filled.length > 0 && !drafting && (

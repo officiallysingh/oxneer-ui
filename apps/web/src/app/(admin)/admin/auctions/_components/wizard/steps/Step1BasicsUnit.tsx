@@ -7,7 +7,7 @@ import type { ListingSummaryVM } from '@repo/api';
 import { ListingPicker } from '../basics/ListingPicker';
 import { ListingViewDialog } from '../../../../listings/_components/ListingViewDialog';
 import type { SelectOption } from '../../../_components/AuctionShared';
-import type { CurrencySelectOption } from '../../../_hooks/useAuctionLookups';
+import { useRoundingModes, type CurrencySelectOption } from '../../../_hooks/useAuctionLookups';
 import type { BasicsState, SelectedListing } from '../../../_lib/wizard/types';
 import {
   ChoiceCardGroup,
@@ -50,8 +50,9 @@ interface RoundingChoice {
   examples: { calculated: string; rounded: string }[];
 }
 
-// The rounding modes offered, fixed in the UI.
-const ROUNDING_MODES: RoundingChoice[] = [
+// Rounding modes come from /model/monetary-rounding-modes for the chosen
+// currency; this copy (INR examples) is used only if that call fails.
+const FALLBACK_ROUNDING: RoundingChoice[] = [
   {
     value: 'HALF_UP',
     label: 'Nearest, halves up',
@@ -218,6 +219,19 @@ export function Step1BasicsUnit({
   const currency = currencyOptions.find((option) => option.value === form.currencyUnit);
   const symbol = currency?.symbol || form.currencyUnit;
   const decimals = currency?.decimals ?? 2;
+  // Fetched for the chosen currency, so the examples use its decimal places.
+  const apiRounding = useRoundingModes(form.currencyUnit);
+  const roundingOptions: RoundingChoice[] = apiRounding.length
+    ? apiRounding.map((mode) => ({
+        value: mode.value,
+        label: mode.label,
+        summary: mode.summary ?? '',
+        description: mode.description ?? '',
+        useWhen: mode.useWhen ?? '',
+        recommended: Boolean(mode.recommended),
+        examples: mode.examples ?? [],
+      }))
+    : FALLBACK_ROUNDING;
   const openingLabel = isForward ? 'Opening price' : 'Starting price';
   const reserveLabel = isForward ? 'Reserve price' : 'Maximum price';
   const who = isForward ? 'bidders' : 'suppliers';
@@ -433,7 +447,7 @@ export function Step1BasicsUnit({
               aria-describedby="rounding-hint"
               className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4"
             >
-              {ROUNDING_MODES.map((mode) => {
+              {roundingOptions.map((mode) => {
                 const selected = form.roundingMode === mode.value;
                 const card = (
                   <button
@@ -456,7 +470,9 @@ export function Step1BasicsUnit({
                         </span>
                       )}
                     </span>
-                    <span className="text-[11px] text-muted-foreground">{mode.summary}</span>
+                    {mode.summary && (
+                      <span className="text-[11px] text-muted-foreground">{mode.summary}</span>
+                    )}
                   </button>
                 );
                 // Hovering or focusing a mode shows what it does and when to use it.
@@ -465,24 +481,26 @@ export function Step1BasicsUnit({
                     <TooltipTrigger asChild>{card}</TooltipTrigger>
                     <TooltipContent className="max-w-xs space-y-1.5 text-xs leading-relaxed">
                       <p className="font-semibold">{mode.label}</p>
-                      <p>{mode.description}</p>
-                      <table className="w-full font-mono tabular-nums">
-                        <thead>
-                          <tr className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                            <th className="text-left font-medium">Calculated</th>
-                            <th className="text-right font-medium">Rounded</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {mode.examples.map((example) => (
-                            <tr key={example.calculated}>
-                              <td>{example.calculated}</td>
-                              <td className="text-right font-semibold">{example.rounded}</td>
+                      {mode.description && <p>{mode.description}</p>}
+                      {mode.examples.length > 0 && (
+                        <table className="w-full font-mono tabular-nums">
+                          <thead>
+                            <tr className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                              <th className="text-left font-medium">Calculated</th>
+                              <th className="text-right font-medium">Rounded</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                      <p className="text-muted-foreground">{mode.useWhen}</p>
+                          </thead>
+                          <tbody>
+                            {mode.examples.map((example) => (
+                              <tr key={example.calculated}>
+                                <td>{example.calculated}</td>
+                                <td className="text-right font-semibold">{example.rounded}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                      {mode.useWhen && <p className="text-muted-foreground">{mode.useWhen}</p>}
                     </TooltipContent>
                   </Tooltip>
                 );

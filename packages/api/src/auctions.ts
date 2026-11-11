@@ -487,7 +487,8 @@ export interface RoundingModeOption {
   description?: string;
   useWhen?: string;
   recommended?: boolean;
-  examples?: unknown[];
+  /** Worked examples in the requested currency, e.g. 24.675 → 24.68. */
+  examples?: { calculated: string; rounded: string }[];
 }
 
 /** Model endpoints return arrays of single-key objects: [{ "KEY": "Label" }, ...] */
@@ -846,19 +847,14 @@ export const auctionsApi = {
     );
   },
 
-  /** Rounding modes for money. `label` is the API's one-line summary, so the
-   *  wizard's tooltip stays short; the full option is in `option`. */
-  getRoundingModeTypes: async (): Promise<
-    { value: string; label: string; option: RoundingModeOption }[]
-  > => {
+  /** Rounding modes for money, with copy and worked examples. The examples use
+   *  `currency`'s decimal places (the API defaults to INR). */
+  getRoundingModes: async (currency?: string): Promise<RoundingModeOption[]> => {
     const response = await apiClient.get<RoundingModeOption[]>(
       '/api/v1/auctions/model/monetary-rounding-modes',
+      { params: currency ? { currency } : {} },
     );
-    return response.data.map((option) => ({
-      value: option.value,
-      label: option.summary || option.description || option.label,
-      option,
-    }));
+    return response.data;
   },
 
   getParticipantVisibilityTypes: async (): Promise<{ value: string; label: string }[]> => {

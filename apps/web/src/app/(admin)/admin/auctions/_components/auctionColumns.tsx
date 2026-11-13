@@ -53,10 +53,13 @@ export function buildAuctionColumns({
     {
       accessorKey: 'format',
       header: 'Format / Type',
+      // The list API sends `type` only; show it as the main line when `format` is absent.
       cell: ({ row }) => (
         <div className="space-y-0.5">
-          <div className="text-sm text-foreground">{formatLabel(row.original.format)}</div>
-          {row.original.type && (
+          <div className="text-sm text-foreground">
+            {formatLabel(row.original.format ?? row.original.type)}
+          </div>
+          {row.original.format && row.original.type && (
             <div className="text-[11px] text-muted-foreground">
               {formatLabel(row.original.type)}
             </div>
@@ -67,12 +70,12 @@ export function buildAuctionColumns({
     {
       id: 'accessibility',
       header: 'Access',
-      cell: ({ row }) => <AccessibilityCell value={row.original.protocol?.accessibility} />,
+      cell: ({ row }) => <AccessibilityCell value={row.original.accessibility} />,
     },
     {
       id: 'direction',
       header: 'Direction',
-      cell: ({ row }) => <DirectionCell value={row.original.protocol?.direction} />,
+      cell: ({ row }) => <DirectionCell value={row.original.direction} />,
     },
     {
       id: 'protocol',
@@ -94,7 +97,7 @@ export function buildAuctionColumns({
       id: 'currency',
       header: 'Currency',
       cell: ({ row }) => {
-        const curr = resolveStr(row.original.monetaryOptions?.currencyUnit);
+        const curr = resolveStr(row.original.regionalSettings?.currency);
         if (!curr) return <span className="text-xs text-muted-foreground">—</span>;
         const symbol = currencySymbol(curr);
         return (

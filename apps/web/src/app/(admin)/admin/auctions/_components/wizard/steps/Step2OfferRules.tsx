@@ -305,7 +305,8 @@ function WindowEditor({
       </div>
 
       <div className="space-y-3 px-3 py-3">
-        <div className="grid gap-3 sm:grid-cols-2">
+        {/* One row: how the price moves, by how much, and for how long. */}
+        <div className={cn('grid gap-3 sm:grid-cols-2', !clock && 'lg:grid-cols-3')}>
           {clock ? (
             <Field label="Price moves by">
               <div className="flex h-9 items-center rounded-md border border-dashed border-border px-3 text-xs text-muted-foreground">
@@ -322,6 +323,43 @@ function WindowEditor({
                 onChange={(type) => onChange({ type: type as PriceWindow['type'] })}
               />
             </Field>
+          )}
+          {window.type === 'STEP' && (
+            <Field label="One step" htmlFor={`${id}-step`}>
+              <MoneyField
+                id={`${id}-step`}
+                value={window.value}
+                currency={symbol}
+                onChange={(value) => onChange({ value })}
+              />
+            </Field>
+          )}
+          {window.type === 'PERCENT' && (
+            <Field label={`Each ${noun} moves`} htmlFor={`${id}-pct`}>
+              <PercentField
+                id={`${id}-pct`}
+                value={window.value}
+                onChange={(value) => onChange({ value })}
+              />
+            </Field>
+          )}
+          {window.type === 'RANGE' && (
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="At least" htmlFor={`${id}-min`}>
+                <PercentField
+                  id={`${id}-min`}
+                  value={window.value}
+                  onChange={(value) => onChange({ value })}
+                />
+              </Field>
+              <Field label="At most" htmlFor={`${id}-max`}>
+                <PercentField
+                  id={`${id}-max`}
+                  value={window.maxValue}
+                  onChange={(maxValue) => onChange({ maxValue })}
+                />
+              </Field>
+            </div>
           )}
           <Field label={isLast ? 'Runs' : 'Runs for'}>
             {isLast ? (
@@ -342,58 +380,15 @@ function WindowEditor({
         </div>
 
         {window.type === 'STEP' && (
-          <div className="space-y-3">
-            <div className="max-w-[150px]">
-              <Field label="One step" htmlFor={`${id}-step`}>
-                <MoneyField
-                  id={`${id}-step`}
-                  value={window.value}
-                  currency={symbol}
-                  onChange={(value) => onChange({ value })}
-                />
-              </Field>
-            </div>
-            <JumpPicker
-              label={`${forward ? 'Bidders' : 'Suppliers'} may jump`}
-              windowLabel={`Window ${n}`}
-              values={window.steps}
-              hint={`Pick every number of steps one ${noun} may move the price. A${forward ? '' : 'n'} ${noun} of ×3 moves it by ${formatMoney(3 * stepAmount, currencyUnit)}.`}
-              stepAmount={stepAmount}
-              currencyUnit={currencyUnit}
-              onChange={(steps) => onChange({ steps })}
-            />
-          </div>
-        )}
-
-        {window.type === 'PERCENT' && (
-          <div className="max-w-[160px]">
-            <Field label={`Each ${noun} moves`} htmlFor={`${id}-pct`}>
-              <PercentField
-                id={`${id}-pct`}
-                value={window.value}
-                onChange={(value) => onChange({ value })}
-              />
-            </Field>
-          </div>
-        )}
-
-        {window.type === 'RANGE' && (
-          <div className="grid max-w-sm gap-3 sm:grid-cols-2">
-            <Field label="At least" htmlFor={`${id}-min`}>
-              <PercentField
-                id={`${id}-min`}
-                value={window.value}
-                onChange={(value) => onChange({ value })}
-              />
-            </Field>
-            <Field label="At most" htmlFor={`${id}-max`}>
-              <PercentField
-                id={`${id}-max`}
-                value={window.maxValue}
-                onChange={(maxValue) => onChange({ maxValue })}
-              />
-            </Field>
-          </div>
+          <JumpPicker
+            label={`${forward ? 'Bidders' : 'Suppliers'} may jump`}
+            windowLabel={`Window ${n}`}
+            values={window.steps}
+            hint={`Pick every number of steps one ${noun} may move the price. A${forward ? '' : 'n'} ${noun} of ×3 moves it by ${formatMoney(3 * stepAmount, currencyUnit)}.`}
+            stepAmount={stepAmount}
+            currencyUnit={currencyUnit}
+            onChange={(steps) => onChange({ steps })}
+          />
         )}
 
         {window.type === 'CLOCK' && (

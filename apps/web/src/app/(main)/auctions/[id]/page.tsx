@@ -198,12 +198,12 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
 
   // ── Derived values ───────────────────────────────────────────────────────────
   const status = resolveStr(auction.status);
-  const accessibility = resolveStr(auction.protocol?.accessibility);
-  const direction = resolveStr(auction.protocol?.direction);
-  const AccessibilityIcon = resolveAccessibilityIcon(auction.protocol?.accessibility);
-  const DirectionIcon = resolveDirectionIcon(auction.protocol?.direction);
+  const accessibility = resolveStr(auction.accessibility);
+  const direction = resolveStr(auction.direction);
+  const AccessibilityIcon = resolveAccessibilityIcon(auction.accessibility);
+  const DirectionIcon = resolveDirectionIcon(auction.direction);
   const joinable = auctionIsJoinable(auction.status);
-  const currency = resolveStr(auction.monetaryOptions?.currencyUnit);
+  const currency = resolveStr(auction.regionalSettings?.currency);
   const statusColor = STATUS_COLORS[status] ?? 'bg-muted text-muted-foreground border-border';
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -331,7 +331,7 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
               </div>
             )}
 
-            {auction.protocol?.participantVisibility && (
+            {auction.participantVisibility && (
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-lg bg-muted shrink-0">
                   <Users className="h-4 w-4 text-muted-foreground" />
@@ -341,7 +341,7 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
                     Participants
                   </p>
                   <p className="text-sm font-semibold text-foreground mt-0.5">
-                    {formatLabel(auction.protocol.participantVisibility)}
+                    {formatLabel(auction.participantVisibility)}
                   </p>
                 </div>
               </div>

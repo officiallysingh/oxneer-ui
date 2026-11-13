@@ -40,15 +40,13 @@ export function PublicAuctionOverview({ auction }: { auction: AuctionVM }) {
         </div>
         <div className="space-y-3 text-sm">
           <PublicDetailRow label="Currency unit">
-            {resolveStr(auction.monetaryOptions?.currencyUnit) || '—'}
+            {resolveStr(auction.regionalSettings?.currency) || '—'}
           </PublicDetailRow>
-          <PublicDetailRow label="Precision">
-            {auction.monetaryOptions?.precision != null
-              ? `${auction.monetaryOptions.precision} decimal places`
-              : '—'}
+          <PublicDetailRow label="Time zone">
+            {resolveStr(auction.regionalSettings?.timeZone) || '—'}
           </PublicDetailRow>
           <PublicDetailRow label="Rounding mode">
-            {formatLabel(auction.monetaryOptions?.roundingMode) || '—'}
+            {formatLabel(auction.regionalSettings?.roundingMode)}
           </PublicDetailRow>
         </div>
       </div>
@@ -62,16 +60,14 @@ export function PublicAuctionOverview({ auction }: { auction: AuctionVM }) {
         </div>
         <div className="space-y-3 text-sm">
           <PublicDetailRow label="Accessibility">
-            {formatLabel(auction.protocol?.accessibility) || '—'}
+            {formatLabel(auction.accessibility)}
           </PublicDetailRow>
-          <PublicDetailRow label="Dimension">
-            {formatLabel(auction.protocol?.dimension) || '—'}
-          </PublicDetailRow>
+          <PublicDetailRow label="Direction">{formatLabel(auction.direction)}</PublicDetailRow>
           <PublicDetailRow label="Participant visibility">
-            {formatLabel(auction.protocol?.participantVisibility) || '—'}
+            {formatLabel(auction.participantVisibility)}
           </PublicDetailRow>
           <PublicDetailRow label="Offer visibility">
-            {formatLabel(auction.protocol?.offerVisibility) || '—'}
+            {formatLabel(auction.offerVisibility)}
           </PublicDetailRow>
         </div>
       </div>

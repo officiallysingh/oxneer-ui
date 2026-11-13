@@ -2,7 +2,7 @@
 
 import { AuctionVM } from '@repo/api';
 import { Calendar, IndianRupee, Building2, FileText } from 'lucide-react';
-import { formatDateTime, formatLabel } from '@/components/common/admin/format';
+import { formatDateTime, formatLabel, resolveStr } from '@/components/common/admin/format';
 import { DetailRow, SectionCard } from '@/components/common/admin/SectionCard';
 
 interface AuctionOverviewTabProps {
@@ -10,7 +10,7 @@ interface AuctionOverviewTabProps {
 }
 
 export function AuctionOverviewTab({ auction }: AuctionOverviewTabProps) {
-  const monetary = auction.monetaryOptions;
+  const regional = auction.regionalSettings;
   const schedule = auction.schedule;
   const primaryUnit = auction.units?.[0] ?? auction.unit;
   const standingPrice = (primaryUnit as { standingPrice?: number })?.standingPrice;
@@ -46,8 +46,10 @@ export function AuctionOverviewTab({ auction }: AuctionOverviewTabProps) {
         <DetailRow label="Standing Price">
           {standingPrice != null ? `₹${standingPrice.toLocaleString()}` : 'N/A'}
         </DetailRow>
-        <DetailRow label="Currency Unit">{monetary?.currencyUnit ?? 'INR'}</DetailRow>
-        <DetailRow label="Rounding Mode">{formatLabel(monetary?.roundingMode) || 'N/A'}</DetailRow>
+        <DetailRow label="Currency Unit">{resolveStr(regional?.currency) || 'N/A'}</DetailRow>
+        <DetailRow label="Rounding Mode">
+          {regional?.roundingMode ? formatLabel(regional.roundingMode) : 'N/A'}
+        </DetailRow>
       </SectionCard>
 
       {/* Additional Metadata */}

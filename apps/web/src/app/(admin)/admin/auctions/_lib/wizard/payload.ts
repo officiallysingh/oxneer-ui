@@ -140,6 +140,27 @@ export function buildReservePricePolicy(basics: BasicsState): ReservePricePolicy
   };
 }
 
+/** Reverse of {@link buildReservePricePolicy}: turns a saved reserve policy
+ *  (a margin on the opening price) back into the price and visibility the
+ *  form shows. */
+export function reserveFromPolicy(
+  policy: PolicyItemRQ,
+  openingPrice: string,
+  direction: BasicsState['direction'],
+): Pick<BasicsState, 'reserveAmount' | 'reserveVisibility'> {
+  const visibility = resolveStr(policy.visibility);
+  const reserveVisibility =
+    (Object.keys(RESERVE_VISIBILITY) as ReserveVisibility[]).find(
+      (key) => RESERVE_VISIBILITY[key] === visibility,
+    ) ?? 'HIDDEN';
+  const opening = parseFloat(openingPrice);
+  const value = policy.value ?? 0;
+  if (Number.isNaN(opening)) return { reserveAmount: '', reserveVisibility };
+  const margin = resolveStr(policy.basis) === 'PERCENTAGE_BASED' ? (opening * value) / 100 : value;
+  const reserve = direction === 'FORWARD' ? opening + margin : opening - margin;
+  return { reserveAmount: String(Number(reserve.toFixed(6))), reserveVisibility };
+}
+
 const WINDOW_POLICY_TYPE: Record<string, string> = {
   STEP: 'STEP_BASED_OFFER_PRICE_POLICY',
   PERCENT: 'FIXED_PERCENTAGE_BASED_OFFER_PRICE_POLICY',

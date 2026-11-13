@@ -1,20 +1,6 @@
 import { apiClient } from './client';
 import type { PropertyDef } from './metadata';
 
-export interface AuctionProtocol {
-  accessibility: string;
-  direction: string;
-  dimension: string;
-  participantVisibility: string;
-  offerVisibility: string;
-}
-
-export interface AuctionMonetaryOptions {
-  currencyUnit: string;
-  precision: number;
-  roundingMode: string;
-}
-
 export interface AuctionSchedule {
   startTime?: string;
   endTime?: string;
@@ -122,9 +108,12 @@ export interface AuctionVM {
   title: string;
   description?: string;
   referenceId?: string;
-  protocol?: AuctionProtocol;
-  monetaryOptions?: AuctionMonetaryOptions;
-  /** Currency, time zone and rounding (replaces `monetaryOptions`). */
+  /** Protocol settings, sent flat on the auction (`SimpleAuctionVM`). */
+  direction?: string | Record<string, string>;
+  accessibility?: string | Record<string, string>;
+  participantVisibility?: string | Record<string, string>;
+  offerVisibility?: string | Record<string, string>;
+  /** Currency, time zone and rounding. */
   regionalSettings?: {
     currency?: string | Record<string, string>;
     timeZone?: string | Record<string, string>;
@@ -331,6 +320,8 @@ export interface PolicyItemRQ {
   phase?: string | Record<string, string>;
   basis?: string;
   value?: number;
+  /** RESERVE_PRICE_POLICY: who sees the reserve. */
+  visibility?: string | Record<string, string>;
   order?: number;
   currency?: string;
   mode?: string;

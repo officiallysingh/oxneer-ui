@@ -108,9 +108,9 @@ function CountdownOrSchedule({ startIso, endIso }: { startIso?: string; endIso?:
 function PublicAuctionCard({ auction, index }: { auction: AuctionVM; index: number }) {
   const router = useRouter();
   const status = resolveStr(auction.status);
-  const direction = resolveStr(auction.protocol?.direction);
-  const accessibility = resolveStr(auction.protocol?.accessibility);
-  const currency = resolveStr(auction.monetaryOptions?.currencyUnit);
+  const direction = resolveStr(auction.direction);
+  const accessibility = resolveStr(auction.accessibility);
+  const currency = resolveStr(auction.regionalSettings?.currency);
   const statusColor = auctionStatusColor(auction.status);
   const DirectionIcon = direction === 'REVERSE' ? TrendingDown : TrendingUp;
   const AccessIcon = accessibility === 'PUBLIC' ? Globe : Lock;

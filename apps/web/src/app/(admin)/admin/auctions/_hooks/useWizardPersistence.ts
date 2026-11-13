@@ -118,6 +118,22 @@ export function useWizardPersistence({
     return auctionIdRef.current;
   };
 
+  /** The update API has no reserve field, so once the auction exists its
+   *  reserve is added, changed or removed as a policy. */
+  const syncReservePrice = async (id: string, state: WizardState) => {
+    const next = buildReservePricePolicy(state.basics);
+    const saved = (await auctionsApi.getAuctionPolicies(id)).find(
+      (policy) => resolveStr(policy.type) === 'RESERVE_PRICE_POLICY',
+    );
+    if (next && saved?.id) {
+      await auctionsApi.updateAuctionPolicy(id, saved.id, { ...next, order: saved.order });
+    } else if (next) {
+      await auctionsApi.addAuctionPolicy(id, next);
+    } else if (saved?.id) {
+      await auctionsApi.deleteAuctionPolicy(id, saved.id);
+    }
+  };
+
   /** Creates the draft on first save and updates it afterwards. */
   const persistBasics = async (state: WizardState): Promise<string> => {
     const { basics } = state;
@@ -148,6 +164,7 @@ export function useWizardPersistence({
         // Leave an existing auction's subcategories alone if none can be worked out.
         ...(subCategories.length ? { subCategories } : {}),
       });
+      await syncReservePrice(auctionIdRef.current, state);
       return auctionIdRef.current;
     }
 

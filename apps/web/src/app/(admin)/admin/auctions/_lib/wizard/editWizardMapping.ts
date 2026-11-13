@@ -3,6 +3,7 @@ import { resolveStr } from '@/components/common/admin/format';
 import type { BasicsState, OfferState, PriceWindow, SelectedListing, WizardState } from './types';
 import { initialWizardState } from './types';
 import { dateToZonedInput } from './zonedTime';
+import { reserveFromPolicy } from './payload';
 
 export interface EditWizardSnapshot {
   state: WizardState;
@@ -232,43 +233,35 @@ export function mapAuctionToWizardState(
   // clock policies; the auction type alone doesn't say so.
   const windows = mapWindows(policies);
   const clock = type.includes('CLOCK') || windows.some((window) => window.type === 'CLOCK');
-  const protocol = auction.protocol;
-  const monetary = auction.monetaryOptions;
   const regional = auction.regionalSettings;
   const timeZone = resolveStr(regional?.timeZone) || initialWizardState.basics.timeZone;
   const rawStart = auction.schedule?.startTime ?? auction.startTime ?? '';
+  const unitBasics = mapUnit(unit, auction.title ?? '');
+  const direction = resolveStr(auction.direction) === 'REVERSE' ? 'REVERSE' : 'FORWARD';
 
   const state: WizardState = {
     basics: {
       ...initialWizardState.basics,
-      direction: resolveStr(protocol?.direction) === 'REVERSE' ? 'REVERSE' : 'FORWARD',
-      accessibility: resolveStr(protocol?.accessibility) === 'PRIVATE' ? 'PRIVATE' : 'PUBLIC',
+      direction,
+      accessibility: resolveStr(auction.accessibility) === 'PRIVATE' ? 'PRIVATE' : 'PUBLIC',
       title: auction.title ?? '',
       description: auction.description ?? '',
       referenceId: auction.referenceId ?? '',
-      currencyUnit:
-        resolveStr(regional?.currency) ||
-        resolveStr(monetary?.currencyUnit) ||
-        initialWizardState.basics.currencyUnit,
+      currencyUnit: resolveStr(regional?.currency) || initialWizardState.basics.currencyUnit,
       timeZone,
-      precision: String(monetary?.precision ?? initialWizardState.basics.precision),
-      roundingMode:
-        resolveStr(regional?.roundingMode) ||
-        resolveStr(monetary?.roundingMode) ||
-        initialWizardState.basics.roundingMode,
+      roundingMode: resolveStr(regional?.roundingMode) || initialWizardState.basics.roundingMode,
       reserveEnabled: Boolean(reserve),
-      reserveAmount: reserve ? String(reserve.value ?? '') : '',
-      ...mapUnit(unit, auction.title ?? ''),
+      // Saved as a margin on the opening price; the form shows the price itself.
+      ...(reserve ? reserveFromPolicy(reserve, unitBasics.openingPrice, direction) : {}),
+      ...unitBasics,
     },
     offer: {
       ...initialWizardState.offer,
       mechanism: clock ? 'CLOCK' : type.includes('SEALED') ? 'SEALED' : 'OPEN',
       windows: clock ? initialWizardState.offer.windows : windows,
       clockWindows: clock && windows.length ? windows : initialWizardState.offer.clockWindows,
-      offerVisibility: offerVisibilityChoice(resolveStr(protocol?.offerVisibility)),
-      participantVisibility: participantVisibilityChoice(
-        resolveStr(protocol?.participantVisibility),
-      ),
+      offerVisibility: offerVisibilityChoice(resolveStr(auction.offerVisibility)),
+      participantVisibility: participantVisibilityChoice(resolveStr(auction.participantVisibility)),
     },
     schedule: mapSchedule(auction, policies, timeZone),
     participation: {

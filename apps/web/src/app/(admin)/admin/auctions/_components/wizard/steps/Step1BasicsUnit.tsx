@@ -733,52 +733,21 @@ export function Step1BasicsUnit({
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                     Who sees the reserve
                   </p>
-                  <div className="overflow-hidden rounded-md border border-border">
-                    {[
-                      ['HIDDEN', 'Hidden', `${Who} do not see it.`],
-                      ['SHOWN', 'Shown', `${Who} see the amount.`],
-                      [
-                        'MET_ONLY',
-                        'Shown once met',
-                        `${Who} see it only after ${isForward ? 'a bid' : 'an ask'} reaches it.`,
-                      ],
-                    ].map(([value, title, description]) => (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() =>
-                          onChange({ reserveVisibility: value as BasicsState['reserveVisibility'] })
-                        }
-                        className={cn(
-                          'flex w-full items-start gap-2 border-b border-border px-3 py-2 text-left last:border-b-0',
-                          form.reserveVisibility === value
-                            ? 'bg-primary/5 shadow-[inset_3px_0_0_hsl(var(--primary))]'
-                            : 'bg-background hover:bg-muted/30',
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            'mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border',
-                            form.reserveVisibility === value
-                              ? 'border-primary'
-                              : 'border-muted-foreground/50',
-                          )}
-                        >
-                          {form.reserveVisibility === value && (
-                            <span className="h-2 w-2 rounded-full bg-primary" />
-                          )}
-                        </span>
-                        <span>
-                          <span className="block text-xs font-semibold text-foreground">
-                            {title}
-                          </span>
-                          <span className="mt-0.5 block text-[11px] text-muted-foreground">
-                            {description}
-                          </span>
-                        </span>
-                      </button>
-                    ))}
-                  </div>
+                  <ChoiceCardGroup<BasicsState['reserveVisibility']>
+                    label="Who sees the reserve"
+                    columns={3}
+                    value={form.reserveVisibility}
+                    onChange={(reserveVisibility) => onChange({ reserveVisibility })}
+                    options={[
+                      { value: 'HIDDEN', title: 'Hidden', description: `${Who} do not see it.` },
+                      { value: 'SHOWN', title: 'Shown', description: `${Who} see the amount.` },
+                      {
+                        value: 'MET_ONLY',
+                        title: 'Shown once met',
+                        description: `${Who} see it only after ${isForward ? 'a bid' : 'an ask'} reaches it.`,
+                      },
+                    ]}
+                  />
                 </div>
               </>
             )}

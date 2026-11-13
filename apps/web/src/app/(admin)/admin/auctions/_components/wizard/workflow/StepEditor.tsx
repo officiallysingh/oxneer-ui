@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 import { AlertTriangle, ChevronDown, Info, Landmark, Loader2, Upload, X } from 'lucide-react';
 import { Button, RichTextEditor, Switch, cn } from '@repo/ui';
 import { auctionsApi, type AuctionWorkflowStep } from '@repo/api';
@@ -19,6 +19,7 @@ import {
 import { ChoiceCardGroup, Field, WizardRow, inputClass } from '../ui/wizard-ui';
 import { ChargesEditor } from './ChargesEditor';
 import { TemplatePicker } from './TemplatePicker';
+import { PreviewDialog } from './PreviewDialog';
 import { STEP_ICON } from './stepIcons';
 
 let paymentModesRequest: Promise<{ value: string; label: string }[]> | null = null;
@@ -43,73 +44,84 @@ function DeadlineField({
   picks,
   suffix,
   dueAt,
+  note,
 }: {
   draft: StepDraft;
   onChange: (patch: Partial<StepDraft>) => void;
   picks: number[];
   suffix: string;
   dueAt: string;
+  /** Shown beside the due time, e.g. how long you have to review. */
+  note?: ReactNode;
 }) {
   const total = draftMinutes(draft);
   const input =
     'h-9 w-14 rounded-md border border-input bg-background px-2 text-sm tabular-nums outline-none focus:border-ring focus:ring-2 focus:ring-ring/30';
   return (
     <div className="space-y-2">
-      <div role="group" aria-label="Quick picks" className="flex flex-wrap gap-1.5">
-        {picks.map((minutes) => (
-          <button
-            key={minutes}
-            type="button"
-            aria-pressed={total === minutes}
-            onClick={() => onChange(setDraftMinutes(minutes))}
-            className={cn(
-              'h-7 rounded-full border px-3 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-              total === minutes
-                ? 'border-primary bg-primary/10 text-foreground'
-                : 'border-border text-muted-foreground hover:text-foreground',
-            )}
-          >
-            {dhm(minutes)}
-          </button>
-        ))}
+      {/* The exact time and the quick picks share one line. */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <div className="flex items-center gap-1.5">
+          <input
+            type="number"
+            min={0}
+            aria-label="Days"
+            value={draft.days}
+            onChange={(event) => onChange({ days: event.target.value })}
+            className={input}
+          />
+          <span className="text-xs text-muted-foreground">d</span>
+          <input
+            type="number"
+            min={0}
+            max={23}
+            aria-label="Hours"
+            value={draft.hours}
+            onChange={(event) => onChange({ hours: event.target.value })}
+            className={input}
+          />
+          <span className="text-xs text-muted-foreground">h</span>
+          <input
+            type="number"
+            min={0}
+            max={59}
+            step={5}
+            aria-label="Minutes"
+            value={draft.minutes}
+            onChange={(event) => onChange({ minutes: event.target.value })}
+            className={input}
+          />
+          <span className="text-xs text-muted-foreground">{suffix}</span>
+        </div>
+        <div role="group" aria-label="Quick picks" className="flex flex-wrap gap-1.5">
+          {picks.map((minutes) => (
+            <button
+              key={minutes}
+              type="button"
+              aria-pressed={total === minutes}
+              onClick={() => onChange(setDraftMinutes(minutes))}
+              className={cn(
+                'h-7 rounded-full border px-3 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                total === minutes
+                  ? 'border-primary bg-primary/10 text-foreground'
+                  : 'border-border text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {dhm(minutes)}
+            </button>
+          ))}
+        </div>
       </div>
-      <div className="flex flex-wrap items-center gap-1.5">
-        <input
-          type="number"
-          min={0}
-          aria-label="Days"
-          value={draft.days}
-          onChange={(event) => onChange({ days: event.target.value })}
-          className={input}
-        />
-        <span className="text-xs text-muted-foreground">d</span>
-        <input
-          type="number"
-          min={0}
-          max={23}
-          aria-label="Hours"
-          value={draft.hours}
-          onChange={(event) => onChange({ hours: event.target.value })}
-          className={input}
-        />
-        <span className="text-xs text-muted-foreground">h</span>
-        <input
-          type="number"
-          min={0}
-          max={59}
-          step={5}
-          aria-label="Minutes"
-          value={draft.minutes}
-          onChange={(event) => onChange({ minutes: event.target.value })}
-          className={input}
-        />
-        <span className="text-xs text-muted-foreground">{suffix}</span>
-      </div>
-      {dueAt && (
-        <p className="rounded bg-muted/60 px-2.5 py-1.5 text-[11px] text-muted-foreground">
-          <span className="font-semibold uppercase tracking-wider text-foreground">Due</span>{' '}
-          {dueAt}
-        </p>
+      {(dueAt || note) && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-muted-foreground">
+          {dueAt && (
+            <p className="rounded bg-muted/60 px-2.5 py-1.5">
+              <span className="font-semibold uppercase tracking-wider text-foreground">Due</span>{' '}
+              {dueAt}
+            </p>
+          )}
+          {note}
+        </div>
       )}
     </div>
   );
@@ -225,6 +237,12 @@ export function StepEditor({
     if (onAddBankFirst) void run(() => onAddBankFirst(draft));
   };
 
+  // Terms as plain text, for the preview and its summary line.
+  const tncPlainText = draft.tncText
+    .replace(/<\/(p|div|li|h[1-6])>|<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]*>/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
   const deadlineMinutes = draftMinutes(draft);
   const dueAt = pre
     ? start
@@ -404,24 +422,32 @@ export function StepEditor({
                 description="They must tick the box to continue."
               >
                 <div className="space-y-2">
-                  <div className="rounded-md border border-dashed border-input bg-muted/20 p-3">
-                    <div className="mb-2 flex flex-wrap justify-between gap-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                      <span>Preview</span>
-                      <span>Accepting can’t be undone</span>
+                  <PreviewDialog
+                    title={`What ${who} see`}
+                    description="They must tick the box to continue. Accepting can’t be undone."
+                    summary={
+                      draft.tncSource === 'TEXT'
+                        ? tncPlainText
+                          ? `Written terms · ${tncPlainText.length.toLocaleString()} characters · accept box`
+                          : 'No terms written yet.'
+                        : `Document: ${draft.tncFile?.name ?? 'the attached document'} · accept box`
+                    }
+                  >
+                    <div className="rounded-md border border-border bg-background p-4">
+                      <p className="text-sm font-semibold text-foreground">
+                        {draft.name || 'Terms and conditions'}
+                      </p>
+                      <p className="mt-2 whitespace-pre-line text-xs leading-relaxed text-muted-foreground">
+                        {draft.tncSource === 'TEXT'
+                          ? tncPlainText || 'No terms written yet.'
+                          : `Opens ${draft.tncFile?.name ?? 'the attached document'}.`}
+                      </p>
+                      <label className="mt-3 flex items-center gap-2 text-xs text-foreground">
+                        <input type="checkbox" disabled className="h-4 w-4" />I have read and accept
+                        these terms
+                      </label>
                     </div>
-                    <p className="text-sm font-semibold text-foreground">
-                      {draft.name || 'Terms and conditions'}
-                    </p>
-                    <p className="mt-1 line-clamp-4 text-xs leading-relaxed text-muted-foreground">
-                      {draft.tncSource === 'TEXT'
-                        ? draft.tncText.replace(/<[^>]*>/g, ' ').trim() || 'No terms written yet.'
-                        : `Opens ${draft.tncFile?.name ?? 'the attached document'}.`}
-                    </p>
-                    <label className="mt-2 flex items-center gap-2 text-xs text-foreground">
-                      <input type="checkbox" disabled className="h-4 w-4" />I have read and accept
-                      these terms
-                    </label>
-                  </div>
+                  </PreviewDialog>
                   <p className="flex items-start gap-1.5 text-[11px] leading-snug text-muted-foreground">
                     <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
                     No deadline of its own. It’s always the first step, so participants accept
@@ -503,19 +529,26 @@ export function StepEditor({
                   picks={[60, 6 * 60, 1440, 2 * 1440, 3 * 1440]}
                   suffix="before start"
                   dueAt={dueAt}
+                  note={
+                    draft.manualApproval && deadlineMinutes > 0 ? (
+                      <p
+                        className={cn(
+                          'flex items-start gap-1.5',
+                          deadlineMinutes < 120 && 'text-warning',
+                        )}
+                      >
+                        {deadlineMinutes < 120 && (
+                          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+                        )}
+                        <span>
+                          You’ll have <b className="text-foreground">{dhm(deadlineMinutes)}</b> to
+                          review submissions before the start
+                          {deadlineMinutes < 120 ? ', a tight window to review every one.' : '.'}
+                        </span>
+                      </p>
+                    ) : undefined
+                  }
                 />
-                {draft.manualApproval && deadlineMinutes > 0 && (
-                  <p className="mt-2 text-[11px] text-muted-foreground">
-                    You’ll have <b className="text-foreground">{dhm(deadlineMinutes)}</b> to review
-                    submissions before the auction starts.
-                  </p>
-                )}
-                {draft.manualApproval && deadlineMinutes > 0 && deadlineMinutes < 120 && (
-                  <p className="mt-1.5 flex items-start gap-1.5 text-[11px] text-warning">
-                    <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-                    That’s a tight window to review every submission.
-                  </p>
-                )}
               </WizardRow>
             </>
           )}
@@ -526,11 +559,11 @@ export function StepEditor({
                 label={pre ? 'What participants give' : 'What the winner gives'}
                 description="These fields are fixed. There’s nothing to set up."
               >
-                <div className="rounded-md border border-dashed border-input bg-muted/20 p-3">
-                  <div className="mb-2 flex flex-wrap justify-between gap-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    <span>Preview</span>
-                    <span>All four are required</span>
-                  </div>
+                <PreviewDialog
+                  title={pre ? 'What participants give' : 'What the winner gives'}
+                  description="All four are required. These fields are fixed."
+                  summary={`${BANK_FIELDS.map(([label]) => label).join(', ')}, cancelled cheque · all required`}
+                >
                   <div className="grid gap-2 sm:grid-cols-2">
                     {BANK_FIELDS.map(([label, placeholder]) => (
                       <label key={label} className="space-y-1 text-[11px] text-muted-foreground">
@@ -554,7 +587,7 @@ export function StepEditor({
                   <p className="mt-2 text-[11px] text-muted-foreground">
                     Participants who saved an account before can pick it instead of typing it again.
                   </p>
-                </div>
+                </PreviewDialog>
               </WizardRow>
               <WizardRow label="Why it’s here" description="Linked to the steps that use it.">
                 <p className="flex items-start gap-1.5 text-[11px] leading-snug text-muted-foreground">

@@ -26,7 +26,7 @@ export function WizardSection({
       aria-label={title}
     >
       {title && (
-        <header className="flex flex-wrap items-baseline gap-x-2 gap-y-1 border-b border-border px-4 py-3">
+        <header className="flex flex-wrap items-baseline gap-x-2 gap-y-1 border-b border-border px-4 py-2.5">
           <h2 className="text-sm font-semibold text-foreground">{title}</h2>
           {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}
         </header>
@@ -55,11 +55,11 @@ export function WizardRow({
       id={id}
       tabIndex={id ? -1 : undefined}
       className={cn(
-        'grid scroll-mt-4 gap-4 px-4 py-4 focus-visible:outline-none md:grid-cols-[148px_minmax(0,1fr)] md:gap-6',
+        'grid scroll-mt-4 gap-2 px-4 py-3 focus-visible:outline-none md:grid-cols-[148px_minmax(0,1fr)] md:gap-6',
         className,
       )}
     >
-      <div className="space-y-1">
+      <div className="space-y-0.5">
         <div className="text-xs font-semibold text-foreground">{label}</div>
         {description && (
           <p className="text-[11px] leading-snug text-muted-foreground">{description}</p>
@@ -101,7 +101,7 @@ export function ChoiceCard({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        'relative rounded-md border px-3 py-2.5 text-left transition-colors',
+        'relative rounded-md border px-3 py-2 text-left transition-colors',
         selected
           ? 'border-primary bg-primary/5'
           : 'border-border bg-background hover:border-primary/40 hover:bg-muted/30',
@@ -124,7 +124,7 @@ export function ChoiceCard({
         {badge}
       </span>
       {description && (
-        <span className="mt-1 block text-[11px] leading-snug text-muted-foreground">
+        <span className="mt-0.5 block text-[11px] leading-snug text-muted-foreground">
           {description}
         </span>
       )}

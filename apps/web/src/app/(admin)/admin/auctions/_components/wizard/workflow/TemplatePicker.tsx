@@ -3,8 +3,27 @@
 import { useEffect, useRef, useState } from 'react';
 import { Loader2, Search } from 'lucide-react';
 import { cn } from '@repo/ui';
-import { metadataApi, type ManagedTypeListItemFull, type ManagedTypeVM } from '@repo/api';
+import {
+  metadataApi,
+  type ManagedTypeListItemFull,
+  type ManagedTypeVM,
+  type PropertyDef,
+} from '@repo/api';
 import { PropertyFormPreview } from '../../../../metadata/_components/PropertyFormPreview';
+import { PreviewDialog } from './PreviewDialog';
+
+const REQUIRED_VALIDATOR = /^NOT_(NULL|BLANK|EMPTY)$|REQUIRED/;
+
+/** "8 fields · 3 required", counted on the form's top-level fields. */
+function fieldSummary(properties: PropertyDef[]): string {
+  const required = properties.filter(
+    (property) =>
+      property.required ||
+      property.validators?.some((validator) => REQUIRED_VALIDATOR.test(validator.type)),
+  ).length;
+  const fields = `${properties.length} field${properties.length === 1 ? '' : 's'}`;
+  return required ? `${fields} · ${required} required` : fields;
+}
 
 /** Search the organisation's form templates, pick one and preview it. */
 export function TemplatePicker({
@@ -148,22 +167,28 @@ export function TemplatePicker({
       </div>
 
       {typeId && (
-        <div
-          aria-label="Preview of the form"
-          className="rounded-md border border-dashed border-input bg-muted/20 p-3"
+        <PreviewDialog
+          title={previewLabel}
+          description={detail?.name}
+          disabled={loadingDetail || !detail}
+          summary={
+            loadingDetail ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+                Loading the form…
+              </span>
+            ) : detail ? (
+              <>
+                <b className="font-semibold text-foreground">{detail.name}</b> ·{' '}
+                {fieldSummary(detail.properties ?? [])}
+              </>
+            ) : (
+              'This form couldn’t be loaded.'
+            )
+          }
         >
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            {previewLabel}
-          </p>
-          {loadingDetail ? (
-            <div className="flex items-center justify-center gap-2 py-6 text-xs text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-              Loading the form…
-            </div>
-          ) : (
-            <PropertyFormPreview properties={detail?.properties ?? []} />
-          )}
-        </div>
+          <PropertyFormPreview properties={detail?.properties ?? []} />
+        </PreviewDialog>
       )}
     </div>
   );

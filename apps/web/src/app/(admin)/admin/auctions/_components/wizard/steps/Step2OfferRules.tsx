@@ -304,7 +304,7 @@ function WindowEditor({
         </div>
       </div>
 
-      <div className="space-y-3 px-3 py-3">
+      <div className="space-y-2.5 px-3 py-2.5">
         {/* One row: how the price moves, by how much, and for how long. */}
         <div className={cn('grid gap-3 sm:grid-cols-2', !clock && 'lg:grid-cols-3')}>
           {clock ? (
@@ -540,7 +540,7 @@ export function Step2OfferRules({
   const issueCount = (errors.windows || noWindows ? 1 : 0) + (overrun ? 1 : 0);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div
         id={ISSUE_ANCHOR.mechanism}
         tabIndex={-1}

@@ -75,7 +75,7 @@ export function Step4Participation({
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {!form.minimumEnabled ? (
         <PolicyOffRow
           title="No minimum participants"
@@ -108,8 +108,8 @@ export function Step4Participation({
             label="Rule"
             description="The auction only goes live if enough people are ready."
           >
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
                 <Field label="At least" htmlFor="minimum-count">
                   <div className="flex items-center gap-1.5">
                     <input

@@ -75,10 +75,12 @@ export function AwardSettings({
         description="Final at the close, or after you check it."
         className="rounded-none border border-border bg-card"
       >
-        <div className="space-y-2">
+        {/* Days to confirm sits beside the choice instead of under it. */}
+        <div className="flex flex-wrap items-center gap-3">
           <ChoiceCardGroup
             label="Confirming the result"
             columns={2}
+            className="min-w-0 flex-1 basis-80"
             value={form.confirmation}
             onChange={(confirmation) => onChange({ confirmation })}
             options={[
@@ -95,7 +97,7 @@ export function AwardSettings({
             ]}
           />
           {form.confirmation === 'MANUAL' && (
-            <div className="flex items-end gap-2 pt-1">
+            <div className="flex items-center gap-2">
               <label
                 htmlFor="confirm-days"
                 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"

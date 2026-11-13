@@ -193,6 +193,8 @@ function currencyLabel(currency: CurrencySelectOption): string {
   return `${currency.value}: ${currency.label}${symbol}`;
 }
 
+const subLabelClass = 'text-[10px] font-semibold uppercase tracking-wider text-muted-foreground';
+
 const decimalsText = (decimals: number) =>
   decimals === 0 ? 'no decimal places' : `${decimals} decimal places`;
 
@@ -291,7 +293,7 @@ export function Step1BasicsUnit({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <WizardSection
         title="The auction"
         hint={isForward ? 'How it runs, and who can join.' : 'How it runs, and who can join.'}
@@ -307,16 +309,35 @@ export function Step1BasicsUnit({
         </WizardRow>
 
         <WizardRow
-          label="Direction"
-          description="Selling or buying. This changes wording and limits in later sections."
+          label="Direction and access"
+          description="Selling or buying, and who can join. Private auctions are invite-only: you invite people after you publish."
         >
-          <ChoiceCardGroup<string>
-            label="Direction"
-            columns={2}
-            value={form.direction}
-            onChange={(direction) => onChange({ direction: direction as BasicsState['direction'] })}
-            options={choiceOptions(DIRECTIONS)}
-          />
+          <div className="grid gap-3 lg:grid-cols-2">
+            <div className="space-y-1.5">
+              <p className={subLabelClass}>Direction</p>
+              <ChoiceCardGroup<string>
+                label="Direction"
+                columns={2}
+                value={form.direction}
+                onChange={(direction) =>
+                  onChange({ direction: direction as BasicsState['direction'] })
+                }
+                options={choiceOptions(DIRECTIONS)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <p className={subLabelClass}>Who can join</p>
+              <ChoiceCardGroup<string>
+                label="Who can join"
+                columns={2}
+                value={form.accessibility}
+                onChange={(accessibility) =>
+                  onChange({ accessibility: accessibility as BasicsState['accessibility'] })
+                }
+                options={choiceOptions(ACCESSIBILITY)}
+              />
+            </div>
+          </div>
         </WizardRow>
 
         <WizardRow
@@ -381,21 +402,6 @@ export function Step1BasicsUnit({
         </WizardRow>
 
         <WizardRow
-          label="Who can join"
-          description="Private auctions are invite-only. You invite people after you publish."
-        >
-          <ChoiceCardGroup<string>
-            label="Who can join"
-            columns={2}
-            value={form.accessibility}
-            onChange={(accessibility) =>
-              onChange({ accessibility: accessibility as BasicsState['accessibility'] })
-            }
-            options={choiceOptions(ACCESSIBILITY)}
-          />
-        </WizardRow>
-
-        <WizardRow
           label="Regional settings"
           description="Currency, time zone and how calculated amounts are rounded."
         >
@@ -434,11 +440,8 @@ export function Step1BasicsUnit({
               </select>
             </Field>
           </div>
-          <div className="mt-4 space-y-2">
-            <p
-              id="rounding-label"
-              className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
-            >
+          <div className="mt-3 space-y-1.5">
+            <p id="rounding-label" className={subLabelClass}>
               Rounding mode
             </p>
             <div
@@ -670,15 +673,17 @@ export function Step1BasicsUnit({
               : 'Where bidding starts, for the whole unit. Asks come down from here.'
           }
         >
-          <div className="max-w-[200px]">
-            <MoneyField
-              id="openingPrice"
-              value={form.openingPrice}
-              currency={symbol}
-              onChange={(value) => onChange({ openingPrice: value })}
-              error={errors.openingPrice}
-            />
-            <p className="mt-1.5 text-[11px] text-muted-foreground">
+          <div className="flex flex-wrap items-start gap-x-4 gap-y-2">
+            <div className="w-[200px]">
+              <MoneyField
+                id="openingPrice"
+                value={form.openingPrice}
+                currency={symbol}
+                onChange={(value) => onChange({ openingPrice: value })}
+                error={errors.openingPrice}
+              />
+            </div>
+            <p className="flex min-h-9 items-center text-[11px] text-muted-foreground">
               {form.openingPrice
                 ? `${formatMoney(form.openingPrice, form.currencyUnit)} for the whole unit`
                 : 'Set the price the unit opens at.'}
@@ -695,44 +700,49 @@ export function Step1BasicsUnit({
           }
         >
           <div className="space-y-2.5">
-            <label className="flex cursor-pointer items-center gap-2.5 text-xs font-medium text-foreground">
-              <Switch
-                checked={form.reserveEnabled}
-                onCheckedChange={(reserveEnabled) => onChange({ reserveEnabled })}
-              />
-              {form.reserveEnabled
-                ? isForward
-                  ? 'Reserve price on'
-                  : 'Maximum price on'
-                : isForward
-                  ? 'No reserve price'
-                  : 'No maximum price'}
-            </label>
-            {form.reserveEnabled && (
-              <>
-                <div className="max-w-[200px]">
+            {/* The switch and the amount share one line. */}
+            <div className="flex flex-wrap items-start gap-x-4 gap-y-2">
+              <label className="flex h-9 cursor-pointer items-center gap-2.5 text-xs font-medium text-foreground">
+                <Switch
+                  checked={form.reserveEnabled}
+                  onCheckedChange={(reserveEnabled) => onChange({ reserveEnabled })}
+                />
+                {form.reserveEnabled
+                  ? isForward
+                    ? 'Reserve price on'
+                    : 'Maximum price on'
+                  : isForward
+                    ? 'No reserve price'
+                    : 'No maximum price'}
+              </label>
+              {form.reserveEnabled && (
+                <div className="w-[200px]">
                   <MoneyField
                     value={form.reserveAmount}
                     currency={symbol}
                     onChange={(value) => onChange({ reserveAmount: value })}
                     error={errors.reserveAmount}
                   />
-                  <p className="mt-1.5 text-[11px] text-muted-foreground">
-                    {form.reserveAmount
-                      ? `${formatMoney(form.reserveAmount, form.currencyUnit)}, ${
-                          form.reserveVisibility === 'HIDDEN'
-                            ? `${who} do not see it`
-                            : form.reserveVisibility === 'SHOWN'
-                              ? `${who} see the amount`
-                              : `${who} see it once it is met`
-                        }`
-                      : 'Add the amount you want to protect.'}
-                  </p>
                 </div>
+              )}
+              {form.reserveEnabled && (
+                <p className="flex min-h-9 items-center text-[11px] text-muted-foreground">
+                  {form.reserveAmount
+                    ? `${formatMoney(form.reserveAmount, form.currencyUnit)}, ${
+                        form.reserveVisibility === 'HIDDEN'
+                          ? `${who} do not see it`
+                          : form.reserveVisibility === 'SHOWN'
+                            ? `${who} see the amount`
+                            : `${who} see it once it is met`
+                      }`
+                    : 'Add the amount you want to protect.'}
+                </p>
+              )}
+            </div>
+            {form.reserveEnabled && (
+              <>
                 <div className="space-y-1.5">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Who sees the reserve
-                  </p>
+                  <p className={subLabelClass}>Who sees the reserve</p>
                   <ChoiceCardGroup<BasicsState['reserveVisibility']>
                     label="Who sees the reserve"
                     columns={3}

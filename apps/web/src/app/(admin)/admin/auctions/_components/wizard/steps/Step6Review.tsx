@@ -130,6 +130,7 @@ export function Step6Review() {
     goToStep,
     publish,
     workflowDrafts,
+    setupSummary,
   } = useAuctionWizard();
   const workflow = useWorkflowSteps(auctionId, workflowDrafts);
   const publishing = busy === 'publish';
@@ -162,7 +163,9 @@ export function Step6Review() {
       )}
 
       <SetupChecklist
-        rows={checklistRows(state, workflowCount, postWorkflowCount)}
+        server={setupSummary.summary}
+        serverLoading={setupSummary.loading}
+        fallbackRows={checklistRows(state, workflowCount, postWorkflowCount)}
         issues={allIssues}
         visited={visited}
         reviewFlags={reviewFlags}

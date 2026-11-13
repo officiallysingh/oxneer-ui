@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { Info } from 'lucide-react';
-import { DateTimePicker } from '@repo/ui';
+import { DateTimePicker, cn } from '@repo/ui';
 import type { AuctionMechanism, ScheduleState } from '../../../_lib/wizard/types';
 import {
   ChoiceCardGroup,
@@ -106,14 +106,20 @@ export function Step3Schedule({
   const latestLabel = form.limitEnabled ? (latest ? formatTime(latest) : 'close') : '…';
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <WizardSection>
         <WizardRow
           label="Start"
           description={`All times are in ${TIME_ZONE_LABEL[timeZone] ?? timeZone}.`}
         >
-          <div className="max-w-md space-y-1.5">
-            <Field label="Bidding opens" htmlFor="startTime" error={errors.startTime}>
+          {/* The picker and when it opens share one line. */}
+          <div className="flex flex-wrap items-end gap-x-3 gap-y-1.5">
+            <Field
+              label="Bidding opens"
+              htmlFor="startTime"
+              error={errors.startTime}
+              className="w-full max-w-sm"
+            >
               <DateTimePicker
                 id="startTime"
                 value={form.startTime}
@@ -123,7 +129,7 @@ export function Step3Schedule({
               />
             </Field>
             {form.startTime && (
-              <p className="rounded bg-muted/60 px-2.5 py-1.5 text-[11px] text-muted-foreground">
+              <p className="flex min-h-9 items-center rounded bg-muted/60 px-2.5 py-1.5 text-[11px] text-muted-foreground">
                 <span className="font-semibold uppercase tracking-wider text-foreground">
                   Opens
                 </span>{' '}
@@ -143,7 +149,7 @@ export function Step3Schedule({
               is left or the price reaches where the clock stops, so there is no end time to set.
             </InfoNote>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <ChoiceCardGroup
                 label="How bidding ends"
                 columns={2}
@@ -163,35 +169,41 @@ export function Step3Schedule({
                 ]}
               />
 
-              {form.endMode === 'DURATION' ? (
-                <Field label="Bidding runs for">
-                  <div className="flex items-center gap-1.5">
-                    <input
-                      type="number"
-                      min={0}
-                      max={720}
-                      value={form.durationHours}
-                      onChange={(e) => onChange({ durationHours: e.target.value })}
-                      className="h-9 w-16 rounded-md border border-input bg-background px-2 text-sm tabular-nums outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
-                      aria-label="Hours of bidding"
-                    />
-                    <span className="text-xs text-muted-foreground">h</span>
-                    <input
-                      type="number"
-                      min={0}
-                      max={59}
-                      step={5}
-                      value={form.durationMinutes}
-                      onChange={(e) => onChange({ durationMinutes: e.target.value })}
-                      className="h-9 w-16 rounded-md border border-input bg-background px-2 text-sm tabular-nums outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
-                      aria-label="Minutes of bidding"
-                    />
-                    <span className="text-xs text-muted-foreground">min</span>
-                  </div>
-                </Field>
-              ) : (
-                <div className="max-w-md">
-                  <Field label="Bidding closes" htmlFor="endTime" error={errors.endTime}>
+              {/* The length or close time, and the resulting close, on one line. */}
+              <div className="flex flex-wrap items-end gap-x-3 gap-y-1.5">
+                {form.endMode === 'DURATION' ? (
+                  <Field label="Bidding runs for">
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="number"
+                        min={0}
+                        max={720}
+                        value={form.durationHours}
+                        onChange={(e) => onChange({ durationHours: e.target.value })}
+                        className="h-9 w-16 rounded-md border border-input bg-background px-2 text-sm tabular-nums outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+                        aria-label="Hours of bidding"
+                      />
+                      <span className="text-xs text-muted-foreground">h</span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={59}
+                        step={5}
+                        value={form.durationMinutes}
+                        onChange={(e) => onChange({ durationMinutes: e.target.value })}
+                        className="h-9 w-16 rounded-md border border-input bg-background px-2 text-sm tabular-nums outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+                        aria-label="Minutes of bidding"
+                      />
+                      <span className="text-xs text-muted-foreground">min</span>
+                    </div>
+                  </Field>
+                ) : (
+                  <Field
+                    label="Bidding closes"
+                    htmlFor="endTime"
+                    error={errors.endTime}
+                    className="w-full max-w-sm"
+                  >
                     <DateTimePicker
                       id="endTime"
                       value={form.endTime}
@@ -200,25 +212,25 @@ export function Step3Schedule({
                       min={form.startTime || new Date().toISOString().slice(0, 16)}
                     />
                   </Field>
-                </div>
-              )}
-
-              <p className="rounded bg-muted/60 px-2.5 py-1.5 text-[11px] text-muted-foreground">
-                <span className="font-semibold uppercase tracking-wider text-foreground">
-                  Closes
-                </span>{' '}
-                {formatDateTime(endTime)}{' '}
-                {totalMinutes > 0 && (
-                  <span>
-                    {minutesLabel(totalMinutes)} of bidding
-                    {!sealed && form.softCloseEnabled
-                      ? form.limitEnabled && latest
-                        ? `, up to ${formatTime(latest)} with extensions`
-                        : ', plus any extensions'
-                      : ''}
-                  </span>
                 )}
-              </p>
+
+                <p className="flex min-h-9 flex-wrap items-center gap-x-1 rounded bg-muted/60 px-2.5 py-1.5 text-[11px] text-muted-foreground">
+                  <span className="font-semibold uppercase tracking-wider text-foreground">
+                    Closes
+                  </span>{' '}
+                  {formatDateTime(endTime)}{' '}
+                  {totalMinutes > 0 && (
+                    <span>
+                      {minutesLabel(totalMinutes)} of bidding
+                      {!sealed && form.softCloseEnabled
+                        ? form.limitEnabled && latest
+                          ? `, up to ${formatTime(latest)} with extensions`
+                          : ', plus any extensions'
+                        : ''}
+                    </span>
+                  )}
+                </p>
+              </div>
               {form.endMode === 'DURATION' && errors.endTime && (
                 <p className="text-[11px] text-destructive">{errors.endTime}</p>
               )}
@@ -269,47 +281,56 @@ export function Step3Schedule({
           footer={extendMinutes ? undefined : 'Set the minutes to save.'}
         >
           <WizardRow label="Extend by" description={`How much time a late ${noun} adds.`}>
-            <div className="max-w-[130px]">
-              <Field label="Minutes" htmlFor="soft-close-minutes">
+            {/* Minutes beside where they're measured from. Both columns have a
+                label and stretch, so the input is as tall as the two cards. */}
+            <div className="grid gap-3 sm:grid-cols-[110px_minmax(0,1fr)]">
+              <Field label="Minutes" htmlFor="soft-close-minutes" className="flex flex-col">
                 <input
                   id="soft-close-minutes"
                   type="number"
                   min={1}
                   value={form.extendMinutes}
                   onChange={(e) => onChange({ extendMinutes: e.target.value })}
-                  className={inputClass}
+                  className={cn(inputClass, 'min-h-9 flex-1 text-base font-semibold tabular-nums')}
                 />
               </Field>
+              <div className="flex flex-col space-y-1.5">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Measured from
+                </p>
+                <ChoiceCardGroup
+                  label="Measured from"
+                  columns={2}
+                  className="flex-1"
+                  value={form.extensionReference}
+                  onChange={(extensionReference) => onChange({ extensionReference })}
+                  options={[
+                    {
+                      value: 'FROM_AUCTION_END_TIME',
+                      title: 'From the scheduled close',
+                      description: `Each extension adds to ${closeTime}`,
+                    },
+                    {
+                      value: 'FROM_LATEST_OFFER_TIME',
+                      title: `From the latest ${noun}`,
+                      description: `The close is always ${extendMinutes || 'N'} min after the last ${noun}`,
+                    },
+                  ]}
+                />
+              </div>
             </div>
-            <ChoiceCardGroup
-              label="Measured from"
-              columns={2}
-              className="mt-3"
-              value={form.extensionReference}
-              onChange={(extensionReference) => onChange({ extensionReference })}
-              options={[
-                {
-                  value: 'FROM_AUCTION_END_TIME',
-                  title: 'From the scheduled close',
-                  description: `Each extension adds to ${closeTime}`,
-                },
-                {
-                  value: 'FROM_LATEST_OFFER_TIME',
-                  title: `From the latest ${noun}`,
-                  description: `The close is always ${extendMinutes || 'N'} min after the last ${noun}`,
-                },
-              ]}
-            />
           </WizardRow>
 
           <WizardRow
             label="How many times"
             description="Put a cap on how long the auction can run."
           >
-            <div className="space-y-2">
+            {/* The cap sits beside the choice instead of under it. */}
+            <div className="flex flex-wrap items-center gap-3">
               <ChoiceCardGroup
                 label="How many times"
                 columns={2}
+                className="min-w-0 flex-1 basis-80"
                 value={form.limitEnabled ? 'CAPPED' : 'UNLIMITED'}
                 onChange={(limit) => onChange({ limitEnabled: limit === 'CAPPED' })}
                 options={[

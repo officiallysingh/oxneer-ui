@@ -109,7 +109,7 @@ export function WizardSummary() {
   ];
 
   return (
-    <div className="rounded-lg border border-border bg-card">
+    <div className="rounded-none border border-border bg-card">
       <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-1.5">
         <p className="text-xs font-semibold text-foreground">Summary</p>
         <AuctionFacts />

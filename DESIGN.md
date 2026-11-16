@@ -63,7 +63,10 @@ Admin body text is `text-sm`. Don't use `text-base` for table cells or form help
 
 - Spacing is on the 4px Tailwind scale. Page sections stack with `space-y-4`, form sections with `space-y-6`, and inline controls use `gap-2`.
 - Page header: `pb-6 border-b`. Card padding is `px-4 py-3`/`py-3.5`. Detail rows are `px-4 py-3`.
-- Radius: `--radius` is `0.5rem`, giving `rounded-lg` (8px) on inputs and buttons, `rounded-md` / `rounded-sm` for nested items, `rounded-2xl` for section cards and large panels, and `rounded-full` for pills, avatars and dots.
+- Radius: **outermost containers are sharp; everything inside follows the theme.**
+  - Outermost containers use `rounded-none`. That means any bordered box that sits directly on the page or in a page column, not inside another box: section cards, large panels, sidebar cards, step rails, summaries, and page-level notice, error and status banners.
+  - Everything nested inside them uses the theme radius (`--radius` is `0.5rem`): `rounded-lg` (8px) for inputs and buttons, `rounded-md` / `rounded-sm` for nested items (choice cards, inner tables, callouts, chips), and `rounded-full` for pills, avatars and dots.
+  - Dialogs, popovers, sheets and menus keep their primitive's own radius.
 - Elevation: admin surfaces use borders first, shadows second. `shadow-xs` at rest, then `hover:shadow-md` on interactive cards. Use `shadow-admin`, `shadow-admin-md` and `shadow-admin-lg` for popovers and floating bars. `shadow-card` and `shadow-gold` are for public pages.
 - Don't nest cards inside cards. Inside a card, divide with `divide-y divide-border/40`.
 

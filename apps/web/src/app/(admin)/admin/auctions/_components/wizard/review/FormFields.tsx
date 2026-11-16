@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { useId, useState, type ReactNode } from 'react';
+import { ChevronDown, Loader2 } from 'lucide-react';
 import type { PropertyDef } from '@repo/api';
 import { cn } from '@repo/ui';
 import { resolveStr } from '@/components/common/admin/format';
@@ -73,6 +73,8 @@ export function FormFields({ form, onPolicy = false }: { form: TimelineForm; onP
   );
   const fields = embedded.length ? embedded : (managedType?.properties ?? []);
   const required = fields.filter(isRequiredProperty).length;
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const previewId = `form-preview-${useId()}`;
 
   if (loading) {
     return (
@@ -116,43 +118,73 @@ export function FormFields({ form, onPolicy = false }: { form: TimelineForm; onP
           );
         })}
       </ul>
-      <p
-        className={cn(
-          'text-[11px]',
-          onPolicy ? 'text-policy-foreground/75' : 'text-muted-foreground',
-        )}
-      >
-        {required === fields.length
-          ? `All ${fields.length} fields are required.`
-          : `${required} of ${fields.length} fields required (marked *).`}
-      </p>
-      <FormPreview fields={fields} />
+      {/* The count and the preview toggle share one line to keep the card short. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+        <p
+          className={cn(
+            'text-[11px]',
+            onPolicy ? 'text-policy-foreground/75' : 'text-muted-foreground',
+          )}
+        >
+          {required === fields.length
+            ? `All ${fields.length} fields are required.`
+            : `${required} of ${fields.length} fields required (marked *).`}
+        </p>
+        <DisclosureToggle open={previewOpen} controls={previewId} onToggle={setPreviewOpen}>
+          Preview the form
+        </DisclosureToggle>
+      </div>
+      {previewOpen && <FormPreview id={previewId} fields={fields} />}
     </div>
   );
 }
 
-/** The form as participants fill it in, opened in place like "Read the terms".
- *  Nothing typed here is saved. */
-function FormPreview({ fields }: { fields: PropertyDef[] }) {
+/** A text toggle that shows or hides a panel placed elsewhere in the card. */
+export function DisclosureToggle({
+  open,
+  controls,
+  onToggle,
+  children,
+}: {
+  open: boolean;
+  controls: string;
+  onToggle: (open: boolean) => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-expanded={open}
+      aria-controls={controls}
+      onClick={() => onToggle(!open)}
+      className="inline-flex min-h-7 shrink-0 items-center gap-1 rounded-sm text-xs font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      {children}
+      <ChevronDown
+        className={cn('h-3.5 w-3.5 transition-transform', open && 'rotate-180')}
+        aria-hidden
+      />
+    </button>
+  );
+}
+
+/** The form as participants fill it in. Nothing typed here is saved, and it
+ *  starts empty each time it opens. */
+function FormPreview({ id, fields }: { id: string; fields: PropertyDef[] }) {
   const [values, setValues] = useState<Record<string, unknown>>({});
   return (
-    <details onToggle={(event) => !event.currentTarget.open && setValues({})}>
-      <summary className="flex min-h-8 w-fit cursor-pointer items-center rounded-sm text-xs font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-        Preview the form
-      </summary>
-      <div className="mt-2 space-y-4 rounded-md bg-muted/45 px-3 py-3">
-        <p className="text-[11px] text-muted-foreground">
-          How participants see it. Nothing you type here is saved.
-        </p>
-        {fields.map((property) => (
-          <SingleField
-            key={property.name}
-            prop={property}
-            value={values[property.name]}
-            onChange={(value) => setValues((prev) => ({ ...prev, [property.name]: value }))}
-          />
-        ))}
-      </div>
-    </details>
+    <div id={id} className="space-y-4 rounded-md bg-muted/45 px-3 py-3">
+      <p className="text-[11px] text-muted-foreground">
+        How participants see it. Nothing you type here is saved.
+      </p>
+      {fields.map((property) => (
+        <SingleField
+          key={property.name}
+          prop={property}
+          value={values[property.name]}
+          onChange={(value) => setValues((prev) => ({ ...prev, [property.name]: value }))}
+        />
+      ))}
+    </div>
   );
 }

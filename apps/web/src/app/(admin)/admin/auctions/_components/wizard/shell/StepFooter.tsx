@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, ArrowRight, Loader2, Save } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,6 +15,7 @@ import {
 } from '@repo/ui';
 import { useAuctionWizard } from '../../../_context';
 import { STEP_LABELS, isSetupStep } from '../../../_lib/wizard/steps';
+import { formatTime } from '../../../_lib/wizard/summary';
 import { StatusPill } from '../review/StatusPill';
 import { revealIssue } from '../ui/revealIssue';
 
@@ -95,20 +96,47 @@ function CancelButton({ disabled }: { disabled: boolean }) {
   );
 }
 
-/** Back, Cancel, Save and Save & continue for steps 1–5. Both saves validate the step first. */
+/** "Saved 10:32", "Unsaved changes", or nothing before the first edit. */
+function SaveStatus() {
+  const { savedAt, hasUnsavedChanges } = useAuctionWizard();
+  const text = hasUnsavedChanges
+    ? 'Unsaved changes'
+    : savedAt
+      ? `Saved ${formatTime(savedAt.toISOString())}`
+      : '';
+  return (
+    <span role="status" className="text-xs text-muted-foreground tabular-nums">
+      {text}
+    </span>
+  );
+}
+
+/** The one action bar for steps 1–5, stuck to the bottom of the screen:
+ *  Cancel and Back on the left; Continue and Save & continue on the right.
+ *  Save & continue validates and saves this step, then opens the next one.
+ *  Continue opens the next one without saving: edits stay in the form (the
+ *  rail marks the step "Not saved"). It needs the auction to exist, since
+ *  nothing past Basics and unit opens until that step is saved. */
 export function StepFooter() {
-  const { step, busy, errors, locked, goBack, goNext, saveCurrentStep } = useAuctionWizard();
+  const { auctionId, step, busy, errors, locked, published, goBack, goNext, goToStep } =
+    useAuctionWizard();
   if (!isSetupStep(step)) return null;
   const advancing = busy === 'step';
-  const saving = busy === 'stepSave';
   const working = busy !== null;
   const nextLabel = STEP_LABELS[step + 1];
+  const canSkip = !locked && Boolean(auctionId);
 
   return (
     <>
       <SectionIssues />
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-        <div>
+      <div className="sticky bottom-0 z-10 -mx-1 border-t border-border bg-background/95 px-1 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/85">
+        {errors.general && (
+          <p role="alert" className="mb-2 text-xs text-destructive">
+            {errors.general}
+          </p>
+        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <CancelButton disabled={working} />
           {step > 1 && (
             <Button
               type="button"
@@ -118,33 +146,21 @@ export function StepFooter() {
               className="gap-2"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden />
-              Back: {STEP_LABELS[step - 1]}
+              <span className="hidden sm:inline">Back: {STEP_LABELS[step - 1]}</span>
+              <span className="sm:hidden">Back</span>
             </Button>
           )}
-        </div>
-        <div className="flex flex-col items-end gap-1">
-          {errors.general && (
-            <span role="alert" className="text-[11px] text-destructive">
-              {errors.general}
-            </span>
-          )}
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <CancelButton disabled={working} />
-            {/* Published setup steps are read-only, so there's nothing to save. */}
-            {!locked && (
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+            {!published && <SaveStatus />}
+            {canSkip && (
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => void saveCurrentStep()}
+                onClick={() => goToStep(step + 1)}
                 disabled={working}
-                className="gap-2"
+                title={`Opens ${nextLabel} without saving this step`}
               >
-                {saving ? (
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                ) : (
-                  <Save className="h-4 w-4" aria-hidden />
-                )}
-                Save
+                Continue
               </Button>
             )}
             <Button

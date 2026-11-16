@@ -27,7 +27,7 @@ export function StepNotices() {
       {published && (
         <div
           role="status"
-          className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-muted/50 px-3 py-2.5"
+          className="flex flex-wrap items-center gap-3 rounded-none border border-border bg-muted/50 px-3 py-2.5"
         >
           <Lock className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
           <p className="min-w-0 flex-1 text-[11px] leading-snug text-foreground">
@@ -46,7 +46,7 @@ export function StepNotices() {
       {!published && reason && (
         <div
           role="status"
-          className="flex flex-wrap items-center gap-3 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2.5"
+          className="flex flex-wrap items-center gap-3 rounded-none border border-warning/40 bg-warning/10 px-3 py-2.5"
         >
           <AlertTriangle className="h-4 w-4 shrink-0 text-warning" aria-hidden />
           <p className="min-w-0 flex-1 text-[11px] leading-snug text-foreground">
@@ -65,7 +65,7 @@ export function StepNotices() {
       )}
 
       {step === 1 && unitNotice && (
-        <div className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-[11px] leading-relaxed text-foreground">
+        <div className="rounded-none border border-warning/40 bg-warning/10 px-3 py-2 text-[11px] leading-relaxed text-foreground">
           This auction uses a <span className="font-semibold">{unitNotice}</span> unit. The simple
           editor keeps that unit type when saving; its listings still appear below.
         </div>

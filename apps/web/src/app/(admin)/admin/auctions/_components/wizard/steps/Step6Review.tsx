@@ -2,7 +2,18 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Check, Loader2, Rocket } from 'lucide-react';
-import { Button } from '@repo/ui';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+  Button,
+} from '@repo/ui';
 import { auctionsApi, type AuctionWorkflowStep } from '@repo/api';
 import { parseApiError } from '@/lib/api-errors';
 import { useAuctionWizard } from '../../../_context';
@@ -156,7 +167,7 @@ export function Step6Review() {
       {errors.general && (
         <p
           role="alert"
-          className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive"
+          className="rounded-none border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive"
         >
           {errors.general}
         </p>
@@ -209,21 +220,40 @@ export function Step6Review() {
                 ? `Publishing locks the rules as version 1${isPrivate ? '. Then you invite people.' : '.'}`
                 : 'Finish the checklist to publish.'}
           </span>
-          <Button
-            type="button"
-            onClick={() => void publish()}
-            disabled={publishing || published || !ready}
-            className="gap-2"
-          >
-            {publishing ? (
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-            ) : published ? (
-              <Check className="h-4 w-4" aria-hidden />
-            ) : (
-              <Rocket className="h-4 w-4" aria-hidden />
-            )}
-            {published ? 'Published' : publishing ? 'Publishing…' : 'Publish auction'}
-          </Button>
+          {/* Publishing can't be undone, so it asks once before locking the rules. */}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button type="button" disabled={publishing || published || !ready} className="gap-2">
+                {publishing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                ) : published ? (
+                  <Check className="h-4 w-4" aria-hidden />
+                ) : (
+                  <Rocket className="h-4 w-4" aria-hidden />
+                )}
+                {published ? 'Published' : publishing ? 'Publishing…' : 'Publish auction'}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  Publish {state.basics.title.trim() || 'this auction'}?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  The rules are locked as version 1, so everyone takes part on the same terms. You
+                  won&apos;t be able to change the basics, offer rules, schedule, participation or
+                  award after this.
+                  {isPrivate ? ' Next, you invite the people who can take part.' : ''}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Keep reviewing</AlertDialogCancel>
+                <AlertDialogAction onClick={() => void publish()}>
+                  Publish and lock
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
     </div>

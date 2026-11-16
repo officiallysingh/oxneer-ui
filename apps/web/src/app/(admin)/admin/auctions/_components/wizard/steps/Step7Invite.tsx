@@ -239,7 +239,7 @@ export function Step7Invite({
       <InvitePanel auctionId={auctionId} invitedEmails={invitedEmails} onInvited={refreshList} />
 
       {minimumEnabled && counts.ready < minimumCount && (
-        <div className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-[11px] leading-snug text-foreground">
+        <div className="flex items-start gap-2 rounded-none border border-warning/40 bg-warning/10 px-3 py-2 text-[11px] leading-snug text-foreground">
           <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" aria-hidden />
           <p>
             Only {counts.invited} invited so far, but at least {minimumCount} must be ready by{' '}

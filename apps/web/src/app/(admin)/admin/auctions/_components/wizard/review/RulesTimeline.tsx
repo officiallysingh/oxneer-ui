@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import {
   CalendarClock,
   ClipboardList,
@@ -28,7 +28,7 @@ import {
 } from '../../../_lib/wizard/summary';
 import { offsetMinutes } from '../../../_lib/wizard/workflow';
 import { WindowTrack } from '../ui/WindowTrack';
-import { FormFields } from './FormFields';
+import { DisclosureToggle, FormFields } from './FormFields';
 import {
   buildTimeline,
   type TimelineIcon,
@@ -162,6 +162,11 @@ function Tag({
 
 function ItemCard({ item, track }: { item: TimelineItem; track: ReactNode }) {
   const muted = item.policy ? 'text-policy-foreground/75' : 'text-muted-foreground';
+  const [termsOpen, setTermsOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const uid = useId();
+  const termsId = `terms-${uid}`;
+  const detailsId = `details-${uid}`;
   return (
     <article
       className={cn(
@@ -189,6 +194,22 @@ function ItemCard({ item, track }: { item: TimelineItem; track: ReactNode }) {
             </Tag>
           )}
         </div>
+        {/* Toggles sit in the title row, on the right, so they add no height;
+            what they open still appears in place further down. */}
+        {(item.terms || item.details) && (
+          <div className="ml-auto flex shrink-0 items-center gap-3">
+            {item.terms && (
+              <DisclosureToggle open={termsOpen} controls={termsId} onToggle={setTermsOpen}>
+                Read the terms
+              </DisclosureToggle>
+            )}
+            {item.details && (
+              <DisclosureToggle open={detailsOpen} controls={detailsId} onToggle={setDetailsOpen}>
+                {item.details.title}
+              </DisclosureToggle>
+            )}
+          </div>
+        )}
       </div>
 
       <p
@@ -237,38 +258,32 @@ function ItemCard({ item, track }: { item: TimelineItem; track: ReactNode }) {
 
       {item.track && track}
 
-      {item.terms && (
-        <details className="mt-2.5">
-          <summary className="flex min-h-8 w-fit cursor-pointer items-center rounded-sm text-xs font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            Read the terms
-          </summary>
-          <ol className="mt-2 list-decimal space-y-1 rounded-md bg-muted/45 py-2.5 pl-8 pr-3 text-xs leading-relaxed">
-            {item.terms.map((line, index) => (
-              <li key={index}>{line}</li>
-            ))}
-          </ol>
-        </details>
+      {item.terms && termsOpen && (
+        <ol
+          id={termsId}
+          className="mt-2.5 list-decimal space-y-1 rounded-md bg-muted/45 py-2.5 pl-8 pr-3 text-xs leading-relaxed"
+        >
+          {item.terms.map((line, index) => (
+            <li key={index}>{line}</li>
+          ))}
+        </ol>
       )}
 
-      {item.details && (
-        <details className="mt-2.5">
-          <summary className="flex min-h-8 w-fit cursor-pointer items-center rounded-sm text-xs font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            {item.details.title}
-          </summary>
-          <dl
-            className={cn(
-              'mt-1.5 grid grid-cols-[minmax(0,140px)_minmax(0,1fr)] gap-x-4 gap-y-1.5 rounded-md border border-dashed px-3 py-2.5 text-xs',
-              item.policy ? 'border-policy-foreground/25' : 'border-input',
-            )}
-          >
-            {item.details.rows.map((row) => (
-              <div key={row.k} className="contents">
-                <dt className={muted}>{row.k}</dt>
-                <dd className="break-words font-mono text-[11px]">{row.v}</dd>
-              </div>
-            ))}
-          </dl>
-        </details>
+      {item.details && detailsOpen && (
+        <dl
+          id={detailsId}
+          className={cn(
+            'mt-2.5 grid grid-cols-[minmax(0,140px)_minmax(0,1fr)] gap-x-4 gap-y-1.5 rounded-md border border-dashed px-3 py-2.5 text-xs',
+            item.policy ? 'border-policy-foreground/25' : 'border-input',
+          )}
+        >
+          {item.details.rows.map((row) => (
+            <div key={row.k} className="contents">
+              <dt className={muted}>{row.k}</dt>
+              <dd className="break-words font-mono text-[11px]">{row.v}</dd>
+            </div>
+          ))}
+        </dl>
       )}
 
       {item.note && (

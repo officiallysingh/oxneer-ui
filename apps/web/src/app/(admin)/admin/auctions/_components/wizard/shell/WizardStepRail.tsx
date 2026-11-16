@@ -23,7 +23,16 @@ const LOCKED_HINT_ID = 'rail-locked-hint';
 const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
 
 function railState(id: number, wizard: AuctionWizardContextValue): RailState {
-  const { published, visited, reviewFlags, issues, progress, isPrivate, inviteStats } = wizard;
+  const {
+    published,
+    visited,
+    reviewFlags,
+    issues,
+    progress,
+    isPrivate,
+    inviteStats,
+    unsavedSteps,
+  } = wizard;
 
   if (isSetupStep(id)) {
     if (published) return { tone: 'done', text: 'Locked' };
@@ -31,7 +40,12 @@ function railState(id: number, wizard: AuctionWizardContextValue): RailState {
     if (visited.has(id) && toFix.length) return { tone: 'fix', text: `${toFix.length} to fix` };
     if (reviewFlags[id as keyof typeof reviewFlags])
       return { tone: 'review', text: 'Needs review' };
-    if (visited.has(id)) return { tone: 'done', text: 'Done' };
+    // Opened isn't finished: only a step whose settings are saved counts as done.
+    if (visited.has(id)) {
+      return unsavedSteps.has(id)
+        ? { tone: 'todo', text: 'Not saved' }
+        : { tone: 'done', text: 'Done' };
+    }
     return { tone: 'todo', text: 'Not started' };
   }
 
@@ -236,7 +250,7 @@ export function WizardStepRail() {
   return (
     <nav
       aria-label="Auction steps"
-      className="overflow-hidden rounded-lg border border-border bg-card"
+      className="overflow-hidden rounded-none border border-border bg-card"
     >
       <p className="px-3 pb-1 pt-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         Simple auction · 7 steps

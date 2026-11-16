@@ -26,7 +26,7 @@ export function PublishStatusCard() {
         : ['text-success', 'Ready to publish'];
 
   return (
-    <div className="rounded-lg border border-border bg-card px-3 py-3">
+    <div className="rounded-none border border-border bg-card px-3 py-3">
       <p className="text-xs font-semibold text-foreground">
         {published ? 'Published' : 'Before you publish'}
       </p>

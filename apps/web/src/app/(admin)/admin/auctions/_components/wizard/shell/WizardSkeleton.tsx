@@ -9,7 +9,7 @@ export function WizardSkeleton() {
         <Skeleton className="h-6 w-64" />
       </div>
       <div className="grid gap-5 lg:grid-cols-[248px_minmax(0,1fr)]">
-        <div className="space-y-2 rounded-lg border border-border bg-card p-3">
+        <div className="space-y-2 rounded-none border border-border bg-card p-3">
           {Array.from({ length: 7 }, (_, index) => (
             <div key={index} className="flex items-center gap-2.5">
               <Skeleton className="h-5 w-5 rounded-full" />

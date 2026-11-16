@@ -308,6 +308,28 @@ export function Step1BasicsUnit({
           />
         </WizardRow>
 
+        {/* Before Direction: a preset sets the direction, so choosing one after
+            picking a direction would quietly overwrite it. */}
+        <WizardRow
+          label="Preset"
+          description="Optional. Sets the direction, offer rules and award to a standard setup. You can still change anything."
+        >
+          <Field label="Start from" htmlFor="preset" className="max-w-md">
+            <select
+              id="preset"
+              value={form.preset}
+              onChange={(e) => onChange({ preset: e.target.value })}
+              className={selectClass}
+            >
+              {PRESETS.map((preset) => (
+                <option key={preset.value} value={preset.value}>
+                  {preset.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </WizardRow>
+
         <WizardRow
           label="Direction and access"
           description="Selling or buying, and who can join. Private auctions are invite-only: you invite people after you publish."
@@ -338,26 +360,6 @@ export function Step1BasicsUnit({
               />
             </div>
           </div>
-        </WizardRow>
-
-        <WizardRow
-          label="Preset"
-          description="Optional. Fills in Bidding and Award. You can still change anything."
-        >
-          <Field label="Start from" htmlFor="preset" className="max-w-md">
-            <select
-              id="preset"
-              value={form.preset}
-              onChange={(e) => onChange({ preset: e.target.value })}
-              className={selectClass}
-            >
-              {PRESETS.map((preset) => (
-                <option key={preset.value} value={preset.value}>
-                  {preset.label}
-                </option>
-              ))}
-            </select>
-          </Field>
         </WizardRow>
 
         <WizardRow label="About the auction" description="What bidders see first.">

@@ -131,7 +131,7 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
     auctionId,
     `${step}|${savedAt?.getTime() ?? 0}|${published}`,
   );
-  const [busy, setBusy] = useState<'step' | 'stepSave' | 'save' | 'publish' | null>(null);
+  const [busy, setBusy] = useState<'step' | 'save' | 'publish' | null>(null);
   const [workflowCount, setWorkflowCount] = useState(config.workflowCounts?.pre ?? 0);
   const [postWorkflowCount, setPostWorkflowCount] = useState(config.workflowCounts?.post ?? 0);
   const [inviteStats, setInviteStats] = useState<InviteStats | null>(null);
@@ -203,6 +203,24 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
       const baseline = savedWrites.current[kind] ?? initialWrites.current[kind];
       return baseline !== WRITE_INPUT[kind](state, pendingSteps);
     });
+
+  /** Setup steps whose current settings differ from what the server has, so
+   *  the step rail says "Not saved" instead of "Done". */
+  const unsavedSteps: ReadonlySet<number> = published
+    ? new Set()
+    : new Set(SETUP_STEPS.filter((id) => pendingWrites(id).length > 0));
+
+  // Warn before the tab closes or reloads with edits that would be lost.
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      // Older browsers need returnValue set to show the prompt.
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   // Problems in the saved workflow steps (e.g. a payment with no Bank details
   // before it). Loaded here on every step change so the rail is always right,
@@ -328,11 +346,11 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
     toast.error(message);
   };
 
-  /** Validates and saves the current setup step; with `advance`, then opens the next one. */
-  const saveStep = async (advance: boolean) => {
+  /** Validates and saves the current setup step, then opens the next one. */
+  const goNext = async () => {
     const next = step + 1;
     if (!isSetupStep(step) || locked) {
-      if (advance) goToStep(next);
+      goToStep(next);
       return;
     }
     const stepErrors = validateStep(step, state, { published });
@@ -344,14 +362,13 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
 
     const writes = pendingWrites(step);
     if (!writes.length) {
-      // Already saved as it is: no need for another round trip.
+      // Already saved as it is: move on without another round trip.
       markReviewed(step);
-      if (advance) goToStep(next);
-      else toast.success(`${STEP_LABELS[step]} is saved.`);
+      goToStep(next);
       return;
     }
 
-    setBusy(advance ? 'step' : 'stepSave');
+    setBusy('step');
     try {
       if (writes.includes('basics')) await persistence.persistBasics(state);
       if (writes.includes('offerRules')) await persistence.persistOfferRules(state);
@@ -373,17 +390,13 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
       markPhasesSaved(savedPhases);
       setSavedAt(new Date());
       markReviewed(step);
-      if (advance) goToStep(next);
-      else toast.success(`${STEP_LABELS[step]} saved.`);
+      goToStep(next);
     } catch (err) {
       reportError(err, `Could not save ${STEP_LABELS[step]}.`);
     } finally {
       setBusy(null);
     }
   };
-
-  const goNext = () => saveStep(true);
-  const saveCurrentStep = () => saveStep(false);
 
   const goBack = () => goToStep(Math.max(1, step - 1));
 
@@ -541,8 +554,8 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
     markReviewed,
     goToStep,
     goNext,
-    saveCurrentStep,
     hasUnsavedChanges,
+    unsavedSteps,
     goBack,
     saveDraft,
     publish,

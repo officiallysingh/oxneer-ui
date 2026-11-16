@@ -131,7 +131,7 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
     auctionId,
     `${step}|${savedAt?.getTime() ?? 0}|${published}`,
   );
-  const [busy, setBusy] = useState<'step' | 'save' | 'publish' | null>(null);
+  const [busy, setBusy] = useState<'step' | 'stepSave' | 'save' | 'publish' | null>(null);
   const [workflowCount, setWorkflowCount] = useState(config.workflowCounts?.pre ?? 0);
   const [postWorkflowCount, setPostWorkflowCount] = useState(config.workflowCounts?.post ?? 0);
   const [inviteStats, setInviteStats] = useState<InviteStats | null>(null);
@@ -183,6 +183,9 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
   const savedWrites = useRef<Partial<Record<WriteKind, string>>>(
     mode === 'edit' ? snapshotWrites(config.initialState, ALL_WRITES) : {},
   );
+  // What the form held when it opened, so Cancel can tell whether anything
+  // changed on a new auction that hasn't been saved yet.
+  const initialWrites = useRef(snapshotWrites(config.initialState, ALL_WRITES));
   const recordSaved = (saved: WizardState, kinds: WriteKind[], drafts = pendingSteps) => {
     Object.assign(savedWrites.current, snapshotWrites(saved, kinds, drafts));
   };
@@ -192,6 +195,14 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
         !(kind === 'schedule' && !schedulePayload(state)) &&
         savedWrites.current[kind] !== WRITE_INPUT[kind](state, pendingSteps),
     );
+
+  /** Edits (including drafted workflow steps) not yet sent to the server. */
+  const hasUnsavedChanges =
+    !published &&
+    ALL_WRITES.some((kind) => {
+      const baseline = savedWrites.current[kind] ?? initialWrites.current[kind];
+      return baseline !== WRITE_INPUT[kind](state, pendingSteps);
+    });
 
   // Problems in the saved workflow steps (e.g. a payment with no Bank details
   // before it). Loaded here on every step change so the rail is always right,
@@ -317,11 +328,11 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
     toast.error(message);
   };
 
-  /** Validates and saves the current setup step, then opens the next one. */
-  const goNext = async () => {
+  /** Validates and saves the current setup step; with `advance`, then opens the next one. */
+  const saveStep = async (advance: boolean) => {
     const next = step + 1;
     if (!isSetupStep(step) || locked) {
-      goToStep(next);
+      if (advance) goToStep(next);
       return;
     }
     const stepErrors = validateStep(step, state, { published });
@@ -333,13 +344,14 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
 
     const writes = pendingWrites(step);
     if (!writes.length) {
-      // Already saved as it is: move on without another round trip.
+      // Already saved as it is: no need for another round trip.
       markReviewed(step);
-      goToStep(next);
+      if (advance) goToStep(next);
+      else toast.success(`${STEP_LABELS[step]} is saved.`);
       return;
     }
 
-    setBusy('step');
+    setBusy(advance ? 'step' : 'stepSave');
     try {
       if (writes.includes('basics')) await persistence.persistBasics(state);
       if (writes.includes('offerRules')) await persistence.persistOfferRules(state);
@@ -361,13 +373,17 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
       markPhasesSaved(savedPhases);
       setSavedAt(new Date());
       markReviewed(step);
-      goToStep(next);
+      if (advance) goToStep(next);
+      else toast.success(`${STEP_LABELS[step]} saved.`);
     } catch (err) {
       reportError(err, `Could not save ${STEP_LABELS[step]}.`);
     } finally {
       setBusy(null);
     }
   };
+
+  const goNext = () => saveStep(true);
+  const saveCurrentStep = () => saveStep(false);
 
   const goBack = () => goToStep(Math.max(1, step - 1));
 
@@ -525,6 +541,8 @@ export function useAuctionWizardController(config: AuctionWizardConfig) {
     markReviewed,
     goToStep,
     goNext,
+    saveCurrentStep,
+    hasUnsavedChanges,
     goBack,
     saveDraft,
     publish,

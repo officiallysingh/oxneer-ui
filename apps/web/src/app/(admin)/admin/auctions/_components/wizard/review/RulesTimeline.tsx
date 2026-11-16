@@ -28,6 +28,7 @@ import {
 } from '../../../_lib/wizard/summary';
 import { offsetMinutes } from '../../../_lib/wizard/workflow';
 import { WindowTrack } from '../ui/WindowTrack';
+import { FormFields } from './FormFields';
 import {
   buildTimeline,
   type TimelineIcon,
@@ -211,6 +212,8 @@ function ItemCard({ item, track }: { item: TimelineItem; track: ReactNode }) {
           ))}
         </div>
       )}
+
+      {item.form && <FormFields form={item.form} onPolicy={item.policy} />}
 
       {item.heads && (
         <div className="mt-2.5 divide-y divide-border overflow-hidden rounded-md border border-border">

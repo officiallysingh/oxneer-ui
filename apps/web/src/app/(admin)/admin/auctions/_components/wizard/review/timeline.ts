@@ -10,7 +10,8 @@ import {
   parseDuration,
   windowSummary,
 } from '../../../_lib/wizard/summary';
-import { WORKFLOW_TYPE_DESCRIPTION, stepFields, stepTitle } from '../../../_lib/wizard/workflow';
+import { WORKFLOW_TYPE_DESCRIPTION, stepTitle } from '../../../_lib/wizard/workflow';
+import type { TimelineForm } from './FormFields';
 import { dhm, effectiveDeadlines, postStepDue, preStepDue } from '../../../_lib/wizard/deadlines';
 
 export type TimelineIcon = 'terms' | 'form' | 'custom' | 'bank' | 'payment' | 'policy' | 'sealed';
@@ -30,6 +31,8 @@ export interface TimelineItem {
   req?: { label: string; tone: 'default' | 'optional' | 'dark' };
   desc: string;
   chips?: string[];
+  /** A step participants fill in: its fields, required ones marked, with a preview. */
+  form?: TimelineForm;
   heads?: { name: string; sub: string; refundable: boolean; amount: string }[];
   /** Draws the price-window strip inside the card. */
   track?: boolean;
@@ -179,8 +182,12 @@ export function buildTimeline(
           : pre
             ? 'Custom form, editable until the start.'
             : 'Custom form for the winner.');
-      const fields = stepFields(step);
-      if (fields.length) item.chips = fields;
+      item.form = {
+        kind: 'form',
+        title: stepTitle(step),
+        typeId: step.embedded?.typeId ?? step.typeId,
+        properties: step.embedded?.properties,
+      };
     } else if (type === 'BANK_DETAIL_FORM_STEP') {
       item.desc =
         step.description ||
@@ -189,7 +196,7 @@ export function buildTimeline(
           : forward
             ? 'Where refunds go.'
             : 'Where the winning supplier is paid.');
-      item.chips = stepFields(step);
+      item.form = { kind: 'bank', title: stepTitle(step) };
     } else if (type === 'PAYMENT_STEP') {
       const lead = step.description ? `${step.description} ` : '';
       const online = data.mode === 'ONLINE';

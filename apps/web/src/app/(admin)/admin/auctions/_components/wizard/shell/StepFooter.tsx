@@ -1,7 +1,18 @@
 'use client';
 
-import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
-import { Button } from '@repo/ui';
+import { ArrowLeft, ArrowRight, Loader2, Save } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+  Button,
+} from '@repo/ui';
 import { useAuctionWizard } from '../../../_context';
 import { STEP_LABELS, isSetupStep } from '../../../_lib/wizard/steps';
 import { StatusPill } from '../review/StatusPill';
@@ -48,11 +59,50 @@ function SectionIssues() {
   );
 }
 
-/** Back / Next for steps 1–5. Next validates and saves the step first. */
+/** Leaves the wizard, asking first when there are edits that haven't been saved. */
+function CancelButton({ disabled }: { disabled: boolean }) {
+  const { hasUnsavedChanges, exit } = useAuctionWizard();
+
+  if (!hasUnsavedChanges) {
+    return (
+      <Button type="button" variant="ghost" onClick={exit} disabled={disabled}>
+        Cancel
+      </Button>
+    );
+  }
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button type="button" variant="ghost" disabled={disabled}>
+          Cancel
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Changes you haven&apos;t saved will be lost. Anything already saved stays on the
+            auction.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Keep editing</AlertDialogCancel>
+          <AlertDialogAction onClick={exit}>Discard and leave</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+/** Back, Cancel, Save and Save & continue for steps 1–5. Both saves validate the step first. */
 export function StepFooter() {
-  const { step, busy, errors, goBack, goNext } = useAuctionWizard();
+  const { step, busy, errors, locked, goBack, goNext, saveCurrentStep } = useAuctionWizard();
   if (!isSetupStep(step)) return null;
-  const saving = busy === 'step';
+  const advancing = busy === 'step';
+  const saving = busy === 'stepSave';
+  const working = busy !== null;
+  const nextLabel = STEP_LABELS[step + 1];
 
   return (
     <>
@@ -64,7 +114,7 @@ export function StepFooter() {
               type="button"
               variant="outline"
               onClick={goBack}
-              disabled={saving}
+              disabled={working}
               className="gap-2"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden />
@@ -78,11 +128,37 @@ export function StepFooter() {
               {errors.general}
             </span>
           )}
-          <Button type="button" onClick={() => void goNext()} disabled={saving} className="gap-2">
-            {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
-            Next: {STEP_LABELS[step + 1]}
-            <ArrowRight className="h-4 w-4" aria-hidden />
-          </Button>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <CancelButton disabled={working} />
+            {/* Published setup steps are read-only, so there's nothing to save. */}
+            {!locked && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void saveCurrentStep()}
+                disabled={working}
+                className="gap-2"
+              >
+                {saving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                ) : (
+                  <Save className="h-4 w-4" aria-hidden />
+                )}
+                Save
+              </Button>
+            )}
+            <Button
+              type="button"
+              onClick={() => void goNext()}
+              disabled={working}
+              className="gap-2"
+              title={`Opens ${nextLabel}`}
+            >
+              {advancing && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
+              {locked ? `Next: ${nextLabel}` : 'Save & continue'}
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </Button>
+          </div>
         </div>
       </div>
     </>

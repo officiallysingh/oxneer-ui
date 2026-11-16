@@ -5,6 +5,7 @@ import { AlertCircle, AlertTriangle, Check, ChevronDown } from 'lucide-react';
 import type { SetupStepSummary } from '@repo/api';
 import { cn } from '@repo/ui';
 import { useAuctionWizard, type AuctionWizardContextValue } from '../../../_context';
+import Tip from '@/components/common/admin/Tip';
 import { SETUP_STEP_KEY } from '../../../_hooks/useSetupSummary';
 import { WIZARD_STEPS, isSetupStep, type WizardStepMeta } from '../../../_lib/wizard/steps';
 
@@ -14,6 +15,10 @@ interface RailState {
   tone: RailTone;
   text: string;
 }
+
+/** Shown on every other step until Basics and unit is saved. */
+const LOCKED_HINT = 'Available once Basics and unit is saved.';
+const LOCKED_HINT_ID = 'rail-locked-hint';
 
 const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
 
@@ -126,57 +131,64 @@ function RailItem({
   const current = meta.id === wizard.step;
   const alert = tone === 'fix' || tone === 'review';
   const editing = current && !alert && !wizard.published && tone !== 'muted';
+  // Nothing past Basics and unit exists until that step creates the auction.
+  const locked = !wizard.auctionId && meta.id !== 1;
   const stepKey = SETUP_STEP_KEY[meta.id];
   const summary = stepKey ? wizard.setupSummary.summary?.steps[stepKey] : undefined;
   const panelId = `rail-summary-${meta.id}`;
 
+  const stepButton = (
+    <button
+      type="button"
+      // aria-disabled, not disabled: a disabled button gets no hover or focus,
+      // so it couldn't show why it's locked.
+      onClick={() => !locked && wizard.goToStep(meta.id)}
+      aria-disabled={locked || undefined}
+      aria-describedby={locked ? LOCKED_HINT_ID : undefined}
+      aria-current={current ? 'step' : undefined}
+      className={cn(
+        'flex min-w-0 flex-1 items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        locked ? 'cursor-not-allowed opacity-50' : current ? 'bg-muted/70' : 'hover:bg-muted/40',
+      )}
+    >
+      <span
+        aria-hidden
+        className={cn(
+          'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold tabular-nums',
+          current ? 'border-primary/40 bg-primary/10 text-primary' : CIRCLE_TONE[tone],
+        )}
+      >
+        {!current && tone === 'done' ? (
+          <Check className="h-3 w-3" />
+        ) : !current && alert ? (
+          <AlertCircle className="h-3 w-3" />
+        ) : (
+          meta.id
+        )}
+      </span>
+      <span className="min-w-0">
+        <span
+          className={cn(
+            'block text-xs leading-tight text-foreground',
+            current ? 'font-semibold' : 'font-medium',
+          )}
+        >
+          {meta.label}
+        </span>
+        <span
+          className={cn('text-[10px] font-medium', editing ? 'text-foreground' : TEXT_TONE[tone])}
+        >
+          {editing ? 'Editing now' : text}
+        </span>
+      </span>
+    </button>
+  );
+
   return (
     <li>
       <div className="flex items-center gap-0.5">
-        <button
-          type="button"
-          onClick={() => wizard.goToStep(meta.id)}
-          aria-current={current ? 'step' : undefined}
-          className={cn(
-            'flex min-w-0 flex-1 items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-            current ? 'bg-muted/70' : 'hover:bg-muted/40',
-          )}
-        >
-          <span
-            aria-hidden
-            className={cn(
-              'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold tabular-nums',
-              current ? 'border-primary/40 bg-primary/10 text-primary' : CIRCLE_TONE[tone],
-            )}
-          >
-            {!current && tone === 'done' ? (
-              <Check className="h-3 w-3" />
-            ) : !current && alert ? (
-              <AlertCircle className="h-3 w-3" />
-            ) : (
-              meta.id
-            )}
-          </span>
-          <span className="min-w-0">
-            <span
-              className={cn(
-                'block text-xs leading-tight text-foreground',
-                current ? 'font-semibold' : 'font-medium',
-              )}
-            >
-              {meta.label}
-            </span>
-            <span
-              className={cn(
-                'text-[10px] font-medium',
-                editing ? 'text-foreground' : TEXT_TONE[tone],
-              )}
-            >
-              {editing ? 'Editing now' : text}
-            </span>
-          </span>
-        </button>
+        {locked ? <Tip label={LOCKED_HINT}>{stepButton}</Tip> : stepButton}
         {summary && (
           <button
             type="button"
@@ -201,6 +213,7 @@ function RailItem({
 /** The seven-step rail. Step 7 sits under "After publishing". Each setup step
  *  the server has a summary for can be expanded to show it. */
 export function WizardStepRail() {
+  const { auctionId } = useAuctionWizard();
   const setup = WIZARD_STEPS.filter((meta) => !meta.afterPublishing);
   const after = WIZARD_STEPS.filter((meta) => meta.afterPublishing);
   const [expanded, setExpanded] = useState<ReadonlySet<number>>(() => new Set());
@@ -228,6 +241,11 @@ export function WizardStepRail() {
       <p className="px-3 pb-1 pt-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         Simple auction · 7 steps
       </p>
+      {!auctionId && (
+        <p id={LOCKED_HINT_ID} className="sr-only">
+          {LOCKED_HINT}
+        </p>
+      )}
       <ol className="space-y-0.5 px-2 pb-2">{setup.map(item)}</ol>
       <p className="border-t border-border px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         After publishing

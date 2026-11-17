@@ -134,10 +134,13 @@ export const participantsApi = {
     await apiClient.post(`/api/v1/auctions/${auctionId}/participants/me/invitations/accept`, data);
   },
 
-  /** Self-service: the logged-in user declines their own invitation to an auction.
-   *  Uses the /declineSelf endpoint (no body required — identity derived from session). */
-  declineInvitation: async (auctionId: string): Promise<void> => {
-    await apiClient.post(`/api/v1/auctions/${auctionId}/participants/me/invitations/declineSelf`);
+  /** Public (no sign-in): declines a private invitation from the email's Decline link.
+   *  `emailId` and `code` come from the link; `comments` is 5–255 characters. */
+  declineInvitation: async (
+    auctionId: string,
+    data: { emailId: string; code: string; comments: string },
+  ): Promise<void> => {
+    await apiClient.post(`/api/v1/auctions/${auctionId}/invitations/decline`, data);
   },
 
   /** Self-service: complete a participant workflow step.

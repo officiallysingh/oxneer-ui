@@ -90,16 +90,16 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
   // ── Load auction + participant ───────────────────────────────────────────────
   const loadData = useCallback(async () => {
     try {
-      const [auctionData, selfParticipant, workflowData] = await Promise.all([
+      // The public detail carries the workflow; /auctions/{id}/workflow is admin-only.
+      const [auctionData, selfParticipant] = await Promise.all([
         auctionsApi.getPublicAuctionById(id),
         isLoggedIn
           ? participantsApi.getSelfParticipant(id).catch(() => null)
           : Promise.resolve(null),
-        auctionsApi.getAuctionWorkflow(id).catch(() => [] as AuctionWorkflowStep[]),
       ]);
       setAuction(auctionData);
       setParticipant(selfParticipant);
-      setWorkflow(workflowData);
+      setWorkflow(auctionData.workflow ?? []);
     } catch (err) {
       const status = (err as { response?: { status?: number } })?.response?.status;
       if (status === 404) {
@@ -486,7 +486,7 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
             </DialogTitle>
           </DialogHeader>
           <div className="flex-1 min-h-0 overflow-auto">
-            <WorkflowWizard auctionId={id} onClose={handleWizardClose} />
+            <WorkflowWizard auctionId={id} workflow={workflow} onClose={handleWizardClose} />
           </div>
         </DialogContent>
       </Dialog>

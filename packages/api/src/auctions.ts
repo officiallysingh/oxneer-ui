@@ -126,6 +126,9 @@ export interface AuctionVM {
   endTime?: string;
   unit?: AuctionUnitVM;
   units?: AuctionUnit[];
+  /** The participant steps. Always present on the public detail
+   *  (`GET /auctions/{id}/public`); on the admin endpoints only with `X-Expand: workflow`. */
+  workflow?: AuctionWorkflowStep[];
   blobs?: string[];
   createdAt?: string;
   updatedAt?: string;

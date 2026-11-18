@@ -197,7 +197,7 @@ for i in $(seq 1 "$NUM_AUCTIONS"); do
       "name": "'"$title"'",
       "item": {
         "id": "'"$LISTING_ID"'",
-        "name": "'"$title"'",
+        "name": "'"$title"' ('"$ref_id"')",
         "description": "'"$description"'",
         "quantity": 1
       },
@@ -277,6 +277,7 @@ for i in $(seq 1 "$NUM_AUCTIONS"); do
         "mandatory": true,
         "mode": "ONLINE",
         "offset": "PT1H",
+        "prePayment": true,
         "heads": [
           {
             "name": "Security Deposit",
@@ -336,6 +337,28 @@ for i in $(seq 1 "$NUM_AUCTIONS"); do
         "description": "Winner pays their own bid amount",
         "order": 2,
         "kth": 1
+      }
+    ],
+    "steps": [
+      {
+        "type": "PAYMENT_STEP",
+        "name": "Winning Payment",
+        "description": "Winning amount payable after the auction closes",
+        "order": 1,
+        "phase": "POST_AUCTION",
+        "mandatory": true,
+        "mode": "ONLINE",
+        "offset": "PT24H",
+        "postPayment": true,
+        "heads": [
+          {
+            "name": "Winning Amount",
+            "description": "Amount payable for the winning bid",
+            "value": 100,
+            "basis": "PERCENTAGE_BASED",
+            "refundable": false
+          }
+        ]
       }
     ]
   }' || step_failed=1

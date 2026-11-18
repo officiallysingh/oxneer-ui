@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+declare const process: { env?: { NEXT_PUBLIC_API_URL?: string } };
+
 // Get base URL from environment or use a default
 const getBaseUrl = () => {
   if (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_API_URL) {

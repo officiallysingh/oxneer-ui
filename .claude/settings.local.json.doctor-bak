@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/bally/AppData/Local/Temp/claude/**)",
+      "Edit(//c/Users/bally/AppData/Local/Temp/claude/**)"
+    ],
+    "deny": ["Edit(//c/Users/bally/Documents/projects/oxneer/oxneer/**)"]
+  }
+}

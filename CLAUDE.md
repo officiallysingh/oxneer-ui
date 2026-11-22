@@ -52,7 +52,7 @@ Loading (skeleton matching the final layout), empty (with or without filters), e
 
 ## Project skills
 
-For Oxneer screens the project skills (`admin-screen`, `ui-review`, `run-web`) come before general design skills (`impeccable`, `frontend-design`), which are for new visual direction on public or marketing surfaces.
+For Oxneer screens the project skills (`admin-screen`, `ui-review`, `run-web`) come before the general design skill (`impeccable`), which is for new visual direction on public or marketing surfaces.
 
 ## Reference docs (read when the task touches them)
 

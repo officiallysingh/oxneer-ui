@@ -15,6 +15,9 @@ set -euo pipefail
 # Optional:
 #   NUM_AUCTIONS=6 PUBLISH=false ./scripts/create-demo-auctions.sh
 #
+#   REF_START      first DEMO-xxxx reference number (default 1). Reference ids must be
+#                  unique, so raise it when demo auctions already exist, e.g. REF_START=6
+#
 #   ACCESSIBILITY  MIXED (default: odd auctions PUBLIC, even PRIVATE), PUBLIC or PRIVATE
 #   INVITE_EMAILS  comma-separated emails to invite to each PRIVATE auction once it is
 #                  published (the backend only accepts invitations on published auctions).
@@ -24,6 +27,7 @@ set -euo pipefail
 BASE_URL="${BASE_URL:-http://localhost:8090}"
 API="$BASE_URL/api/v1"
 NUM_AUCTIONS="${NUM_AUCTIONS:-6}"
+REF_START="${REF_START:-1}"
 MANAGED_TYPE_ID="${MANAGED_TYPE_ID:-}"
 LISTING_ID="${LISTING_ID:-}"
 SUBCATEGORY_ID="${SUBCATEGORY_ID:-}"
@@ -166,7 +170,8 @@ for i in $(seq 1 "$NUM_AUCTIONS"); do
   description="${DESCRIPTIONS[$idx]}"
   tags="${TAGS[$idx]}"
   price="${PRICES[$idx]}"
-  ref_id="DEMO-$(printf '%04d' $i)"
+  # Auction title, description and reference id each have a unique index, so all three carry the ref id
+  ref_id="DEMO-$(printf '%04d' $(( REF_START + i - 1 )))"
   access=$(accessibility_for "$i")
   if [ "$access" = "PRIVATE" ]; then
     label="Private"
@@ -181,7 +186,7 @@ for i in $(seq 1 "$NUM_AUCTIONS"); do
   api POST "$API/auctions" '{
     "type": "SIMPLE",
     "title": "'"$title"' ('"$label"' '"$ref_id"')",
-    "description": "'"$description"'",
+    "description": "'"$description"' ('"$ref_id"')",
     "referenceId": "'"$ref_id"'",
     "direction": "FORWARD",
     "accessibility": "'"$access"'",

@@ -29,6 +29,12 @@
     "prettier": "^3.10.1",
     "turbo": "^2.11.13"
   },
+  "overrides": {
+    "glob": "^14.0.6",
+    "test-exclude": {
+      "minimatch": "^11.0.9"
+    }
+  },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs}": [
       "eslint --flag unstable_config_lookup_from_file --fix",

@@ -1,18 +1,13 @@
 # Oxneer
 
-Auction platform. Turborepo monorepo with npm workspaces.
-
-- `apps/web`: Next.js 16 App Router, React 19. Route groups: `(admin)/admin/*` (back office), `(main)/*` (public auctions, profile), `(auth)/*`.
-- `packages/ui` (`@repo/ui`): shadcn/ui (new-york) primitives, design tokens (`src/globals.css`), Tailwind preset (`tailwind.config.ts`).
-- `packages/api` (`@repo/api`): API client and view models (`UserDetailVM`, …), `getApiErrorMessage`.
-- `packages/store`: zustand stores (the app also has `apps/web/src/store`).
+Auction platform. `packages/store` holds zustand stores; the app also has `apps/web/src/store`.
 
 ## Commands (run from repo root)
 
-- `npm run dev` starts the web app on port 3000
-- `npm run typecheck` / `npm run lint` / `npm run test` (Turbo)
 - `npm run e2e -w web` runs Playwright (`apps/web/e2e`)
-- Format with prettier. lint-staged runs eslint and prettier on commit.
+- `npx jest <path>` from `apps/web` runs one test file
+- `node .claude/hooks/check-ui-rules.js <file-or-dir>` audits `.tsx` files against the mechanical UI rules
+- Format with prettier. A hook formats files as Claude edits them, and lint-staged runs eslint and prettier on commit.
 
 Run `npm run typecheck` and `npm run lint` before you call UI work done.
 
@@ -24,21 +19,32 @@ Run `npm run typecheck` and `npm run lint` before you call UI work done.
 - **Colors:** use semantic token classes only (`bg-background`, `text-muted-foreground`, `bg-primary`, `text-success`, `bg-warning/15`, …). No raw palette classes (`bg-blue-500`, `text-gray-400`) and no hex values in TSX.
 - **Icons:** `lucide-react` only, and don't add new `react-icons` usages.
 - **Theme:** the app ships dark by default (`<html className="dark">`). Every screen must work in both dark and light.
-- **Tailwind:** a JS config with the `@repo/ui` preset and `@tailwind` directives. Extend tokens in `packages/ui/tailwind.config.ts` and `packages/ui/src/globals.css`, not in feature code.
+- **Tailwind:** v3 in `apps/web` (write v3 syntax, even though the root and `packages/ui` declare v4), a JS config with the `@repo/ui` preset and `@tailwind` directives. Extend tokens in `packages/ui/tailwind.config.ts` and `packages/ui/src/globals.css`, not in feature code.
 - **Class merging:** use `cn()` from `@repo/ui`, not template-string concatenation, for conditional classes.
+
+## Code conventions
+
+- **Write for the human reader.** Use descriptive names, small single-purpose functions and components, early returns instead of deep nesting, and no clever one-liners. Add a short comment only where the _why_ isn't obvious from the code, for example a legacy mapping or a backend quirk.
+- **DRY.** Before writing a helper, hook or component, search the feature, `components/common` and `@repo/ui` for an existing one. If the same logic shows up a second time, extract it: within one feature into its `_lib`/`_hooks`, across features into `components/common` or a package. Don't copy-paste and then tweak.
+- **Pages stay thin.** A `page.tsx` reads route params, calls hooks, picks the loading/error/content state and composes components. Data fetching, state machines and transformations don't live in pages or in presentational components.
 
 ## Feature folder convention (admin)
 
+Split each feature by responsibility, as in `app/(admin)/admin/auctions/`:
+
 ```
 app/(admin)/admin/<feature>/
-  page.tsx            list page (thin: composes hooks + components)
-  new/ [id]/edit/ [id]/view/
-  _components/        <Feature>Columns.tsx, <Feature>ListStates.tsx, <Feature>ActionsMenu.tsx, dialogs, sheets
-  _hooks/             use<Feature>List, use<Feature>Filters, use<Feature>Actions
-  _lib/               pure helpers (filters, display, export)
+  page.tsx, new/, [id]/edit/, [id]/view/   thin route files
+  _components/   presentational UI; group a large flow into subfolders by area (e.g. wizard/steps, wizard/shell, wizard/review)
+  _context/      React context providers + their use<X>() hooks for state shared across a component tree; re-export from _context/index.ts
+  _hooks/        data fetching, API calls, form/controller and persistence logic (use<Feature>List, use<Feature>Actions, …)
+  _lib/          pure, framework-free helpers (mapping, validation, filters, display, export); unit tests in _lib/**/__tests__
 ```
 
-Reference implementation: `app/(admin)/admin/users/`. Copy its structure and patterns for new list/detail screens.
+- Use a context only when several nested components share the same state. Otherwise pass props.
+- Each context file throws a clear error from its hook when it's used outside its provider.
+- When a hook grows past about 200–300 lines, split it by concern, the way `useWizardPersistence` is separated from `useAuctionWizardController`.
+- For simple list/detail screens, `app/(admin)/admin/users/` is the reference implementation.
 
 ## Every screen must have
 
@@ -46,5 +52,9 @@ Loading (skeleton matching the final layout), empty (with or without filters), e
 
 ## Project skills
 
-- `.claude/skills/admin-screen`: recipe for building a new admin list/detail/form screen.
-- `.claude/skills/ui-review`: checklist for reviewing and polishing an existing screen against DESIGN.md.
+For Oxneer screens the project skills (`admin-screen`, `ui-review`, `run-web`) come before the general design skill (`impeccable`), which is for new visual direction on public or marketing surfaces.
+
+## Reference docs (read when the task touches them)
+
+- `AUCTION_CREATION_FLOW.md`: auction wizard steps, lifecycle and participant journey.
+- `ATTRIBUTE_PROTOCOL.md`: component properties and the `ui:` / `form:` / `list:` namespaces. It's about 1,000 lines, so grep its headings and read only the section you need.

@@ -1,11 +1,11 @@
 ---
 name: admin-screen
-description: Use when building a new admin screen or feature in apps/web/src/app/(admin)/admin (list page, detail/view page, create/edit form, or details sheet). Encodes the Oxneer admin feature recipe based on the users screen.
+description: Use when building a new admin screen or feature in apps/web/src/app/(admin)/admin (list page, detail/view page, create/edit form, or details sheet).
 ---
 
 # Building an Oxneer admin screen
 
-Read `DESIGN.md` (sections 6–8) first. The reference implementation is `apps/web/src/app/(admin)/admin/users/`. Open its files and mirror them; don't invent new patterns.
+Read `DESIGN.md` (sections 6–8 and 10) first. The reference implementation is `apps/web/src/app/(admin)/admin/users/`. Open its files and mirror them; don't invent new patterns.
 
 ## 1. Scaffold the feature folder
 
@@ -24,12 +24,19 @@ app/(admin)/admin/<feature>/
     <Feature>DetailsSheet.tsx   right Sheet, opened by row click
     Delete<Feature>Dialog.tsx
     <Feature>FilterBar.tsx      (+ MobileFiltersSheet if it has more than 2 filters)
+    <area>/                     group a large flow into subfolders by area (e.g. auctions/_components/wizard/steps, shell, review)
+  _context/                     only when several nested components share state (see auctions/_context)
+    <X>Context.tsx              Provider + use<X>() that throws outside its provider
+    index.ts                    re-exports providers, hooks and types
   _hooks/
     use<Feature>List.ts         server pagination/sorting, data, error, refresh
     use<Feature>Filters.ts      URL-synced filters + viewId
     use<Feature>Actions.ts      mutations, busyIds, toasts
-  _lib/                         pure helpers: filters, display, export
+  _lib/                         pure, framework-free helpers: filters, display, export, mapping, validation
+    __tests__/                  unit tests for _lib helpers
 ```
+
+Each folder has one job: UI goes in `_components`, shared state in `_context`, data, API and controller logic in `_hooks`, pure logic in `_lib`. Use a simple screen like `users/` as the model, and a multi-step flow like `auctions/` (wizard, context, persistence hooks) as the model for large features. Otherwise pass props instead of adding a context. When a hook grows past about 200–300 lines, split it by concern, as `useWizardPersistence` is separated from `useAuctionWizardController`.
 
 Add the route to `apps/web/src/components/admin/nav-config.ts`.
 
@@ -41,6 +48,8 @@ Add the route to `apps/web/src/components/admin/nav-config.ts`.
 
 ## 3. Rules
 
+- Write for the human reader. Use descriptive names, small single-purpose functions and components, early returns instead of deep nesting, and no clever one-liners. Comment only the non-obvious _why_.
+- DRY. Before writing a helper, hook or component, search this feature, `components/common` and `@repo/ui`. Logic repeated inside a feature moves to its `_lib`/`_hooks`; logic repeated across features moves to `components/common` or a package. Never copy-paste and tweak.
 - Primitives come from `@repo/ui`. Admin building blocks come from `@/components/common/admin/*`. Check that folder before writing any new component.
 - Use semantic color tokens only (`text-muted-foreground`, `bg-success/10`, …). No `blue-500` or hex.
 - Use `cn()` for conditional classes.
@@ -60,5 +69,6 @@ Add the route to `apps/web/src/components/admin/nav-config.ts`.
 - [ ] Mobile: cards, filters in a sheet, primary action in the footer
 - [ ] Dark and light both look right
 - [ ] Keyboard: tab order, focus ring, Esc closes sheets and dialogs
+- [ ] Pages are thin, logic sits in `_hooks`/`_lib`/`_context`, and nothing is duplicated
 - [ ] `npm run typecheck` and `npm run lint` pass
-- [ ] If the dev server is running, screenshot the page at desktop and mobile width and fix what you see
+- [ ] Use the `run-web` skill to screenshot the page at desktop and mobile width and fix what you see

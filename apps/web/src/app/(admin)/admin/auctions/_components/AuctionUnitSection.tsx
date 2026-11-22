@@ -116,8 +116,8 @@ export function AuctionUnitSection({ auction }: { auction: AuctionVM }) {
                 <span className="text-lg font-bold text-foreground mt-0.5">
                   {unit.openingPrice != null ? (
                     <>
-                      {auction.monetaryOptions?.currencyUnit
-                        ? `${resolveStr(auction.monetaryOptions.currencyUnit)} `
+                      {auction.regionalSettings?.currency
+                        ? `${resolveStr(auction.regionalSettings.currency)} `
                         : ''}
                       {unit.openingPrice.toLocaleString()}
                     </>
@@ -131,8 +131,8 @@ export function AuctionUnitSection({ auction }: { auction: AuctionVM }) {
                 <span className="text-lg font-bold text-success mt-0.5">
                   {unit.standingPrice != null ? (
                     <>
-                      {auction.monetaryOptions?.currencyUnit
-                        ? `${resolveStr(auction.monetaryOptions.currencyUnit)} `
+                      {auction.regionalSettings?.currency
+                        ? `${resolveStr(auction.regionalSettings.currency)} `
                         : ''}
                       {unit.standingPrice.toLocaleString()}
                     </>

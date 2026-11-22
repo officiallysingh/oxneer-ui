@@ -7,9 +7,33 @@ import { metadataApi } from '@repo/api';
 import type { PropertyDef, ValidatorDef, DataType, PropertyType } from '@repo/api';
 import { ValidatorRow } from './ValidatorRow';
 import { AttributeEditor } from './AttributeEditor';
-import { ATTR_PROTOCOL_MAP, showWhenMatches } from './attribute-protocol';
 import { PROPERTY_TYPES, HAS_CHILDREN, emptyProperty, extractDataTypeKey } from './types';
 import type { KV } from './types';
+
+interface AttrRow {
+  id: number;
+  key: string;
+  value: string;
+}
+
+let attrRowSeq = 0;
+const nextRowId = () => ++attrRowSeq;
+
+const toRows = (attrs: Record<string, string> | undefined): AttrRow[] =>
+  Object.entries(attrs ?? {}).map(([key, value]) => ({ id: nextRowId(), key, value }));
+
+/** First row wins when two rows share a key; rows without a key aren't saved yet. */
+function rowsToAttrs(rows: AttrRow[]): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const r of rows) if (r.key && !(r.key in out)) out[r.key] = r.value;
+  return out;
+}
+
+function sameAttrs(a: Record<string, string>, b: Record<string, string> | undefined): boolean {
+  const bb = b ?? {};
+  const ak = Object.keys(a);
+  return ak.length === Object.keys(bb).length && ak.every((k) => a[k] === bb[k]);
+}
 
 interface PropertyRowProps {
   prop: PropertyDef;
@@ -37,6 +61,20 @@ export function PropertyRow({
   const [labelTouched, setLabelTouched] = useState(false);
   const [validatorOptions, setValidatorOptions] = useState<KV[]>([]);
   const [loadingValidators, setLoadingValidators] = useState(false);
+  // Local rows keep stable positions, unsaved empty rows and duplicate keys while editing.
+  const [attrRows, setAttrRows] = useState<AttrRow[]>(() => toRows(prop.attributes));
+
+  // Re-sync when attributes change from outside this editor (e.g. form reset / load).
+  useEffect(() => {
+    setAttrRows((rows) =>
+      sameAttrs(rowsToAttrs(rows), prop.attributes) ? rows : toRows(prop.attributes),
+    );
+  }, [prop.attributes]);
+
+  const commitAttrRows = (rows: AttrRow[]) => {
+    setAttrRows(rows);
+    onUpdate({ attributes: rowsToAttrs(rows) });
+  };
 
   const fetchValidators = useCallback(async (mt: string) => {
     if (!mt) return;
@@ -268,59 +306,43 @@ export function PropertyRow({
             {loadingValidators ? 'Loading...' : 'Add validator'}
           </button>
 
-          {/* Attributes — COMPLEX_PROPERTY, COMPOSITE_PROPERTY, LIST_PROPERTY */}
-          {(prop.type === 'COMPLEX_PROPERTY' ||
-            prop.type === 'COMPOSITE_PROPERTY' ||
-            prop.type === 'LIST_PROPERTY') && (
+          {/* Attributes — every type except SIMPLE_PROPERTY */}
+          {prop.type !== 'SIMPLE_PROPERTY' && (
             <div className="space-y-2 pt-1">
               <div className="flex items-center justify-between">
                 <Label className="text-xs text-muted-foreground">Attributes (key → value)</Label>
                 <button
                   type="button"
-                  onClick={() => {
-                    const entries = Object.entries(prop.attributes ?? {});
-                    entries.push(['', '']);
-                    onUpdate({ attributes: Object.fromEntries(entries) });
-                  }}
+                  onClick={() =>
+                    setAttrRows([...attrRows, { id: nextRowId(), key: '', value: '' }])
+                  }
                   className="text-xs text-primary hover:underline flex items-center gap-1"
                 >
                   <Plus className="h-3 w-3" />
                   Add
                 </button>
               </div>
-              {/* Filter out attributes hidden by showWhen / appliesTo */}
-              {Object.entries(prop.attributes ?? {})
-                .filter(([k]) => {
-                  if (!k) return true;
-                  const def = ATTR_PROTOCOL_MAP[k];
-                  if (!def) return true;
-                  if (!showWhenMatches(def.showWhen, prop.attributes)) return false;
-                  if (def.appliesTo && !def.appliesTo.includes(prop.type)) return false;
-                  return true;
-                })
-                .map(([k, v], ai) => (
-                  <AttributeEditor
-                    key={ai}
-                    attrKey={k}
-                    attrValue={v}
-                    onKeyChange={(newKey) => {
-                      const entries = Object.entries(prop.attributes ?? {});
-                      entries[ai] = [newKey, v];
-                      onUpdate({ attributes: Object.fromEntries(entries) });
-                    }}
-                    onValueChange={(newVal) => {
-                      const entries = Object.entries(prop.attributes ?? {});
-                      entries[ai] = [k, newVal];
-                      onUpdate({ attributes: Object.fromEntries(entries) });
-                    }}
-                    onRemove={() => {
-                      const entries = Object.entries(prop.attributes ?? {}).filter(
-                        (_, i) => i !== ai,
-                      );
-                      onUpdate({ attributes: Object.fromEntries(entries) });
-                    }}
-                  />
-                ))}
+              {attrRows.map((row, ai) => (
+                <AttributeEditor
+                  key={row.id}
+                  attrKey={row.key}
+                  attrValue={row.value}
+                  propType={prop.type}
+                  attrs={prop.attributes ?? {}}
+                  usedKeys={
+                    new Set(
+                      attrRows.filter((_, i) => i !== ai && attrRows[i]!.key).map((r) => r.key),
+                    )
+                  }
+                  onKeyChange={(newKey) =>
+                    commitAttrRows(attrRows.map((r, i) => (i === ai ? { ...r, key: newKey } : r)))
+                  }
+                  onValueChange={(newVal) =>
+                    commitAttrRows(attrRows.map((r, i) => (i === ai ? { ...r, value: newVal } : r)))
+                  }
+                  onRemove={() => commitAttrRows(attrRows.filter((_, i) => i !== ai))}
+                />
+              ))}
             </div>
           )}
 

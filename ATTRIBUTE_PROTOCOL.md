@@ -1,569 +1,413 @@
 # Attribute Protocol — Component Properties Guide
 
-Attributes are `Map<String, String>` stored on `COMPLEX_PROPERTY`, `COMPOSITE_PROPERTY`, and `LIST_PROPERTY`.
-`SIMPLE_PROPERTY` does **not** have an attributes field.
+Attributes are a `Map<String, String>` on a property. Every type except `SIMPLE_PROPERTY` can have them:
+`COMPLEX_PROPERTY`, `COMPOSITE_PROPERTY`, `LIST_PROPERTY` and `SET_PROPERTY`.
 
-Keys follow the format `namespace:key`. The frontend reads them to choose:
+Keys use the format `namespace:key`. The frontend reads them to decide:
 
-- **Which UI widget to render** (text input, slider, toggle, badge, etc.)
-- **How to style/format it** for both the **form** (admin input) and the **listing view** (public display)
+- **Which input widget to render** in the admin form (text, slider, toggle, pills, …)
+- **How the stored value looks** on the listing page (badge, price, image, composite layout, …)
+
+Values are always strings. Booleans are `"true"` / `"false"`.
 
 ---
 
-## Architecture: Two surfaces
+## Architecture: one protocol, two surfaces, one renderer each
 
-Every property is rendered on **two separate surfaces**, each with its own attribute namespace:
+| Surface  | Renderer                                     | Reads                                    | Used by                                                                   |
+| -------- | -------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------- |
+| **Form** | `components/common/attributes/AttrField.tsx` | `form:*` + `html:*` + `ui:*` + `style:*` | Listing wizard step 3, template form preview, workflow form-step previews |
+| **List** | `components/common/attributes/AttrValue.tsx` | `list:*` + `style:*` + `ui:*`            | Listing detail page / dialog, template listing-view preview               |
 
-| Surface  | Where                            | Namespace | Renders                               |
-| -------- | -------------------------------- | --------- | ------------------------------------- |
-| **Form** | `Step3Catalog.tsx → ScalarField` | `form:*`  | Input widgets for admin to enter data |
-| **List** | `view/page.tsx → PropValue`      | `list:*`  | Display of stored values to end users |
-
-Namespaces `html:*`, `ui:*`, `style:*` apply to **both** surfaces.
+The admin previews use the **same** renderers as the real screens, so a preview is exactly what users get.
 
 ```
-  attributes: Record<string, string>
-           |
-    resolveAttrs(props, 'form')
-           ↓
-      PropertyFieldGroup / ScalarField
-      (form inputs — admin UI)
-           |
-    resolveAttrs(props, 'list')
-           ↓
-        PropValue
-      (listing display — public page)
+attributes: Record<string, string>
+        │
+        ├── resolveAttrs(attrs, 'form', type) ─► AttrField   (form inputs)
+        │
+        └── resolveAttrs(attrs, 'list', type) ─► AttrValue / AttrPropertySections (listing view)
 ```
 
-The two surfaces are **independent** — configuring `form:size` has zero effect on the listing view, and `list:display = badge` doesn't change the form widget.
+`resolveAttrs` (in `lib/attributes/protocol.ts`) returns only the keys that:
+
+1. belong to that surface (or to `both`),
+2. apply to the property type (`appliesTo`),
+3. have their `showWhen` condition met (for example the `list:badge.*` keys need `list:display = badge | pill | tags`),
+4. are non-empty.
+
+Unknown (custom) keys are kept in storage but never rendered.
 
 ---
 
 ## Blocks
 
-A **block** is a named cluster of `list:*` keys that are only relevant together.
-There are two activation modes:
+A **block** is a group of keys that only matter together. It is a frontend concept; storage stays a flat `key → string` map.
 
-| Activation          | Condition                           | Example                                                    |
-| ------------------- | ----------------------------------- | ---------------------------------------------------------- |
-| **Value-triggered** | A sibling attribute equals a value  | `list:display = badge` → activates `list:badge.*`          |
-| **Type-triggered**  | The property's `type` field matches | `type = COMPOSITE_PROPERTY` → activates `list:composite.*` |
+| Activation          | Condition                 | Example                                           |
+| ------------------- | ------------------------- | ------------------------------------------------- |
+| **Value-triggered** | a sibling key has a value | `list:display = price` activates `list:price.*`   |
+| **Type-triggered**  | the property type matches | `COMPOSITE_PROPERTY` activates `list:composite.*` |
 
-Blocks are a **pure frontend concept**. Storage is still flat `key → string`.
-The editor shows/hides block sub-keys automatically based on activation conditions.
+In the attribute editor, the key dropdown only offers keys that apply to the property type. A key whose block isn't active stays in the list with a hint like _"Active when list:display = badge / pill / tags"_. It isn't hidden, so it doesn't vanish while you're editing.
 
 ---
 
 ## Property type decision
 
-| Situation                             | Use                  |
-| ------------------------------------- | -------------------- |
-| Leaf field, no rendering hints needed | `SIMPLE_PROPERTY`    |
-| Leaf field **with** any attribute     | `COMPLEX_PROPERTY`   |
-| Group of named child fields           | `COMPOSITE_PROPERTY` |
-| Repeating list of items               | `LIST_PROPERTY`      |
+| Situation                                 | Use                                  |
+| ----------------------------------------- | ------------------------------------ |
+| Leaf field, no rendering hints            | `SIMPLE_PROPERTY`                    |
+| Leaf field **with** any attribute         | `COMPLEX_PROPERTY`                   |
+| Group of named child fields               | `COMPOSITE_PROPERTY`                 |
+| Repeating items (rows of child fields)    | `LIST_PROPERTY` with children        |
+| Repeating single values (e.g. highlights) | `LIST_PROPERTY` **without** children |
+
+A list without children renders each item with the **list's own** leaf attributes (`ui:*`, `html:*`, `list:display`, …).
 
 ---
 
 ## Namespaces
 
-| Namespace | Surface | Purpose                                                              |
-| --------- | ------- | -------------------------------------------------------------------- |
-| `html`    | both    | Passed directly to the HTML element (placeholder, min, max, …)       |
-| `ui`      | both    | Controls widget type (component, display mode, multiline)            |
-| `style`   | both    | Data-driven visual options (selectable values, colors, …)            |
-| `form`    | form    | Controls how the **input** renders in a form (size, variant, layout) |
-| `list`    | list    | Controls how the stored **value** renders in listing/detail views    |
+| Namespace | Surface | Purpose                                                       |
+| --------- | ------- | ------------------------------------------------------------- |
+| `html`    | both    | Native input attributes (placeholder, min, max, pattern, …)   |
+| `ui`      | both    | Widget type (component, multiline, rating scale)              |
+| `style`   | both    | Data-driven choices (options, colors)                         |
+| `form`    | form    | Input look and layout, section and list behaviour in the form |
+| `list`    | list    | How the stored value renders on the listing page              |
 
 ---
 
-## `ui:component` — Widget override (both surfaces)
+## `ui:component`: input widget
 
-| Value          | Applies to dataType      | Renders                                                                     |
-| -------------- | ------------------------ | --------------------------------------------------------------------------- |
-| `checkbox`     | BOOLEAN                  | Single checkbox — checked = true                                            |
-| `toggle`       | BOOLEAN                  | Animated pill switch                                                        |
-| `slider`       | any numeric              | Range slider; uses `html:min` / `html:max` / `html:step`                    |
-| `stepper`      | INT types                | `−` · number input · `+` button                                             |
-| `rating`       | INTEGER                  | 5-star clickable rating (click same star to clear)                          |
-| `textarea`     | STRING                   | Resizable textarea; use `ui:rows` for height                                |
-| `tag-input`    | STRING                   | Chip input — Enter/comma adds, Backspace removes; stored as comma-separated |
-| `option-pills` | STRING + `style:options` | Horizontal pill buttons; one selectable                                     |
+| Value            | Data types               | Renders                                                                                             |
+| ---------------- | ------------------------ | --------------------------------------------------------------------------------------------------- |
+| `toggle`         | BOOLEAN                  | Switch                                                                                              |
+| `checkbox`       | BOOLEAN                  | Single checkbox                                                                                     |
+| `segmented`      | BOOLEAN, or with options | Segmented control (Yes / No, or the options)                                                        |
+| `slider`         | any number               | Range slider using `html:min` / `html:max` / `html:step`; value shows `form:prefix` / `form:suffix` |
+| `stepper`        | any number               | `−` · number · `+`, clamped to `html:min` / `html:max`                                              |
+| `rating`         | integer                  | Clickable stars (`ui:max` stars, default 5); click the same star to clear                           |
+| `textarea`       | STRING                   | Textarea (`ui:rows`)                                                                                |
+| `tag-input`      | STRING                   | Chip input, stored comma-separated                                                                  |
+| `select`         | with `style:options`     | Dropdown (the default whenever options exist)                                                       |
+| `radio`          | with `style:options`     | Radio group                                                                                         |
+| `option-pills`   | with `style:options`     | Single-select pill buttons                                                                          |
+| `multi-pills`    | with `style:options`     | Multi-select pill buttons, stored comma-separated                                                   |
+| `checkbox-group` | with `style:options`     | Multi-select checkboxes, stored comma-separated                                                     |
+| `color`          | STRING                   | Native color picker (stores `#rrggbb`)                                                              |
 
----
+`style:options` works with STRING **and** numeric data types. For numeric types, give each option a numeric value: `60 Hz:60,120 Hz:120`.
 
-## `ui:display` — Display mode hint (both surfaces)
+## `ui:*` (other keys)
 
-This is a **legacy** key. Prefer `list:display` (see below) for new properties.
+| Key            | Value          | Effect                                                       |
+| -------------- | -------------- | ------------------------------------------------------------ |
+| `ui:multiline` | `true`/`false` | STRING renders as a textarea                                 |
+| `ui:rows`      | number         | Textarea rows (default 3)                                    |
+| `ui:max`       | number         | Stars for `ui:component = rating` (also used by list rating) |
+| `ui:display`   | legacy         | Old display hint. `list:display` wins when both are set      |
 
-| Value          | Renders the stored value as                       |
-| -------------- | ------------------------------------------------- |
-| `text`         | Plain text (default)                              |
-| `badge`        | Coloured badge chip                               |
-| `color-swatch` | Circular swatch — used with `style:color-options` |
-| `image-grid`   | Grid of thumbnails                                |
-| `icon`         | Icon name resolved to a Lucide icon               |
+## `html:*`
 
----
+| Key                     | Effect                                                                       |
+| ----------------------- | ---------------------------------------------------------------------------- |
+| `html:placeholder`      | Placeholder text                                                             |
+| `html:min` / `html:max` | Min/max value for numbers, sliders, steppers, years; min/max length for text |
+| `html:step`             | Step for numbers, steppers, sliders                                          |
+| `html:pattern`          | Regex for text inputs                                                        |
+| `html:maxlength`        | Max characters (also the limit for `form:show-count`)                        |
+| `html:accept`           | File MIME filter (`image/*`, `application/pdf`, …)                           |
+| `html:type`             | `email` · `tel` · `url` · `password` · `search`                              |
+| `html:inputmode`        | Mobile keyboard hint (`numeric`, `decimal`, `tel`, …)                        |
+| `html:autocomplete`     | Browser autocomplete hint                                                    |
 
-## `html:*` — HTML element attributes (both surfaces)
+## `style:*`
 
-| Key                | Type   | Effect                                                   |
-| ------------------ | ------ | -------------------------------------------------------- |
-| `html:placeholder` | text   | Placeholder text inside input / picker                   |
-| `html:min`         | number | Min value (numeric inputs, year picker, sliders)         |
-| `html:max`         | number | Max value                                                |
-| `html:step`        | number | Step increment for numeric inputs and sliders            |
-| `html:pattern`     | text   | Native HTML `pattern` regex on text inputs               |
-| `html:accept`      | select | File input MIME filter (`image/*`, `application/pdf`, …) |
-| `html:type`        | select | Override input type: `email`, `tel`, `url`, `password`   |
+| Key                   | Format                                     | Effect                                          |
+| --------------------- | ------------------------------------------ | ----------------------------------------------- |
+| `style:options`       | `Label:value,Label:value` or `value,value` | Choices for select / radio / pills / checkboxes |
+| `style:color-options` | `black,red,#1A2B3C`                        | Clickable swatches; stored value = the color    |
 
----
-
-## `style:*` — Data-driven style (both surfaces)
-
-| Key                   | Format                                     | Effect                                            |
-| --------------------- | ------------------------------------------ | ------------------------------------------------- |
-| `style:options`       | `Label:value,Label:value` or `value,value` | Drives `<select>` (default) or `option-pills`     |
-| `style:color-options` | `black,red,#1A2B3C`                        | Clickable swatches; stored value = selected color |
-
----
-
-## `ui:multiline` / `ui:rows` (both surfaces)
-
-| Key            | Value            | Effect                                                           |
-| -------------- | ---------------- | ---------------------------------------------------------------- |
-| `ui:multiline` | `true` / `false` | Renders STRING as `<textarea>` (same as `ui:component=textarea`) |
-| `ui:rows`      | number           | Row height of the textarea (default 3)                           |
+The first unescaped `:` separates label from value, so `Morning:09:30` has the value `09:30`. Escape a literal comma or colon with a backslash: `A\, B`, `10\:30`.
 
 ---
 
-## `form:*` — Form input rendering (form surface only)
+## `form:*`: form rendering
 
-Controls how the input widget looks in the **admin form**. Independent of widget type (`ui:component`) and HTML attributes (`html:*`).
+### Field keys (leaf properties)
 
-### Layout & sizing
+| Key                           | Options                                                  | Effect                                                                     |
+| ----------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `form:size`                   | `sm` · `md` · `lg` · `xl`                                | Input height, padding and font size                                        |
+| `form:variant`                | `default` · `outline` · `ghost` · `filled` · `underline` | Input container style                                                      |
+| `form:width`                  | `full` · `half` · `auto` · `fixed`                       | Input width                                                                |
+| `form:layout`                 | `vertical` · `horizontal` · `inline`                     | Label and input arrangement (horizontal stacks on mobile)                  |
+| `form:label.position`         | `top` · `left` · `hidden`                                | `left` = horizontal layout; `hidden` keeps the label for screen readers    |
+| `form:helper-text`            | text                                                     | Hint below the field (linked with `aria-describedby`)                      |
+| `form:prefix` / `form:suffix` | text                                                     | Static add-on before/after the input (`₹`, `kg`, `https://`)               |
+| `form:show-count`             | `true`                                                   | Character counter, `n / html:maxlength`                                    |
+| `form:readonly`               | `true`                                                   | Visible but not editable. On a composite or list, it locks every child too |
 
-| Key                   | Type   | Options                                                  | Effect                           |
-| --------------------- | ------ | -------------------------------------------------------- | -------------------------------- |
-| `form:size`           | select | `sm` · `md` · `lg` · `xl`                                | Input size (padding + font-size) |
-| `form:variant`        | select | `default` · `outline` · `ghost` · `filled` · `underline` | Input container visual style     |
-| `form:width`          | select | `full` · `auto` · `fixed`                                | How wide the input stretches     |
-| `form:layout`         | select | `vertical` · `horizontal` · `inline`                     | Label + input arrangement        |
-| `form:label.position` | select | `top` · `left` · `hidden`                                | Where the label appears          |
-| `form:helper-text`    | text   | any string                                               | Small hint below the field       |
+### Section keys (composite and list)
 
-### Layout visual reference
+| Key                | Applies to      | Effect                                                                           |
+| ------------------ | --------------- | -------------------------------------------------------------------------------- |
+| `form:columns`     | COMPOSITE       | Child fields in 1–4 columns from `md` up                                         |
+| `form:collapsible` | COMPOSITE, LIST | `true` = collapsible, `collapsed` = starts closed                                |
+| `form:helper-text` | COMPOSITE, LIST | Description under the section header                                             |
+| `form:min-items`   | LIST, SET       | Remove is disabled at this count                                                 |
+| `form:max-items`   | LIST, SET       | Add is disabled at this count; the header shows `n / max`                        |
+| `form:add-label`   | LIST, SET       | Add button text (default "Add item")                                             |
+| `form:item-label`  | LIST, SET       | Item header template: `{n}` = position, `{field}` = a child value, e.g. `{name}` |
 
-```
-vertical (default)        horizontal              inline
-┌────────────┐           Label: ┌────────┐      Label: ┌──────┐
-│ Label      │                  │ input  │             │input │
-├────────────┤                  └────────┘             └──────┘
-│ ┌────────┐ │
-│ │ input  │ │
-│ └────────┘ │
-──── or ──────
-│ Label      │
-├────────────┤
-│ ┌────────┐ │
-│ │ input  │ │   ← form:label.position = left
-│ └────────┘ │
-└────────────┘
-```
-
-### Helper text
-
-```
-┌──────────┐
-│ input    │
-└──────────┘
-↑ small hint text ↑    ← form:helper-text
-```
+List items can be moved up and down and removed. Every icon button has an accessible label.
 
 ---
 
-## `list:*` — Listing / detail view rendering (list surface only)
+## `list:*`: listing rendering
 
-Controls how the stored value appears on the **public listing page** (card, table, detail view).
+### Common keys
 
-### Common display properties
+| Key                           | Options / type                                                                                                                                            | Effect                                                         |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `list:display`                | see below                                                                                                                                                 | Primary render mode                                            |
+| `list:prefix` / `list:suffix` | text                                                                                                                                                      | Text around the value                                          |
+| `list:format`                 | `raw` · `number` · `compact` · `currency` · `percentage` · `bytes` · `date` · `datetime` · `time` · `relative` · `uppercase` · `lowercase` · `capitalize` | Formats the value. Values that don't parse are shown unchanged |
+| `list:decimals`               | number                                                                                                                                                    | Fraction digits for number / currency / percentage / price     |
+| `list:truncate`               | number                                                                                                                                                    | Max characters before `…` (full text in the tooltip)           |
+| `list:empty`                  | text                                                                                                                                                      | Shown for blank values (default `—`)                           |
+| `list:hidden`                 | `true`                                                                                                                                                    | Collected in the form, never shown in the listing              |
+| `list:span`                   | `auto` · `full`                                                                                                                                           | Full row in the two-column field grid                          |
+| `list:hide-label`             | `true`                                                                                                                                                    | Value without its label                                        |
 
-| Key             | Type   | Options                                                                                          | Effect                                  |
-| --------------- | ------ | ------------------------------------------------------------------------------------------------ | --------------------------------------- |
-| `list:display`  | select | `text` · `badge` · `pill` · `color-swatch` · `image` · `icon` · `price` · `rating` · `truncated` | Primary render mode                     |
-| `list:prefix`   | text   | any string (e.g. `₹`, `#`, `+`)                                                                  | Static text prepended to value          |
-| `list:suffix`   | text   | any string (e.g. `%`, `kg`, `hrs`, `mAh`)                                                        | Static text appended to value           |
-| `list:truncate` | number | max character count                                                                              | Truncates long text with `…`            |
-| `list:format`   | select | `raw` · `date` · `datetime` · `currency` · `percentage`                                          | Formats raw stored value before display |
+When `style:options` is set, values are shown with their option **label** (`active` → "Active").
+
+### `list:display` modes
+
+| Value                      | Renders                                          | Block keys             |
+| -------------------------- | ------------------------------------------------ | ---------------------- |
+| `text`                     | Formatted text (default)                         | —                      |
+| `badge` / `pill`           | Tinted badge (square or round corners)           | `list:badge.*`         |
+| `tags`                     | Comma-separated value as several badges          | `list:badge.*`         |
+| `options`                  | Every option, with the stored one(s) highlighted | —                      |
+| `color-swatch`             | Swatches                                         | `list:swatch.show-all` |
+| `image` / `image-grid`     | Image, or a grid of comma-separated image URLs   | `list:image.*`         |
+| `icon`                     | Icon by name                                     | —                      |
+| `price`                    | Localized currency (`₹1,39,900`)                 | `list:price.*`         |
+| `rating`                   | Stars                                            | `list:rating.max`      |
+| `truncated`                | Text cut at `list:truncate` (default 80)         | —                      |
+| `multiline`                | Text with line breaks preserved                  | —                      |
+| `link` / `email` / `phone` | Link, `mailto:` or `tel:`                        | `list:link.*`          |
+| `boolean`                  | Yes / No with custom labels                      | `list:boolean.*`       |
+| `progress`                 | Progress bar                                     | `list:progress.*`      |
+| `monospace`                | Code-style text (SKUs, IDs)                      | —                      |
+
+Defaults when `list:display` isn't set:
+
+| Condition                                    | Default        |
+| -------------------------------------------- | -------------- |
+| `ui:component = rating`                      | `rating`       |
+| `tag-input`, `multi-pills`, `checkbox-group` | `tags`         |
+| `option-pills`                               | `options`      |
+| `style:color-options` set                    | `color-swatch` |
+| BOOLEAN                                      | `boolean`      |
+| `ui:multiline`, `textarea`                   | `multiline`    |
+
+Address, coordinates, duration (`1h 30m`), period (`1y 2mo`), month and day are formatted automatically.
+
+Links are only rendered for `http(s)`, `mailto:`, `tel:` and relative URLs. Others (for example `javascript:`) render as plain text.
 
 ### Value-triggered blocks
 
-These blocks activate when `list:display` matches their trigger value.
-
-#### `list:badge` block — activates when `list:display = badge` or `list:display = pill`
-
-| Key                  | Type   | Options                                      | Effect                 |
-| -------------------- | ------ | -------------------------------------------- | ---------------------- |
-| `list:badge.color`   | select | `primary` · `success` · `warning` · `danger` | Badge colour semantics |
-| `list:badge.size`    | select | `sm` · `md` · `lg`                           | Badge size             |
-| `list:badge.variant` | select | `solid` · `outline` · `soft`                 | Badge fill style       |
-
-Colour rendering:
-
-- `success` → emerald green background (e.g. "In Stock")
-- `warning` → amber/amber (e.g. "Pending")
-- `danger` → red/red (e.g. "Out of Stock")
-- `primary` → theme primary colour
-
-#### `list:image` block — activates when `list:display = image`
-
-| Key                | Type   | Options                            | Effect               |
-| ------------------ | ------ | ---------------------------------- | -------------------- |
-| `list:image.size`  | select | `xs` · `sm` · `md` · `lg` · `full` | Image rendered size  |
-| `list:image.shape` | select | `square` · `rounded` · `circle`    | Corner radius / crop |
-| `list:image.fit`   | select | `cover` · `contain` · `fill`       | CSS object-fit       |
-
-#### `list:price` block — activates when `list:display = price`
-
-| Key                   | Type   | Options                                  | Effect                                     |
-| --------------------- | ------ | ---------------------------------------- | ------------------------------------------ |
-| `list:price.currency` | select | `USD` · `GBP` · `EUR` · `INR` · `custom` | Currency symbol                            |
-| `list:price.format`   | select | `symbol` · `code` · `name`               | Currency display (`$`, `USD`, "US Dollar") |
-| `list:price.size`     | select | `sm` · `md` · `lg`                       | Price text size                            |
-
----
+| Key                            | Options                                                                          | Notes                                                                              |
+| ------------------------------ | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `list:badge.color`             | `primary` · `success` · `warning` · `danger` · `info` · `muted`                  | Tone for every value                                                               |
+| `list:badge.color-map`         | `value:tone,…` e.g. `active:success,pending:warning,inactive:danger`             | Per-value tone (wins over `color`)                                                 |
+| `list:badge.variant`           | `soft` · `solid` · `outline`                                                     |                                                                                    |
+| `list:badge.size`              | `sm` · `md` · `lg`                                                               |                                                                                    |
+| `list:badge.dot`               | `true`                                                                           | Leading status dot                                                                 |
+| `list:image.size`              | `xs` · `sm` · `md` · `lg` · `xl` · `full`                                        |                                                                                    |
+| `list:image.shape`             | `square` · `rounded` · `circle`                                                  |                                                                                    |
+| `list:image.fit`               | `cover` · `contain` · `fill`                                                     |                                                                                    |
+| `list:price.currency`          | `INR` · `USD` · `EUR` · `GBP` · `AED` · `AUD` · `CAD` · `SGD` · `JPY` · `custom` | Also used by `list:format = currency`. `custom` = number only, add `list:prefix`   |
+| `list:price.format`            | `symbol` · `code` · `name`                                                       | `₹1,000` · `INR 1,000` · `1,000 Indian rupees`                                     |
+| `list:price.size`              | `sm` · `md` · `lg` · `xl`                                                        |                                                                                    |
+| `list:rating.max`              | number                                                                           | Default `ui:max` or 5                                                              |
+| `list:swatch.show-all`         | `true` · `false`                                                                 | All swatches with the selected one highlighted (default), or only the stored color |
+| `list:link.label`              | text                                                                             | Link text; blank = the URL                                                         |
+| `list:link.new-tab`            | `true` · `false`                                                                 | Default `true`                                                                     |
+| `list:boolean.true` / `.false` | text                                                                             | Default Yes / No                                                                   |
+| `list:boolean.style`           | `icon` · `badge` · `text`                                                        |                                                                                    |
+| `list:progress.max`            | number                                                                           | Default 100                                                                        |
+| `list:progress.label`          | `percent` · `value` · `none`                                                     |                                                                                    |
 
 ### Type-triggered blocks
 
-These blocks activate when the property `type` field matches — no need for `list:display`.
+#### `list:composite.*` (COMPOSITE_PROPERTY)
 
-#### `list:composite` block — activates when `type = COMPOSITE_PROPERTY`
+Top-level composites render as their own section card on the listing page. Nested composites render inline inside their parent.
 
-Controls how a composite (group of child fields) renders in the listing view.
-
-| Key                          | Type   | Options                                                        | Effect                                    |
-| ---------------------------- | ------ | -------------------------------------------------------------- | ----------------------------------------- |
-| `list:composite.layout`      | select | `table` · `inline` · `card` · `grid` · `definition` · `hidden` | Layout mode for child fields              |
-| `list:composite.columns`     | number | any number (default 2)                                         | Number of columns for `grid` layout       |
-| `list:composite.gap`         | select | `tight` · `normal` · `loose`                                   | Spacing between items                     |
-| `list:composite.label-width` | text   | any Tailwind width class (e.g. `w-32`)                         | Fixed label width for `definition` layout |
-
-##### Composite layout reference
+| Key                          | Options                                                                                                                                                                                                                                                            | Default  |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| `list:composite.layout`      | `table` · `definition` · `grid` · `card` · `inline` · `hidden`                                                                                                                                                                                                     | `table`  |
+| `list:composite.columns`     | `1`–`6` (grid / card)                                                                                                                                                                                                                                              | `2`      |
+| `list:composite.gap`         | `tight` · `normal` · `loose`                                                                                                                                                                                                                                       | `normal` |
+| `list:composite.label-width` | `sm` · `md` · `lg` · `xl` (table / definition)                                                                                                                                                                                                                     | `md`     |
+| `list:composite.icon`        | `info` · `monitor` · `smartphone` · `camera` · `battery` · `cpu` · `hard-drive` · `wifi` · `ruler` · `package` · `truck` · `shield` · `zap` · `palette` · `settings` · `tag` · `calendar` · `map-pin` · `file-text` · `image` · `car` · `home` · `star` · `wrench` | none     |
+| `list:composite.show-empty`  | `true` · `false`                                                                                                                                                                                                                                                   | `true`   |
 
 ```
-table (default)          inline                  card
-┌────────────────────┐   Label1: value1          ┌─────────┐ ┌─────────┐
-│ Label1    value1   │   · Label2: value2         │ Label1  │ │ Label2  │
-│ Label2    value2   │   · Label3: value3         │ value1  │ │ value2  │
-│ Label3    value3   │                           └─────────┘ └─────────┘
-└────────────────────┘
-
-grid (2 cols)            definition              hidden
-┌────────────┬────────┐  Label1   value1          (renders nothing)
-│ Label1     │ Label2 │  Label2   value2
-│ value1     │ value2 │  Label3   value3
-├────────────┼────────┤
-│ Label3     │ Label4 │
-│ value3     │ value4 │
-└────────────┴────────┘
+table (default)          definition              grid / card (2 cols)      inline
+┌────────────────────┐   Label1   value1         ┌────────┬────────┐       Label1: value1 · Label2: value2
+│ Label1    value1   │   Label2   value2         │ Label1 │ Label2 │
+│ Label2    value2   │                           │ value1 │ value2 │
+└────────────────────┘                           └────────┴────────┘
 ```
 
-#### `list:list` block — activates when `type = LIST_PROPERTY` or `type = SET_PROPERTY`
+All layouts collapse to one column on mobile.
 
-Controls how a list of items renders.
+#### `list:list.*` (LIST_PROPERTY / SET_PROPERTY)
 
-| Key                    | Type   | Options                                    | Effect                   |
-| ---------------------- | ------ | ------------------------------------------ | ------------------------ |
-| `list:list.layout`     | select | `cards` · `table` · `inline` · `compact`   | List item arrangement    |
-| `list:list.item-style` | select | `flat` · `card` · `bordered` · `separated` | Item border / background |
+| Key                    | Options                                                           | Default                                         |
+| ---------------------- | ----------------------------------------------------------------- | ----------------------------------------------- |
+| `list:list.layout`     | `cards` · `table` · `inline` · `compact` · `bullets` · `numbered` | `cards` with children, `inline` (chips) without |
+| `list:list.item-style` | `flat` · `card` · `bordered` · `separated`                        | `bordered` with children, `flat` without        |
+
+`table` shows child fields as columns, and turns into cards below `sm`.
 
 ---
 
-## Creating component properties — step by step
+## Creating component properties: step by step
 
-### Step 1: Choose the right property type
-
-Think about the data shape first:
-
-```
-Leaf value?                          → COMPLEX_PROPERTY (or SIMPLE if no attrs)
-Group of related leaf values?        → COMPOSITE_PROPERTY
-Repeating list of items?             → LIST_PROPERTY
-```
-
-### Step 2: Choose the dataType
-
-| Data          | dataType                  |
-| ------------- | ------------------------- |
-| Text (short)  | `STRING`                  |
-| Text (long)   | `STRING` + `ui:multiline` |
-| Whole number  | `INTEGER`                 |
-| Decimal       | `FLOAT`                   |
-| True/false    | `BOOLEAN`                 |
-| Date          | `LOCAL_DATE`              |
-| Date + time   | `LOCAL_DATE_TIME`         |
-| Email / phone | `STRING` + `html:type`    |
-| File          | `FILE`                    |
-
-### Step 3: Configure the form input
-
-Select an input widget and style it:
-
-```
-dataType: STRING
-html:placeholder  →  Enter product name…
-form:size         →  lg
-form:variant      →  outline
-form:layout       →  vertical
-```
-
-```
-dataType: INTEGER
-ui:component     →  slider
-html:min         →  0
-html:max         →  100000
-html:step        →  1000
-form:size        →  sm
-form:label.position →  left
-```
-
-### Step 4: Configure the listing display
-
-Choose how the stored value looks in public views:
-
-```
-dataType: STRING
-list:display    →  badge
-list:badge.color   →  success
-list:badge.variant →  soft
-list:prefix     →  #
-```
-
-```
-dataType: INTEGER
-list:display        →  price
-list:price.currency →  INR
-list:price.size     →  lg
-list:suffix         →  (incl. GST)
-```
-
-### Step 5: Use composites for spec sections
-
-Group related fields into a composite and choose a layout:
-
-```
-"type": "COMPOSITE_PROPERTY",
-"name": "display_specs",
-"label": "Display",
-"attributes": {
-  "list:composite.layout": "card",
-  "list:section.header-icon": "monitor"
-},
-"value": [
-  { "name": "screen_size", "label": "Screen Size", ... },
-  { "name": "resolution", "label": "Resolution", ... }
-]
-```
-
-### Step 6: Use lists for repeating features
-
-```
-"type": "LIST_PROPERTY",
-"name": "highlights",
-"label": "Key Highlights",
-"attributes": {
-  "list:list.layout": "inline",
-  "list:prefix": "✓ "
-},
-"value": [
-  { "name": "highlight", "label": "Highlight", ... }
-]
-```
+1. **Pick the type.** Leaf value → `COMPLEX_PROPERTY`. Group → `COMPOSITE_PROPERTY`. Repeating → `LIST_PROPERTY`.
+2. **Pick the dataType.** Short text `STRING`; long text `STRING` + `ui:multiline`; whole number `INTEGER`; decimal `FLOAT`; yes/no `BOOLEAN`; date `LOCAL_DATE`; date and time `LOCAL_DATE_TIME`; email or phone `STRING` + `html:type`; file `FILE`.
+3. **Configure the form input**, for example:
+   ```
+   dataType: INTEGER
+   ui:component   → slider
+   html:min       → 0
+   html:max       → 100000
+   html:step      → 1000
+   form:prefix    → ₹
+   ```
+4. **Configure the listing display**, for example:
+   ```
+   dataType: STRING
+   style:options         → Active:active,Pending:pending,Inactive:inactive
+   list:display          → badge
+   list:badge.color-map  → active:success,pending:warning,inactive:danger
+   list:badge.dot        → true
+   ```
+5. **Group spec sections** in composites with `list:composite.layout` and `list:composite.icon`.
+6. **Repeat items** with lists: `form:max-items`, `form:item-label`, `list:list.layout`.
 
 ---
 
-## Adding new blocks (the 3-step pattern)
+## Adding a new key
 
-Adding a new block requires changes in exactly **3 places**:
+1. Add an entry to `ATTRIBUTE_PROTOCOL` in `apps/web/src/lib/attributes/protocol.ts` with `surface`, `group`, `valueType` / `options`, and `appliesTo` / `showWhen` if it belongs to a block.
+2. Read it in the renderer: `ScalarControl` / `ScalarFieldGroup` / the section components in `AttrField.tsx` (form), or `ScalarValue` / `CompositeView` / `ListView` in `AttrValue.tsx` (list). Pure helpers (parsing, formatting) go in `lib/attributes/values.ts`, with a test in `lib/attributes/__tests__`.
+3. Nothing else to wire. The attribute editor dropdown, its hints and `resolveAttrs` filtering all read the protocol.
 
-### Step 1: `attribute-protocol.ts` — define the keys + block
-
-```ts
-// Add key entries
-{ key: 'list:accordion.default-open', surface: 'list', group: 'list',
-  label: 'Default open', valueType: 'select',
-  options: ['true', 'false', 'first'],
-  block: 'accordion', appliesTo: ['COMPOSITE_PROPERTY'] },
-
-// Add block definition
-{ name: 'accordion', surface: 'list',
-  label: 'Accordion section',
-  triggerPropType: 'COMPOSITE_PROPERTY',
-  keys: ['list:accordion.default-open'] }
-```
-
-No editor wiring needed — the `AttributeEditor` dropdown picks up new keys automatically from `ATTRIBUTE_PROTOCOL`.
-
-### Step 2: `view/page.tsx` → `PropValue` — add the renderer
-
-```tsx
-// In the COMPOSITE rendering section
-if (compositeLayout === 'accordion') {
-  const defaultOpen = listAttrs['list:accordion.default-open'];
-  // ... render collapsible accordion panels
-}
-```
-
-### Step 3: Verify
-
-- Block sub-keys auto-appear in the editor when the trigger condition is met
-- Legacy properties without these attributes render identically (missing keys fall through to defaults)
-- The `resolveAttrs` filter ensures the keys are only returned for the correct surface + property type
-
-### Trigger modes
-
-| Mode                       | Use for                                     | Example                                 |
-| -------------------------- | ------------------------------------------- | --------------------------------------- |
-| `trigger: { key, equals }` | Blocks activated by a value choice          | `list:display = badge` → badge block    |
-| `triggerPropType`          | Blocks that always apply to a property type | `COMPOSITE_PROPERTY` → composite layout |
+Missing keys always fall back to the defaults above, so existing properties render the same.
 
 ---
 
 ## Examples
 
-### Basic text with placeholder
+### Compact form input with a horizontal label
 
 ```
 dataType: STRING
-html:placeholder  →  e.g. SKU-001-BLK
+html:placeholder    → e.g. SKU-001-BLK
+form:size           → sm
+form:variant        → outline
+form:label.position → left
+list:display        → monospace
 ```
 
-### Compact form input (horizontal label)
+### Status badge with per-value colours
 
 ```
-dataType: STRING
-html:placeholder    →  e.g. SKU-001-BLK
-form:size           →  sm
-form:variant        →  outline
-form:label.position →  left
+dataType:             STRING
+style:options         → Active:active,Inactive:inactive,Pending:pending
+ui:component          → option-pills
+list:display          → badge
+list:badge.color-map  → active:success,pending:warning,inactive:danger
+list:badge.variant    → soft
 ```
 
-### Coloured status badge
+### Price
 
 ```
-dataType:       STRING
-style:options   →  Active:active,Inactive:inactive,Pending:pending
-ui:component    →  option-pills
-list:display    →  badge
-list:badge.color   →  success (active), warning (pending), danger (inactive)
-list:badge.variant →  soft
+dataType:            INTEGER
+ui:component         → slider
+html:min             → 0
+html:max             → 100000
+html:step            → 500
+form:prefix          → ₹
+list:display         → price
+list:price.currency  → INR
+list:price.size      → lg
 ```
 
-### Price with currency symbol
-
-```
-dataType:           INTEGER
-ui:component        →  slider
-html:min            →  0
-html:max            →  100000
-html:step           →  500
-list:display        →  price
-list:price.currency →  INR
-list:price.size     →  md
-```
-
-### Percentage field with suffix
+### Percentage
 
 ```
 dataType:      FLOAT
-html:min       →  0
-html:max       →  100
-html:step      →  0.5
-list:display   →  text
-list:suffix    →  %
-list:format    →  percentage
+html:min       → 0
+html:max       → 100
+html:step      → 0.5
+form:suffix    → %
+list:format    → percentage
+list:decimals  → 1
 ```
 
-### Product specs composite (table)
+### Multi-select features
 
 ```
-COMPOSITE "Camera"
-  attributes:
-    list:composite.layout →  table
-
-  ─ screen_size   →  FLOAT   list:suffix →  inches
-  ─ resolution    →  STRING
-  ─ camera_type   →  STRING  option-pills
+dataType:       STRING
+style:options   → Wi-Fi:wifi,Bluetooth:bt,NFC:nfc,5G:5g
+ui:component    → checkbox-group
+list:display    → tags
 ```
 
-### Feature cards (card layout)
-
-```
-COMPOSITE "Display"
-  attributes:
-    list:composite.layout →  card
-
-  ─ screen_size   →  FLOAT   list:suffix →  "
-  ─ resolution    →  STRING
-  ─ refresh_rate  →  INTEGER  list:suffix →  Hz
-  ─ protection    →  STRING
-```
-
-### Dimensions inline
-
-```
-COMPOSITE "Dimensions"
-  attributes:
-    list:composite.layout →  inline
-
-  ─ height   →  FLOAT  list:suffix →  mm
-  ─ width    →  FLOAT  list:suffix →  mm
-  ─ weight   →  FLOAT  list:suffix →  g
-```
-
-### Spec sheet (definition layout)
+### Spec sheet section
 
 ```
 COMPOSITE "Battery"
-  attributes:
-    list:composite.layout →  definition
-    list:composite.label-width →  w-36
+  list:composite.layout      → definition
+  list:composite.label-width → lg
+  list:composite.icon        → battery
 
-  ─ capacity       →  INTEGER  list:suffix →  mAh
-  ─ charging       →  STRING
-  ─ battery_life   →  STRING
+  ─ capacity     → INTEGER  list:suffix → " mAh"   list:format → number
+  ─ charging     → STRING
+  ─ battery_life → STRING
 ```
 
-### Product image thumbnail
+### Repeating rows as a table
 
 ```
-dataType:       FILE
-html:accept     →  image/*
-list:display    →  image
-list:image.size →  md
-list:image.shape →  rounded
-list:image.fit  →  cover
+LIST "Previous owners"
+  form:max-items    → 5
+  form:item-label   → {name}
+  list:list.layout  → table
+
+  ─ name   → STRING
+  ─ year   → YEAR
 ```
 
----
+### Product image
 
-## Block trigger rules reference
-
-When `list:display` changes, only the matching block's sub-keys are active in both the editor and the renderer.
-
-| `list:display`                                            | Active block   | Render behaviour                                                 |
-| --------------------------------------------------------- | -------------- | ---------------------------------------------------------------- |
-| `badge`                                                   | `list:badge.*` | Badge chip with colour/size/variant                              |
-| `pill`                                                    | `list:badge.*` | Same as badge but pill-style                                     |
-| `image`                                                   | `list:image.*` | Image tag with size/shape/fit                                    |
-| `price`                                                   | `list:price.*` | Formatted price with currency                                    |
-| `text` / `truncated` / `icon` / `rating` / `color-swatch` | no block       | Use `list:prefix`, `list:suffix`, `list:truncate`, `list:format` |
-
-| Property type                    | Active block       | Effect                                                       |
-| -------------------------------- | ------------------ | ------------------------------------------------------------ |
-| `COMPOSITE_PROPERTY`             | `list:composite.*` | Renders children as table/inline/card/grid/definition/hidden |
-| `LIST_PROPERTY` / `SET_PROPERTY` | `list:list.*`      | Renders items as cards/table/inline                          |
+```
+dataType:          FILE
+html:accept        → image/*
+list:display       → image
+list:image.size    → md
+list:image.shape   → rounded
+```
 
 ---
 
@@ -603,7 +447,7 @@ curl -s -X POST http://localhost:8090/api/v1/meta-data/managed-types \
           "list:price.currency": "INR",
           "list:price.format": "symbol",
           "list:price.size": "lg",
-          "list:prefix": "₹",
+          "form:prefix": "₹",
           "form:size": "lg"
         }
       },
@@ -700,9 +544,8 @@ curl -s -X POST http://localhost:8090/api/v1/meta-data/managed-types \
             "label": "Refresh Rate",
             "dataType": "INTEGER",
             "attributes": {
-              "style:options": "60Hz,90Hz,120Hz,144Hz",
+              "style:options": "60 Hz:60,90 Hz:90,120 Hz:120,144 Hz:144",
               "ui:component": "option-pills",
-              "list:suffix": " Hz",
               "form:size": "sm"
             }
           }
@@ -758,7 +601,8 @@ curl -s -X POST http://localhost:8090/api/v1/meta-data/managed-types \
         "dataType": "STRING",
         "attributes": {
           "list:composite.layout": "definition",
-          "list:composite.label-width": "w-36"
+          "list:composite.label-width": "lg",
+          "list:composite.icon": "battery"
         },
         "value": [
           {
@@ -1182,18 +1026,14 @@ curl -s -X PATCH "http://localhost:8090/api/v1/listings/$LISTING_ID" \
 
 ## Source files
 
-| File                                      | Purpose                                                                    |
-| ----------------------------------------- | -------------------------------------------------------------------------- |
-| `attribute-protocol.ts`                   | All key definitions, block definitions, `resolveAttrs()`, `ATTR_GROUPS`    |
-| `AttributeEditor.tsx`                     | Dropdown editor; auto-picks up new keys from protocol                      |
-| `PropertyRow.tsx`                         | Filters visible attributes by `showWhen`/`appliesTo`                       |
-| `Step3Catalog.tsx` → `ScalarField`        | Consumes `form:*` + `html:*` + `ui:*` + `style:*` for form input rendering |
-| `Step3Catalog.tsx` → `PropertyFieldGroup` | Wraps label + input with `form:layout` / `form:label.position`             |
-| `view/page.tsx` → `PropValue`             | Consumes `list:*` keys + blocks for listing/detail display                 |
-
-### Adding new protocol keys
-
-1. Open `attribute-protocol.ts` and add an entry to `ATTRIBUTE_PROTOCOL` with the correct `surface` (`, `form`, or `list`).
-2. If the key belongs to a block, add the block definition to `ATTR_BLOCKS` and set `block`, `showWhen`, or `appliesTo` on the key entry.
-3. If the key needs new rendering logic, add it inside `ScalarField` (form) or `PropValue` (list).
-4. The `AttributeEditor` dropdown picks up new keys automatically — no extra wiring needed.
+| File                                                      | Purpose                                                                            |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `apps/web/src/lib/attributes/protocol.ts`                 | Key definitions (`ATTRIBUTE_PROTOCOL`), `resolveAttrs`, `inactiveReason`           |
+| `apps/web/src/lib/attributes/values.ts`                   | Option parsing, coercion, formatting, price, safe links, embedded-data normalizing |
+| `apps/web/src/components/common/attributes/AttrField.tsx` | Form renderer (`AttrField`, `ScalarControl`)                                       |
+| `apps/web/src/components/common/attributes/AttrValue.tsx` | Listing renderer (`AttrValue`, `AttrPropertySections`)                             |
+| `admin/metadata/_components/AttributeEditor.tsx`          | Key/value row in the property builder; reads the protocol                          |
+| `admin/metadata/_components/PropertyRow.tsx`              | Attribute rows of a property (stable rows, duplicate-safe)                         |
+| `admin/metadata/_components/PropertyFormPreview.tsx`      | Form and listing previews with sample values, using the shared renderers           |
+| `admin/listings/_components/Step3Catalog.tsx`             | Listing wizard catalog step (`AttrField`)                                          |
+| `admin/listings/_components/ListingDetailContent.tsx`     | Listing detail (`AttrPropertySections`)                                            |

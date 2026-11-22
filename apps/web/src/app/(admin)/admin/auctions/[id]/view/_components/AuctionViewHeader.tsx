@@ -1,178 +1,184 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { AuctionVM } from '@repo/api';
-import { Button, toast } from '@repo/ui';
+import type { ReactNode } from 'react';
+import Link from 'next/link';
+import { ChevronLeft, Clock, Copy, MoreHorizontal, Pencil, Ban, Trash2 } from 'lucide-react';
+import type { AuctionVM } from '@repo/api';
 import {
-  ArrowLeft,
-  Pencil,
-  Trash2,
-  Copy,
-  Check,
-  RefreshCw,
-  Calendar,
-  Building2,
-  IndianRupee,
-  Hash,
-} from 'lucide-react';
-import { StatusBadge } from '@/components/common/admin/AuctionStatusBadge';
-import { formatDateTime, formatLabel, resolveStr } from '@/components/common/admin/format';
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@repo/ui';
+import { Pill } from '@/components/common/admin/Pill';
+import Tip from '@/components/common/admin/Tip';
+import { formatDateTime } from '../../../_lib/wizard/summary';
+import type { AuctionChip } from '../_lib/facts';
+import { STAGE_META, type AuctionStage, type Countdown } from '../_lib/stage';
+import { CHIP_ICON } from './viewIcons';
 
 interface AuctionViewHeaderProps {
   auction: AuctionVM;
-  onRefreshPolicies?: () => void;
-  reloadingPolicies?: boolean;
-  onDelete?: () => void;
+  stage: AuctionStage;
+  chips: AuctionChip[];
+  countdown: Countdown | null;
+  onCopyId: () => void;
+  onCancel: () => void;
+  onDelete: () => void;
+  /** The tab list, drawn along the bottom edge of the header. */
+  tabs: ReactNode;
+}
+
+function shortId(id: string): string {
+  return id.length > 12 ? `${id.slice(0, 6)}…${id.slice(-4)}` : id;
+}
+
+/** Cancelling is for auctions people may already be joining. */
+function canCancel(stage: AuctionStage): boolean {
+  return stage === 'registration' || stage === 'bidding';
+}
+
+function HeaderActions({
+  auctionId,
+  stage,
+  onCancel,
+  onDelete,
+}: {
+  auctionId: string;
+  stage: AuctionStage;
+  onCancel: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Button asChild variant="outline" size="sm">
+        <Link href={`/admin/auctions/${auctionId}/edit`}>
+          <Pencil />
+          Edit setup
+        </Link>
+      </Button>
+      <DropdownMenu>
+        <Tip label="More actions">
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" className="h-9 w-9" aria-label="More actions">
+              <MoreHorizontal />
+            </Button>
+          </DropdownMenuTrigger>
+        </Tip>
+        <DropdownMenuContent align="end">
+          {canCancel(stage) && (
+            <DropdownMenuItem onSelect={onCancel}>
+              <Ban className="h-4 w-4" />
+              Cancel auction
+            </DropdownMenuItem>
+          )}
+          {canCancel(stage) && <DropdownMenuSeparator />}
+          <DropdownMenuItem onSelect={onDelete} className="text-destructive focus:text-destructive">
+            <Trash2 className="h-4 w-4" />
+            Delete auction
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
+
+function CountdownBox({ countdown }: { countdown: Countdown }) {
+  return (
+    <div className="flex items-center gap-3 rounded-md border border-policy-border bg-policy px-4 py-2.5 text-policy-foreground">
+      <Clock className="h-5 w-5 shrink-0" aria-hidden />
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wide">{countdown.label}</p>
+        <p className="font-display text-xl font-semibold tabular-nums">{countdown.remaining}</p>
+        <p className="text-xs tabular-nums">{formatDateTime(countdown.at.toISOString())}</p>
+      </div>
+    </div>
+  );
 }
 
 export function AuctionViewHeader({
   auction,
-  onRefreshPolicies,
-  reloadingPolicies = false,
+  stage,
+  chips,
+  countdown,
+  onCopyId,
+  onCancel,
   onDelete,
+  tabs,
 }: AuctionViewHeaderProps) {
-  const router = useRouter();
-  const [copied, setCopied] = useState(false);
-
-  const handleCopyId = () => {
-    if (auction.id) {
-      navigator.clipboard.writeText(auction.id);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-      toast?.success?.('Auction ID copied to clipboard');
-    }
-  };
-
-  const primaryUnit = auction.units?.[0] ?? auction.unit;
-  const price =
-    primaryUnit?.openingPrice ?? (primaryUnit as { standingPrice?: number })?.standingPrice;
-  const startTime = auction.schedule?.startTime ?? auction.startTime;
-  const auctionTypeStr = resolveStr(auction.type);
+  const title = auction.title || 'Untitled auction';
+  const stageMeta = STAGE_META[stage];
 
   return (
-    <div className="space-y-4 bg-card border border-border rounded-2xl p-6 shadow-xs">
-      {/* Navigation & Actions Row */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.push('/admin/auctions')}
-          className="gap-2 text-muted-foreground hover:text-foreground -ml-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Auctions
-        </Button>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {onRefreshPolicies && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onRefreshPolicies}
-              disabled={reloadingPolicies}
-              className="gap-2 text-xs rounded-xl"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${reloadingPolicies ? 'animate-spin' : ''}`} />
-              Re-evaluate Policies
-            </Button>
-          )}
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.push(`/admin/auctions/${auction.id}/edit`)}
-            className="gap-2 text-xs rounded-xl"
+    <header className="flex flex-col gap-4 border border-border bg-card px-4 pt-4 sm:px-6 sm:pt-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 text-sm">
+          <Link
+            href="/admin/auctions"
+            className="inline-flex min-h-9 shrink-0 items-center gap-1 whitespace-nowrap rounded-md text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <Pencil className="h-3.5 w-3.5" />
-            Edit Auction
-          </Button>
-
-          {onDelete && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onDelete}
-              className="gap-2 text-xs rounded-xl text-destructive hover:bg-destructive/10 border-destructive/30"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              Delete
-            </Button>
-          )}
-        </div>
+            <ChevronLeft className="h-4 w-4" aria-hidden />
+            All auctions
+          </Link>
+          {/* On a phone the title right below says the same thing. */}
+          <span className="hidden text-muted-foreground sm:inline" aria-hidden>
+            /
+          </span>
+          <span
+            className="hidden truncate font-semibold text-foreground sm:inline"
+            aria-current="page"
+          >
+            {title}
+          </span>
+        </nav>
+        <HeaderActions
+          auctionId={auction.id}
+          stage={stage}
+          onCancel={onCancel}
+          onDelete={onDelete}
+        />
       </div>
 
-      {/* Main Title & Status Info */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-2">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              {auction.title || 'Untitled Auction'}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex min-w-0 flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">
+              {title}
             </h1>
-            <StatusBadge value={auction.status} />
+            <Pill tone={stageMeta.tone} dot>
+              {stageMeta.label}
+            </Pill>
           </div>
-
-          <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-            {auction.referenceId && (
-              <span className="flex items-center gap-1.5 font-medium text-foreground bg-muted/60 px-2.5 py-1 rounded-md">
-                <Hash className="h-3.5 w-3.5 text-muted-foreground" />
-                Ref: {auction.referenceId}
-              </span>
-            )}
-
-            <button
-              onClick={handleCopyId}
-              className="flex items-center gap-1.5 hover:text-foreground transition-colors bg-muted/40 hover:bg-muted/80 px-2.5 py-1 rounded-md"
-              title="Click to copy ID"
-            >
-              {copied ? (
-                <Check className="h-3.5 w-3.5 text-success" />
-              ) : (
-                <Copy className="h-3.5 w-3.5" />
-              )}
-              <span className="font-mono">{auction.id}</span>
-            </button>
-
-            {auctionTypeStr && (
-              <span className="flex items-center gap-1.5 bg-primary/10 text-primary font-medium px-2.5 py-1 rounded-md">
-                <Building2 className="h-3.5 w-3.5" />
-                {formatLabel(auctionTypeStr)}
-              </span>
-            )}
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            {chips.map((chip) => {
+              const Icon = CHIP_ICON[chip.key];
+              return (
+                <Pill key={chip.key} tone="muted">
+                  <Icon className="h-3.5 w-3.5" aria-hidden />
+                  {chip.label}
+                </Pill>
+              );
+            })}
+            {auction.referenceId && <span>Ref {auction.referenceId}</span>}
+            <Tip label="Copy auction ID">
+              <button
+                type="button"
+                onClick={onCopyId}
+                aria-label={`Copy auction ID ${auction.id}`}
+                className="inline-flex min-h-8 items-center gap-1 rounded-md px-1 font-mono text-xs tabular-nums transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <Copy className="h-3.5 w-3.5" aria-hidden />
+                {shortId(auction.id)}
+              </button>
+            </Tip>
           </div>
         </div>
-
-        {/* Highlight Stats Chips */}
-        <div className="flex flex-wrap items-center gap-3 shrink-0">
-          <div className="bg-muted/40 border border-border/60 rounded-xl p-3 flex items-center gap-3 min-w-[140px]">
-            <div className="p-2 bg-success/10 text-success rounded-lg">
-              <IndianRupee className="h-4 w-4" />
-            </div>
-            <div>
-              <p className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
-                Opening Price
-              </p>
-              <p className="text-sm font-bold text-foreground">
-                {price != null ? `₹${price.toLocaleString()}` : 'N/A'}
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-muted/40 border border-border/60 rounded-xl p-3 flex items-center gap-3 min-w-[160px]">
-            <div className="p-2 bg-primary/10 text-primary rounded-lg">
-              <Calendar className="h-4 w-4" />
-            </div>
-            <div>
-              <p className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
-                Start Time
-              </p>
-              <p className="text-sm font-bold text-foreground">
-                {startTime ? formatDateTime(startTime) : 'Not scheduled'}
-              </p>
-            </div>
-          </div>
-        </div>
+        {countdown && <CountdownBox countdown={countdown} />}
       </div>
-    </div>
+
+      {tabs}
+    </header>
   );
 }

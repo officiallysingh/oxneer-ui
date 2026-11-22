@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { AuthForm } from '@/components/auth/AuthForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui';
@@ -30,9 +31,13 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <div className="text-center mb-8 lg:hidden">
             <Link href="/" className="inline-flex items-center gap-2 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-xl">O</span>
-              </div>
+              <Image
+                src="/Oxneer - Logo.png"
+                alt=""
+                width={40}
+                height={40}
+                className="h-10 w-10 rounded-lg object-contain"
+              />
               <span className="text-xl font-bold text-foreground">Oxneer</span>
             </Link>
           </div>
@@ -41,9 +46,13 @@ export default function LoginPage() {
             <CardHeader className="space-y-1 text-center pb-4">
               <div className="hidden lg:flex justify-center mb-4">
                 <Link href="/" className="inline-flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-                    <span className="text-primary-foreground font-bold text-xl">O</span>
-                  </div>
+                  <Image
+                    src="/Oxneer - Logo.png"
+                    alt=""
+                    width={40}
+                    height={40}
+                    className="h-10 w-10 rounded-lg object-contain"
+                  />
                   <span className="text-xl font-bold text-foreground">Oxneer</span>
                 </Link>
               </div>

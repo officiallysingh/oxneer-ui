@@ -109,9 +109,11 @@ export function AdminSidebar({
             className={`flex items-center gap-3 overflow-hidden py-1 rounded-lg ${focusRing}`}
           >
             {collapsed ? (
-              <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-display font-bold text-lg shrink-0">
-                O
-              </div>
+              <img
+                src="/Oxneer - Logo.png"
+                alt="Oxneer"
+                className="h-9 w-9 rounded-lg object-contain shrink-0"
+              />
             ) : (
               <>
                 <img

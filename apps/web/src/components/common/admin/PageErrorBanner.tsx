@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -29,14 +30,14 @@ export function usePageErrorBanner() {
 export function PageErrorProvider({ children }: { children: ReactNode }) {
   const [current, setCurrent] = useState<BannerEntry | null>(null);
   const [dismissedId, setDismissedId] = useState<number | null>(null);
-  const idRef = useState(() => ({ n: 0 }))[0];
+  const idRef = useRef(0);
 
   const report = useCallback((message: string) => {
-    const id = ++idRef.n;
+    const id = ++idRef.current;
     setCurrent({ id, message });
     setDismissedId(null);
     return id;
-  }, [idRef]);
+  }, []);
 
   const clear = useCallback((id: number) => {
     setCurrent((entry) => (entry?.id === id ? null : entry));

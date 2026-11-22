@@ -1,0 +1,572 @@
+'use client';
+
+import { useId, useState, type ReactNode } from 'react';
+import {
+  CalendarClock,
+  ClipboardList,
+  CreditCard,
+  FileText,
+  Flag,
+  Gavel,
+  Info,
+  Landmark,
+  Loader2,
+  Lock,
+  SquarePen,
+  Zap,
+  type LucideIcon,
+} from 'lucide-react';
+import { cn } from '@repo/ui';
+import type { AuctionWorkflowStep } from '@repo/api';
+import { paymentStepData, resolveStr } from '../../../_components/PolicyShared';
+import type { WizardState } from '../../../_lib/wizard/types';
+import {
+  endTimeFor,
+  formatShortDate,
+  formatTime,
+  latestCloseFor,
+} from '../../../_lib/wizard/summary';
+import { offsetMinutes } from '../../../_lib/wizard/workflow';
+import { WindowTrack } from '../ui/WindowTrack';
+import { DisclosureToggle, FormFields } from './FormFields';
+import {
+  buildTimeline,
+  type TimelineIcon,
+  type TimelineItem,
+  type TimelinePhase,
+} from './timeline';
+
+const ITEM_ICON: Record<TimelineIcon, LucideIcon> = {
+  terms: FileText,
+  form: ClipboardList,
+  custom: SquarePen,
+  bank: Landmark,
+  payment: CreditCard,
+  policy: Zap,
+  sealed: Lock,
+};
+
+const PHASE_STYLE: Record<TimelinePhase['id'], { box: string; icon: string; Icon: LucideIcon }> = {
+  pre: { box: 'border-info/25 bg-info/5', icon: 'text-info', Icon: CalendarClock },
+  // Neutral, so the gold-tinted policy cards inside it stand out.
+  during: { box: 'border-border bg-muted/40', icon: 'text-primary', Icon: Gavel },
+  post: { box: 'border-success/25 bg-success/5', icon: 'text-success', Icon: Flag },
+};
+
+/** The time tag at the top of each card. Its left end tapers into a curve that
+ *  cups the item's dot on the rail. The whole outline is drawn as SVG strokes
+ *  (curve and box alike), so every side renders at the same weight at any zoom;
+ *  a CSS border would snap to whole pixels while the curve stays anti-aliased. */
+/** Outline weight of the time tag, and half of it: lines sit that far in from
+ *  the edges so the whole stroke stays inside the tag. */
+const TAG_STROKE = 1;
+const TAG_INSET = TAG_STROKE / 2;
+
+function TimeTag({ item }: { item: TimelineItem }) {
+  const stroke = item.policy ? 'stroke-policy-border' : 'stroke-foreground';
+  return (
+    <div
+      // Every tag is the same width so they line up down the rail; text that
+      // doesn't fit is cut with "…" and shown in full on hover.
+      title={`${item.timeMain} · ${item.timeSub}`}
+      className={cn(
+        'relative -ml-[19px] flex h-[54px] w-[264px] max-w-full shrink-0 flex-col justify-center whitespace-nowrap pl-2 pr-4',
+        item.policy ? 'bg-policy-raise' : 'bg-secondary',
+      )}
+    >
+      {/* Curved end, fixed size. */}
+      <svg
+        className="pointer-events-none absolute -left-[28px] top-0 h-[54px] w-[28px] overflow-visible"
+        viewBox="0 0 28 54"
+        aria-hidden
+      >
+        <path
+          className={item.policy ? 'fill-policy-raise' : 'fill-secondary'}
+          d="M28 0L1.87 9A24 24 0 0 1 1.87 45L28 54Z"
+        />
+        <path
+          className={cn('fill-none', stroke)}
+          strokeWidth={TAG_STROKE}
+          strokeLinejoin="round"
+          d={`M28 ${TAG_INSET}L1.87 9A24 24 0 0 1 1.87 45L28 ${54 - TAG_INSET}`}
+        />
+      </svg>
+      {/* Top, right and bottom edges. Stretches with the tag; the stroke keeps its width. */}
+      <svg
+        // An <svg> ignores left/right for its width, so size it explicitly: the
+        // tag's width less half a stroke, which keeps the right edge inside the tag.
+        className="pointer-events-none absolute left-0 top-0 h-[54px] w-[calc(100%-0.75px)] overflow-visible"
+        viewBox="0 0 100 54"
+        preserveAspectRatio="none"
+        aria-hidden
+      >
+        <path
+          className={cn('fill-none', stroke)}
+          strokeWidth={TAG_STROKE}
+          strokeLinecap="square"
+          vectorEffect="non-scaling-stroke"
+          d={`M0 ${TAG_INSET}H100V${54 - TAG_INSET}H0`}
+        />
+      </svg>
+      <b
+        className={cn(
+          'truncate text-[13px] font-semibold tabular-nums',
+          item.policy ? 'text-policy-foreground' : 'text-foreground/85',
+        )}
+      >
+        {item.timeMain}
+      </b>
+      <span
+        className={cn(
+          'truncate text-[11px]',
+          item.policy ? 'text-policy-foreground/70' : 'text-muted-foreground',
+        )}
+      >
+        {item.timeSub}
+      </span>
+    </div>
+  );
+}
+
+function Tag({
+  children,
+  tone,
+  onPolicy,
+}: {
+  children: string;
+  tone: 'step' | 'policy' | 'default' | 'optional' | 'dark' | 'ok';
+  onPolicy: boolean;
+}) {
+  return (
+    <span
+      className={cn(
+        'inline-flex h-5 items-center whitespace-nowrap rounded-full border px-2 text-[10px] font-semibold',
+        tone === 'policy' &&
+          'border-transparent bg-[image:var(--gradient-gold)] text-primary-foreground',
+        tone !== 'policy' &&
+          onPolicy &&
+          'border-transparent bg-policy-foreground/10 text-policy-foreground/90',
+        !onPolicy && tone === 'step' && 'border-foreground bg-card text-foreground',
+        !onPolicy &&
+          tone === 'default' &&
+          'border-transparent bg-secondary text-secondary-foreground',
+        !onPolicy && tone === 'optional' && 'border-input bg-card text-muted-foreground',
+        !onPolicy && tone === 'dark' && 'border-transparent bg-foreground text-background',
+        !onPolicy && tone === 'ok' && 'border-success/30 bg-success/10 text-success',
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+function ItemCard({ item, track }: { item: TimelineItem; track: ReactNode }) {
+  const muted = item.policy ? 'text-policy-foreground/75' : 'text-muted-foreground';
+  const [termsOpen, setTermsOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const uid = useId();
+  const termsId = `terms-${uid}`;
+  const detailsId = `details-${uid}`;
+  return (
+    <article
+      className={cn(
+        'relative rounded-md border px-[18px] pb-4 pt-3.5',
+        item.policy
+          ? 'border-policy-border bg-policy text-policy-foreground'
+          : 'border-border bg-card text-card-foreground shadow-sm',
+      )}
+    >
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5">
+        <TimeTag item={item} />
+        <div className="flex min-w-0 flex-[1_1_240px] flex-wrap items-center gap-x-2.5 gap-y-1.5">
+          {item.n !== undefined && (
+            <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-foreground text-[11px] font-bold text-background">
+              {item.n}
+            </span>
+          )}
+          <h4 className="text-sm font-semibold">{item.name}</h4>
+          <Tag tone={item.policy ? 'policy' : 'step'} onPolicy={item.policy}>
+            {item.tag}
+          </Tag>
+          {item.req && (
+            <Tag tone={item.req.tone} onPolicy={item.policy}>
+              {item.req.label}
+            </Tag>
+          )}
+        </div>
+        {/* Toggles sit in the title row, on the right, so they add no height;
+            what they open still appears in place further down. */}
+        {(item.terms || item.details) && (
+          <div className="ml-auto flex shrink-0 items-center gap-3">
+            {item.terms && (
+              <DisclosureToggle open={termsOpen} controls={termsId} onToggle={setTermsOpen}>
+                Read the terms
+              </DisclosureToggle>
+            )}
+            {item.details && (
+              <DisclosureToggle open={detailsOpen} controls={detailsId} onToggle={setDetailsOpen}>
+                {item.details.title}
+              </DisclosureToggle>
+            )}
+          </div>
+        )}
+      </div>
+
+      <p
+        className={cn(
+          'mt-2 text-xs leading-relaxed',
+          item.policy ? 'text-policy-foreground/80' : 'text-foreground/80',
+        )}
+      >
+        {item.desc}
+      </p>
+
+      {item.chips && (
+        <div className="mt-2.5 flex flex-wrap gap-1.5">
+          {item.chips.map((chip) => (
+            <span
+              key={chip}
+              className="inline-flex h-6 items-center rounded-full border border-dashed border-muted-foreground/50 bg-muted/35 px-2.5 text-[11px]"
+            >
+              {chip}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {item.form && <FormFields form={item.form} onPolicy={item.policy} />}
+
+      {item.heads && (
+        <div className="mt-2.5 divide-y divide-border overflow-hidden rounded-md border border-border">
+          {item.heads.map((head, index) => (
+            <div
+              key={`${head.name}-${index}`}
+              className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 bg-muted/35 px-3 py-2 text-xs sm:grid-cols-[minmax(0,1fr)_auto_auto]"
+            >
+              <span className="min-w-0">
+                <b className="font-semibold">{head.name}</b>
+                <span className={muted}> · {head.sub}</span>
+              </span>
+              <Tag tone={head.refundable ? 'ok' : 'default'} onPolicy={item.policy}>
+                {head.refundable ? 'Refundable' : 'Not refundable'}
+              </Tag>
+              <span className="tabular-nums sm:text-right">{head.amount}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {item.track && track}
+
+      {item.terms && termsOpen && (
+        <ol
+          id={termsId}
+          className="mt-2.5 list-decimal space-y-1 rounded-md bg-muted/45 py-2.5 pl-8 pr-3 text-xs leading-relaxed"
+        >
+          {item.terms.map((line, index) => (
+            <li key={index}>{line}</li>
+          ))}
+        </ol>
+      )}
+
+      {item.details && detailsOpen && (
+        <dl
+          id={detailsId}
+          className={cn(
+            'mt-2.5 grid grid-cols-[minmax(0,140px)_minmax(0,1fr)] gap-x-4 gap-y-1.5 rounded-md border border-dashed px-3 py-2.5 text-xs',
+            item.policy ? 'border-policy-foreground/25' : 'border-input',
+          )}
+        >
+          {item.details.rows.map((row) => (
+            <div key={row.k} className="contents">
+              <dt className={muted}>{row.k}</dt>
+              <dd className="break-words font-mono text-[11px]">{row.v}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+
+      {item.note && (
+        <div
+          className={cn(
+            'mt-3 flex items-start gap-2 rounded-md px-3 py-2.5 text-xs leading-snug',
+            item.policy
+              ? 'bg-policy-foreground/10 text-policy-foreground/90'
+              : item.note.tone === 'success'
+                ? 'bg-success/10 text-success'
+                : 'bg-muted/60 text-foreground/80',
+          )}
+        >
+          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+          <span>{item.note.text}</span>
+        </div>
+      )}
+    </article>
+  );
+}
+
+function PhaseBlock({ phase, track }: { phase: TimelinePhase; track: ReactNode }) {
+  const style = PHASE_STYLE[phase.id];
+  const items = phase.groups.flatMap((group) => group.items);
+  const position = (item: TimelineItem) => items.indexOf(item);
+
+  return (
+    <section
+      aria-label={phase.title}
+      className={cn('rounded-lg border px-3 pb-1.5 pt-4 sm:px-5', style.box)}
+    >
+      <div className="mb-4 flex flex-wrap items-center gap-x-3.5 gap-y-2.5">
+        <span
+          className={cn(
+            'flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-card/85',
+            style.icon,
+          )}
+        >
+          <style.Icon className="h-[18px] w-[18px]" aria-hidden />
+        </span>
+        <div className="min-w-0">
+          <h4 className="text-[15px] font-semibold text-foreground">{phase.title}</h4>
+          <p className="mt-px text-xs text-muted-foreground">{phase.sub}</p>
+        </div>
+        <span className="ml-auto inline-flex min-h-[30px] items-center rounded-full bg-card/85 px-3 text-xs font-medium tabular-nums text-foreground">
+          {phase.range}
+        </span>
+      </div>
+
+      <div className="pb-3.5">
+        {phase.groups.map((group) => (
+          <div key={group.key} role="group" aria-label={group.label} className="relative">
+            {group.same && (
+              <span
+                aria-hidden
+                className="absolute -left-2.5 bottom-5 top-4 w-14 rounded-[28px] border-[1.5px] border-dashed border-foreground/45 bg-card/50"
+              />
+            )}
+            {group.items.map((item) => {
+              const index = position(item);
+              const Icon = ITEM_ICON[item.icon];
+              return (
+                <div key={item.key} className="grid grid-cols-[36px_minmax(0,1fr)] gap-x-6">
+                  <div className="relative" aria-hidden>
+                    {items.length > 1 && (
+                      <span
+                        className={cn(
+                          'absolute left-1/2 -ml-px w-0.5 bg-foreground/15',
+                          index === 0
+                            ? 'bottom-0 top-[42px]'
+                            : index === items.length - 1
+                              ? 'top-0 h-[42px]'
+                              : 'inset-y-0',
+                        )}
+                      />
+                    )}
+                    {item.span && (
+                      <span
+                        className={cn(
+                          'absolute left-1/2 top-[42px] -ml-1 w-2 rounded bg-foreground/30',
+                          item.span === 'long' ? '-bottom-[60px]' : 'bottom-3',
+                        )}
+                      />
+                    )}
+                    <span
+                      className={cn(
+                        'absolute left-1/2 top-6 z-[1] -ml-[18px] flex h-9 w-9 items-center justify-center rounded-full border-2',
+                        item.policy
+                          ? 'border-policy-border bg-policy text-primary'
+                          : 'border-foreground bg-card text-foreground',
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </span>
+                  </div>
+                  <div className="min-w-0 pb-4">
+                    <ItemCard item={item} track={track} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function milestone(input: string, minutes = 0): string {
+  if (!input) return 'Not set';
+  const date = new Date(input);
+  if (Number.isNaN(date.getTime())) return 'Not set';
+  date.setMinutes(date.getMinutes() + minutes);
+  return `${formatShortDate(date.toISOString())} · ${formatTime(date.toISOString())}`;
+}
+
+function opensIn(start: string): string {
+  if (!start) return 'No start time yet';
+  const date = new Date(start);
+  if (Number.isNaN(date.getTime())) return 'No start time yet';
+  const diff = date.getTime() - Date.now();
+  if (diff <= 0) return 'Started';
+  const days = Math.floor(diff / 86_400_000);
+  const hours = Math.floor((diff % 86_400_000) / 3_600_000);
+  if (days > 0) return `Opens in ${days} d ${hours} h`;
+  const minutes = Math.floor((diff % 3_600_000) / 60_000);
+  return `Opens in ${hours} h ${minutes} min`;
+}
+
+/** Three-phase rules timeline (pre, during, post) on a vertical rail, plus the
+ *  key moments and legend. */
+export function RulesTimeline({
+  state,
+  preSteps,
+  postSteps,
+  loadingSteps,
+  stepsError,
+  workflowCount,
+  postWorkflowCount,
+  published,
+}: {
+  state: WizardState;
+  preSteps: AuctionWorkflowStep[];
+  postSteps: AuctionWorkflowStep[];
+  loadingSteps: boolean;
+  stepsError: string | null;
+  workflowCount: number;
+  postWorkflowCount: number;
+  published: boolean;
+}) {
+  const { basics, offer, schedule, participation } = state;
+  const symbol = basics.currencyUnit === 'INR' ? '₹' : basics.currencyUnit;
+  const start = schedule.startTime;
+  const closing = endTimeFor(schedule);
+  const latestClose = latestCloseFor(schedule);
+  const sealed = offer.mechanism === 'SEALED';
+  const softClose = schedule.softCloseEnabled && offer.mechanism === 'OPEN';
+  const phases = buildTimeline(state, preSteps, postSteps);
+
+  const paymentStep = postSteps.find((step) => resolveStr(step.type) === 'PAYMENT_STEP');
+  const paymentOffset = paymentStep ? paymentStepData(paymentStep).offset : undefined;
+
+  const policyCount = (participation.minimumEnabled ? 1 : 0) + (sealed ? 0 : softClose ? 2 : 1) + 3;
+  const stepCount = workflowCount + postWorkflowCount;
+
+  const track = (
+    <WindowTrack
+      windows={offer.mechanism === 'CLOCK' ? offer.clockWindows : offer.windows}
+      clock={offer.mechanism === 'CLOCK'}
+      symbol={symbol}
+      start={start}
+      closing={closing}
+      latestClose={latestClose}
+      softClose={softClose}
+    />
+  );
+
+  return (
+    <>
+      <header className="flex flex-wrap items-baseline gap-x-2 gap-y-1 border-b border-border bg-muted/20 px-4 py-2.5">
+        <h3 className="text-sm font-semibold text-foreground">Auction rules timeline</h3>
+        <p className="ml-auto text-[11px] text-muted-foreground">
+          {policyCount} {policyCount === 1 ? 'policy' : 'policies'} · {stepCount} workflow step
+          {stepCount === 1 ? '' : 's'} · across 3 phases
+        </p>
+      </header>
+
+      <div className="grid gap-4 p-3 sm:p-4 xl:grid-cols-[minmax(0,1fr)_240px]">
+        <div className="min-w-0 space-y-3">
+          {loadingSteps ? (
+            <div className="flex items-center justify-center gap-2 py-8 text-xs text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              Loading timeline…
+            </div>
+          ) : (
+            phases.map((phase) => <PhaseBlock key={phase.id} phase={phase} track={track} />)
+          )}
+
+          {stepsError && (
+            <p className="rounded bg-destructive/10 px-3 py-2 text-[11px] text-destructive">
+              {stepsError}
+            </p>
+          )}
+        </div>
+
+        <aside aria-label="Key moments and legend" className="space-y-3">
+          <div className="rounded-md bg-policy p-4 text-policy-foreground">
+            <span className="inline-flex rounded-full bg-[image:var(--gradient-gold)] px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
+              {published ? 'Published' : 'Upcoming'}
+            </span>
+            <p className="mt-2 font-display text-base font-semibold">{opensIn(start)}</p>
+            <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 border-t border-policy-foreground/15 pt-3 text-xs">
+              {participation.minimumEnabled && (
+                <>
+                  <dt className="text-policy-foreground/70">Minimum check</dt>
+                  <dd className="text-right tabular-nums">
+                    {start
+                      ? milestone(
+                          start,
+                          -(
+                            (parseInt(participation.checkDays, 10) || 0) * 1440 +
+                            (parseInt(participation.checkHours, 10) || 0) * 60 +
+                            (parseInt(participation.checkMinutes, 10) || 0)
+                          ),
+                        )
+                      : 'Set the start'}
+                  </dd>
+                </>
+              )}
+              <dt className="text-policy-foreground/70">Bidding</dt>
+              <dd className="text-right tabular-nums">
+                {start ? milestone(start) : 'Set the start'} →{' '}
+                {closing ? formatTime(closing) : 'close'}
+              </dd>
+              <dt className="text-policy-foreground/70">Latest close</dt>
+              <dd className="text-right tabular-nums">
+                {latestClose ? milestone(latestClose) : 'Set the start'}
+              </dd>
+              <dt className="text-policy-foreground/70">Winner pays by</dt>
+              <dd className="text-right tabular-nums">
+                {closing
+                  ? paymentOffset
+                    ? milestone(new Date(closing).toISOString(), offsetMinutes(paymentOffset))
+                    : `${formatShortDate(closing)} + payment window`
+                  : 'Set the start'}
+              </dd>
+            </dl>
+          </div>
+
+          <div className="rounded-md border border-border bg-card p-4 text-xs text-muted-foreground">
+            <h4 className="text-[13px] font-semibold text-foreground">Reading the timeline</h4>
+            <ul className="mt-2.5 space-y-2.5">
+              <li className="flex items-center gap-3">
+                <span
+                  className="h-5 w-7 shrink-0 rounded-sm border-2 border-foreground bg-card"
+                  aria-hidden
+                />
+                White card · workflow step (a participant does it)
+              </li>
+              <li className="flex items-center gap-3">
+                <span
+                  className="h-5 w-7 shrink-0 rounded-sm border-2 border-policy-border bg-policy"
+                  aria-hidden
+                />
+                Gold card · policy (applied automatically)
+              </li>
+              <li className="flex items-center gap-3">
+                <span
+                  className="h-5 w-7 shrink-0 rounded-full border-[1.5px] border-dashed border-foreground/45"
+                  aria-hidden
+                />
+                Rows inside a dashed capsule happen at the same moment
+              </li>
+              <li className="flex items-center gap-3">
+                <span className="flex h-5 w-7 shrink-0 justify-center" aria-hidden>
+                  <span className="w-2 rounded bg-foreground/30" />
+                </span>
+                Runs over a span of time
+              </li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </>
+  );
+}

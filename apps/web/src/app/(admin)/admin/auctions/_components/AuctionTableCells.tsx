@@ -66,8 +66,8 @@ export function AccessibilityCell({ value }: { value?: unknown }) {
 }
 
 export function ProtocolDetailsCell({ auction }: { auction: AuctionVM }) {
-  const participantVis = resolveStr(auction.protocol?.participantVisibility);
-  const offerVis = resolveStr(auction.protocol?.offerVisibility);
+  const participantVis = resolveStr(auction.participantVisibility);
+  const offerVis = resolveStr(auction.offerVisibility);
   if (!participantVis && !offerVis) return <span className="text-xs text-muted-foreground">—</span>;
 
   const participantLabel = participantVis ? formatLabel(participantVis) : null;

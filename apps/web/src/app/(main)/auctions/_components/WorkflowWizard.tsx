@@ -13,12 +13,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import {
-  auctionsApi,
-  participantsApi,
-  type AuctionWorkflowStep,
-  type ParticipantVM,
-} from '@repo/api';
+import { participantsApi, type AuctionWorkflowStep, type ParticipantVM } from '@repo/api';
 import { Button } from '@repo/ui';
 import { Loader2, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
 import { resolveStr, formatLabel } from '@/components/common/admin/format';
@@ -66,11 +61,14 @@ const generateMongoId = (): string => {
 
 export interface WorkflowWizardProps {
   auctionId: string;
+  /** The auction's steps, from the public auction detail
+   *  (`/auctions/{id}/workflow` is admin-only, so a bidder can't load it). */
+  workflow: AuctionWorkflowStep[];
   /** Called when all steps are done or user dismisses. */
   onClose: () => void;
 }
 
-export function WorkflowWizard({ auctionId, onClose }: WorkflowWizardProps) {
+export function WorkflowWizard({ auctionId, workflow, onClose }: WorkflowWizardProps) {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [steps, setSteps] = useState<AuctionWorkflowStep[]>([]);
@@ -83,14 +81,13 @@ export function WorkflowWizard({ auctionId, onClose }: WorkflowWizardProps) {
   // Load workflow + participant on mount
   useEffect(() => {
     let cancelled = false;
-    Promise.all([
-      auctionsApi.getAuctionWorkflow(auctionId),
-      participantsApi.getSelfParticipant(auctionId).catch(() => null),
-    ])
-      .then(([wf, p]) => {
+    participantsApi
+      .getSelfParticipant(auctionId)
+      .catch(() => null)
+      .then((p) => {
         if (cancelled) return;
         // Only PRE_AUCTION steps (TNC / BANK / PARTICIPATION are always pre)
-        const preSteps = wf.filter((s) => {
+        const preSteps = workflow.filter((s) => {
           const phase = resolveStr(s.phase);
           const type = resolveStepType(s);
           const alwaysPre = [
@@ -120,7 +117,7 @@ export function WorkflowWizard({ auctionId, onClose }: WorkflowWizardProps) {
     return () => {
       cancelled = true;
     };
-  }, [auctionId]);
+  }, [auctionId, workflow]);
 
   const currentStep = steps[currentIndex];
 

@@ -157,7 +157,7 @@ export function SingleField({ prop, value, onChange }: SingleFieldProps) {
 
   let input: React.ReactNode;
 
-  if (options) {
+  if (options && attrs['ui:component'] !== 'radio') {
     input = (
       <select
         id={fieldId}

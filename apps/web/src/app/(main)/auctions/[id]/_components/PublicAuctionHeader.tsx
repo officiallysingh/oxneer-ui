@@ -13,8 +13,8 @@ interface PublicAuctionHeaderProps {
 
 export function PublicAuctionHeader({ auction }: PublicAuctionHeaderProps) {
   const router = useRouter();
-  const isPublic = resolveStr(auction.protocol?.accessibility) === 'PUBLIC';
-  const isReverse = resolveStr(auction.protocol?.direction) === 'REVERSE';
+  const isPublic = resolveStr(auction.accessibility) === 'PUBLIC';
+  const isReverse = resolveStr(auction.direction) === 'REVERSE';
   const AccessIcon = isPublic ? Globe : Lock;
   const DirIcon = isReverse ? TrendingDown : TrendingUp;
   const typeStr = resolveStr(auction.type);

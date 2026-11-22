@@ -79,7 +79,27 @@ export {
   SheetTitle,
   SheetDescription,
 } from './components/sheet';
-export { Popover, PopoverTrigger, PopoverContent } from './components/popover';
+export { Popover, PopoverTrigger, PopoverAnchor, PopoverContent } from './components/popover';
+export {
+  Combobox,
+  ChipCombobox,
+  type ComboboxOption,
+  type ComboboxProps,
+  type ChipComboboxProps,
+} from './components/combobox';
 export { Checkbox } from './components/checkbox';
 export { Switch } from './components/switch';
+export { Textarea, type TextareaProps } from './components/textarea';
+export { RadioGroup, RadioGroupItem } from './components/radio-group';
+export { Slider } from './components/slider';
+export {
+  Select,
+  SelectGroup,
+  SelectValue,
+  SelectTrigger,
+  SelectContent,
+  SelectLabel,
+  SelectItem,
+  SelectSeparator,
+} from './components/select';
 export { Skeleton } from './components/skeleton';

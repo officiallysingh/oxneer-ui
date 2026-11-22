@@ -16,22 +16,23 @@ Sources of truth:
 
 All colors are HSL channel CSS variables, used as `hsl(var(--x))` and exposed as Tailwind classes. **Use semantic classes only.** No raw palette classes (`blue-500`, `gray-400`) and no hex in components.
 
-| Token                        | Light                         | Dark                  | Use                                                          |
-| ---------------------------- | ----------------------------- | --------------------- | ------------------------------------------------------------ |
-| `background`                 | cream `40 25% 97%`            | `220 20% 7%`          | Page canvas                                                  |
-| `foreground`                 | navy `220 20% 10%`            | `40 20% 92%`          | Primary text                                                 |
-| `card` / `popover`           | white                         | `220 18% 10%` / `12%` | Surfaces: cards, sheets, menus                               |
-| `primary`                    | gold `42 78% 45%`             | `42 78% 55%`          | The one main action per view, active state, focus ring       |
-| `primary-foreground`         | navy                          | navy                  | Text on gold (white on gold fails contrast, so never use it) |
-| `secondary`                  | `220 15% 92%`                 | `220 15% 16%`         | Secondary buttons, subtle fills                              |
-| `muted` / `muted-foreground` | `220 14% 92%` / `220 10% 45%` | `14%` / `55%`         | Table header fills, help text, metadata                      |
-| `border` / `input`           | `220 14% 86%`                 | `220 14% 18%`         | Dividers, field outlines                                     |
-| `ring`                       | gold                          | gold                  | Focus rings                                                  |
-| `destructive`                | `0 72% 51%`                   | same                  | Delete, disabled, errors                                     |
-| `success`                    | emerald `160 60% 35%`         | `45%`                 | Active, verified, completed                                  |
-| `warning`                    | `32 95% 44%`                  | `38 92% 55%`          | Locked, expiring, needs attention                            |
-| `info`                       | `217 85% 50%`                 | `213 90% 62%`         | Neutral informational state, scheduled                       |
-| `sidebar-*`                  |                               |                       | Admin sidebar only                                           |
+| Token                           | Light                                      | Dark                                | Use                                                          |
+| ------------------------------- | ------------------------------------------ | ----------------------------------- | ------------------------------------------------------------ |
+| `background`                    | cream `40 25% 97%`                         | `220 20% 7%`                        | Page canvas                                                  |
+| `foreground`                    | navy `220 20% 10%`                         | `40 20% 92%`                        | Primary text                                                 |
+| `card` / `popover`              | white                                      | `220 18% 10%` / `12%`               | Surfaces: cards, sheets, menus                               |
+| `primary`                       | gold `42 78% 45%`                          | `42 78% 55%`                        | The one main action per view, active state, focus ring       |
+| `primary-foreground`            | navy                                       | navy                                | Text on gold (white on gold fails contrast, so never use it) |
+| `secondary`                     | `220 15% 92%`                              | `220 15% 16%`                       | Secondary buttons, subtle fills                              |
+| `muted` / `muted-foreground`    | `220 14% 92%` / `220 10% 45%`              | `14%` / `55%`                       | Table header fills, help text, metadata                      |
+| `border` / `input`              | `220 14% 86%`                              | `220 14% 18%`                       | Dividers, field outlines                                     |
+| `ring`                          | gold                                       | gold                                | Focus rings                                                  |
+| `destructive`                   | `0 72% 51%`                                | same                                | Delete, disabled, errors                                     |
+| `success`                       | emerald `160 60% 35%`                      | `45%`                               | Active, verified, completed                                  |
+| `warning`                       | `32 95% 44%`                               | `38 92% 55%`                        | Locked, expiring, needs attention                            |
+| `info`                          | `217 85% 50%`                              | `213 90% 62%`                       | Neutral informational state, scheduled                       |
+| `policy` / `-raise` / `-border` | `42 65% 90%` / `42 60% 82%` / `42 50% 68%` | `42 30% 14%` / `20%` / `42 35% 28%` | Gold-tinted policy cards, their time tag/header and border   |
+| `sidebar-*`                     |                                            |                                     | Admin sidebar only                                           |
 
 Brand aliases (`gold`, `gold-light`, `gold-dark`, `navy`, `cream`, `emerald`, `ruby`) exist as CSS vars. Prefer the semantic token (`primary`, `success`, `destructive`) in components. Use brand aliases only for marketing or hero surfaces.
 
@@ -62,7 +63,10 @@ Admin body text is `text-sm`. Don't use `text-base` for table cells or form help
 
 - Spacing is on the 4px Tailwind scale. Page sections stack with `space-y-4`, form sections with `space-y-6`, and inline controls use `gap-2`.
 - Page header: `pb-6 border-b`. Card padding is `px-4 py-3`/`py-3.5`. Detail rows are `px-4 py-3`.
-- Radius: `--radius` is `0.5rem`, giving `rounded-lg` (8px) on inputs and buttons, `rounded-md` / `rounded-sm` for nested items, `rounded-2xl` for section cards and large panels, and `rounded-full` for pills, avatars and dots.
+- Radius: **outermost containers are sharp; everything inside follows the theme.**
+  - Outermost containers use `rounded-none`. That means any bordered box that sits directly on the page or in a page column, not inside another box: section cards, large panels, sidebar cards, step rails, summaries, and page-level notice, error and status banners.
+  - Everything nested inside them uses the theme radius (`--radius` is `0.5rem`): `rounded-lg` (8px) for inputs and buttons, `rounded-md` / `rounded-sm` for nested items (choice cards, inner tables, callouts, chips), and `rounded-full` for pills, avatars and dots.
+  - Dialogs, popovers, sheets and menus keep their primitive's own radius.
 - Elevation: admin surfaces use borders first, shadows second. `shadow-xs` at rest, then `hover:shadow-md` on interactive cards. Use `shadow-admin`, `shadow-admin-md` and `shadow-admin-lg` for popovers and floating bars. `shadow-card` and `shadow-gold` are for public pages.
 - Don't nest cards inside cards. Inside a card, divide with `divide-y divide-border/40`.
 

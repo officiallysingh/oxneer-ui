@@ -287,6 +287,12 @@
     cursor: pointer;
   }
 
+  /* v4 placeholders default to 50% currentColor; use the design-system token like Input does. */
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--muted-foreground);
+  }
+
   ::selection {
     background: color-mix(in oklab, var(--primary) 28%, transparent);
     color: var(--foreground);

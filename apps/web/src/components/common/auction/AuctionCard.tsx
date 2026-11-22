@@ -61,7 +61,7 @@ const AuctionCard = ({ item, index }: { item: AuctionItem; index: number }) => {
             height={224}
             className="h-56 w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+          <div className="absolute inset-0 bg-linear-to-t from-background/80 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
 
           <button
             onClick={() => setLiked(!liked)}

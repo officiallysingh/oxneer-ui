@@ -215,7 +215,7 @@ export function TnCStepDetails({ step }: { step: AuctionWorkflowStep }) {
                     [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
             dangerouslySetInnerHTML={{ __html: html }}
           />
-          <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-background to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-10 bg-linear-to-t from-background to-transparent" />
         </div>
         <div className="flex justify-center border-t border-border/40">
           <Button

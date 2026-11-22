@@ -160,7 +160,7 @@ export function RichTextEditor({
 
   React.useEffect(() => {
     if (!editor) return;
-    if (value !== editor.getHTML()) editor.commands.setContent(value || '', false);
+    if (value !== editor.getHTML()) editor.commands.setContent(value || '', { emitUpdate: false });
   }, [value, editor]);
 
   React.useEffect(() => {

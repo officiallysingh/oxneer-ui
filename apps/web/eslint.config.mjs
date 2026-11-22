@@ -8,6 +8,11 @@ const eslintConfig = defineConfig([
   {
     rules: {
       '@next/next/no-html-link-for-pages': ['error', 'src/app'],
+      // React Compiler rules turned on by eslint-plugin-react-hooks 7.1. Existing code
+      // has ~60 hits; kept as warnings until those components are refactored.
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/refs': 'warn',
+      'react-hooks/static-components': 'warn',
     },
   },
   // Override default ignores of eslint-config-next.

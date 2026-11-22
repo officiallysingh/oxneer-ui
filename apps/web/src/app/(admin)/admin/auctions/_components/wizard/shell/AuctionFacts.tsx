@@ -34,7 +34,7 @@ function Fact({
         <li
           tabIndex={0}
           aria-label={`${label}: ${value}`}
-          className="flex h-6 w-6 cursor-default items-center justify-center rounded-md border border-border bg-muted/40 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex h-6 w-6 cursor-default items-center justify-center rounded-md border border-border bg-muted/40 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
         >
           <Icon className="h-3.5 w-3.5" aria-hidden />
         </li>

@@ -108,7 +108,7 @@ export function TimelineItem({
                   <div className="absolute -left-[5px] top-2 w-3 h-3 rounded-full bg-background border-2 border-info z-10" />
 
                   <div className="pl-5">
-                    <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
+                    <div className="bg-card border border-border rounded-xl p-4 shadow-xs">
                       <h4 className="text-sm font-semibold text-foreground">{child.name}</h4>
                       {child.description && (
                         <p className="text-xs text-muted-foreground mt-0.5">{child.description}</p>
@@ -162,7 +162,7 @@ export function TimelineItem({
       <div className="relative">
         <div className="flex items-start gap-3 relative z-10">
           {/* LEFT – icon rail, same w-12 width as the top-level stage icons */}
-          <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full border-4 border-background shadow-sm shrink-0 bg-muted/50">
+          <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full border-4 border-background shadow-xs shrink-0 bg-muted/50">
             {icon}
           </div>
 
@@ -217,7 +217,7 @@ export function TimelineItem({
           <div className="flex gap-3 h-7">
             <div className="w-12 flex justify-center shrink-0 relative z-20">
               {durationToNext ? (
-                <div className="bg-background border border-border text-muted-foreground text-[10px] font-semibold px-2 py-0.5 rounded-full shadow-sm whitespace-nowrap">
+                <div className="bg-background border border-border text-muted-foreground text-[10px] font-semibold px-2 py-0.5 rounded-full shadow-xs whitespace-nowrap">
                   {durationToNext}
                 </div>
               ) : (
@@ -252,7 +252,7 @@ export function TimelineItem({
         </div>
 
         {/* CENTER – Icon */}
-        <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full border-4 border-background shadow-sm shrink-0 bg-muted/50">
+        <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full border-4 border-background shadow-xs shrink-0 bg-muted/50">
           {icon}
         </div>
 
@@ -298,7 +298,7 @@ export function TimelineItem({
           {/* CENTER – same width as icon, so pill sits on the vertical line */}
           <div className="w-12 flex justify-center shrink-0 relative z-20">
             {durationToNext ? (
-              <div className="bg-background border border-border text-muted-foreground text-[11px] font-semibold px-2.5 py-0.5 rounded-full shadow-sm whitespace-nowrap">
+              <div className="bg-background border border-border text-muted-foreground text-[11px] font-semibold px-2.5 py-0.5 rounded-full shadow-xs whitespace-nowrap">
                 {durationToNext}
               </div>
             ) : (

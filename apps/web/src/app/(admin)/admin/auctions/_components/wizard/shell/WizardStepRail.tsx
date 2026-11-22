@@ -162,7 +162,7 @@ function RailItem({
       aria-current={current ? 'step' : undefined}
       className={cn(
         'flex min-w-0 flex-1 items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring',
         locked ? 'cursor-not-allowed opacity-50' : current ? 'bg-muted/70' : 'hover:bg-muted/40',
       )}
     >
@@ -210,7 +210,7 @@ function RailItem({
             aria-expanded={expanded}
             aria-controls={panelId}
             aria-label={`${expanded ? 'Hide' : 'Show'} summary of ${meta.label}`}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
           >
             <ChevronDown
               className={cn('h-3.5 w-3.5 transition-transform', expanded && 'rotate-180')}

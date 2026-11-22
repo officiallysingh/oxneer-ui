@@ -54,59 +54,64 @@ function CategoryCell({ icon, name }: { icon?: string; name: string }) {
 const reactSelectStyles = {
   control: (base: Record<string, unknown>, state: { isFocused: boolean }) => ({
     ...base,
-    backgroundColor: 'hsl(var(--background))',
-    borderColor: state.isFocused ? 'hsl(var(--primary))' : 'hsl(var(--input))',
-    boxShadow: state.isFocused ? '0 0 0 2px hsl(var(--primary) / 0.2)' : 'none',
+    backgroundColor: 'var(--background)',
+    borderColor: state.isFocused ? 'var(--primary)' : 'var(--input)',
+    boxShadow: state.isFocused
+      ? '0 0 0 2px color-mix(in oklab, var(--primary) 20%, transparent)'
+      : 'none',
     borderRadius: '0.375rem',
     minHeight: '2.25rem',
     fontSize: '0.875rem',
-    '&:hover': { borderColor: 'hsl(var(--primary) / 0.5)' },
+    '&:hover': { borderColor: 'color-mix(in oklab, var(--primary) 50%, transparent)' },
   }),
   option: (base: Record<string, unknown>, state: { isSelected: boolean; isFocused: boolean }) => ({
     ...base,
     backgroundColor: state.isSelected
-      ? 'hsl(var(--primary))'
+      ? 'var(--primary)'
       : state.isFocused
-        ? 'hsl(var(--muted))'
-        : 'hsl(var(--background))',
-    color: state.isSelected ? 'hsl(var(--primary-foreground))' : 'hsl(var(--foreground))',
+        ? 'var(--muted)'
+        : 'var(--background)',
+    color: state.isSelected ? 'var(--primary-foreground)' : 'var(--foreground)',
     fontSize: '0.875rem',
   }),
   multiValue: (base: Record<string, unknown>) => ({
     ...base,
-    backgroundColor: 'hsl(var(--secondary))',
+    backgroundColor: 'var(--secondary)',
     borderRadius: '0.25rem',
   }),
   multiValueLabel: (base: Record<string, unknown>) => ({
     ...base,
-    color: 'hsl(var(--secondary-foreground))',
+    color: 'var(--secondary-foreground)',
     fontSize: '0.75rem',
   }),
   multiValueRemove: (base: Record<string, unknown>) => ({
     ...base,
-    color: 'hsl(var(--muted-foreground))',
-    '&:hover': { backgroundColor: 'hsl(var(--destructive)/0.1)', color: 'hsl(var(--destructive))' },
+    color: 'var(--muted-foreground)',
+    '&:hover': {
+      backgroundColor: 'color-mix(in oklab, var(--destructive) 10%, transparent)',
+      color: 'var(--destructive)',
+    },
   }),
   menu: (base: Record<string, unknown>) => ({
     ...base,
-    backgroundColor: 'hsl(var(--background))',
-    border: '1px solid hsl(var(--border))',
-    boxShadow: '0 4px 16px hsl(var(--foreground)/0.08)',
+    backgroundColor: 'var(--background)',
+    border: '1px solid var(--border)',
+    boxShadow: '0 4px 16px color-mix(in oklab, var(--foreground) 8%, transparent)',
     zIndex: 50,
   }),
   input: (base: Record<string, unknown>) => ({
     ...base,
-    color: 'hsl(var(--foreground))',
+    color: 'var(--foreground)',
     fontSize: '0.875rem',
   }),
   placeholder: (base: Record<string, unknown>) => ({
     ...base,
-    color: 'hsl(var(--muted-foreground))',
+    color: 'var(--muted-foreground)',
     fontSize: '0.875rem',
   }),
   singleValue: (base: Record<string, unknown>) => ({
     ...base,
-    color: 'hsl(var(--foreground))',
+    color: 'var(--foreground)',
   }),
 };
 
@@ -513,7 +518,7 @@ export default function ListingsPage() {
             <select
               value={availableFilter}
               onChange={(e) => setAvailableFilter(e.target.value as 'all' | 'true' | 'false')}
-              className="w-full rounded-md border border-input bg-background px-3 py-[7px] text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-md border border-input bg-background px-3 py-[7px] text-sm focus:outline-hidden focus:ring-2 focus:ring-ring"
             >
               <option value="all">All</option>
               <option value="true">Yes</option>

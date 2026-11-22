@@ -199,7 +199,7 @@ function SectionShell({
             aria-expanded={open}
             aria-controls={contentId}
             onClick={() => setOpen((o) => !o)}
-            className="flex flex-1 items-center gap-2 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex flex-1 items-center gap-2 rounded-sm text-left focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
           >
             <ChevronDown
               className={cn(
@@ -356,7 +356,7 @@ function ListSection({ prop, value, onChange, depth = 0, disabled }: AttrFieldPr
                 <button
                   type="button"
                   onClick={addItem}
-                  className="rounded-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="rounded-sm font-medium text-primary hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   Add the first one
                 </button>
@@ -892,7 +892,7 @@ function Adorned({
 const pillCls = (selected: boolean) =>
   cn(
     'rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors',
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background',
+    'focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background',
     'disabled:cursor-not-allowed disabled:opacity-50',
     selected
       ? 'border-primary bg-primary/15 text-primary'
@@ -1184,7 +1184,7 @@ function RatingControl({
           aria-label={`${star} ${star === 1 ? 'star' : 'stars'}`}
           aria-pressed={current === star}
           onClick={() => onChange(current === star ? '' : String(star))}
-          className="rounded-sm p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed"
+          className="rounded-sm p-0.5 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed"
         >
           <Star
             className={cn(
@@ -1231,7 +1231,7 @@ function SwatchControl({
           onClick={() => onChange(strVal === color ? '' : color)}
           className={cn(
             'flex flex-col items-center gap-1 rounded-lg border-2 p-1.5 transition-colors',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
+            'focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
             strVal === color ? 'border-primary' : 'border-transparent hover:border-border',
           )}
         >
@@ -1402,7 +1402,7 @@ function FileDrop({
       onClick={() => !disabled && inputRef.current?.click()}
       className={cn(
         'relative cursor-pointer rounded-lg border-2 border-dashed transition-colors',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring',
         disabled && 'cursor-not-allowed opacity-50',
         dragging
           ? 'border-primary bg-primary/5'

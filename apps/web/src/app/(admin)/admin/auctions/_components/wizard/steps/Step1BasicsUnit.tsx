@@ -461,7 +461,7 @@ export function Step1BasicsUnit({
                     aria-checked={selected}
                     onClick={() => onChange({ roundingMode: mode.value })}
                     className={cn(
-                      'flex h-full w-full flex-col items-start gap-1 rounded-md border px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                      'flex h-full w-full flex-col items-start gap-1 rounded-md border px-3 py-2.5 text-left transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring',
                       selected
                         ? 'border-primary bg-primary/10'
                         : 'border-border bg-background hover:border-primary/40',
@@ -632,7 +632,7 @@ export function Step1BasicsUnit({
                         max={item.availableQuantity}
                         value={item.quantity}
                         onChange={(e) => setQuantity(item.id, e.target.value)}
-                        className="h-7 w-full rounded border border-input bg-background px-1.5 text-xs tabular-nums outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+                        className="h-7 w-full rounded border border-input bg-background px-1.5 text-xs tabular-nums outline-hidden focus:border-ring focus:ring-2 focus:ring-ring/30"
                         aria-label={`Quantity for ${item.name}`}
                       />
                       <button

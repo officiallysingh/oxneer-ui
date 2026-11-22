@@ -145,7 +145,7 @@ export function ChargesEditor({
                         value: isPercentage ? Math.min(100, Math.max(0, next)) : next,
                       });
                     }}
-                    className="h-full w-full bg-transparent px-2 text-sm tabular-nums outline-none"
+                    className="h-full w-full bg-transparent px-2 text-sm tabular-nums outline-hidden"
                   />
                 </div>
                 {outOfRange && (
@@ -167,7 +167,7 @@ export function ChargesEditor({
                 aria-label={`Remove ${head.name || `charge ${index + 1}`}`}
                 disabled={heads.length === 1}
                 onClick={() => onChange(heads.filter((_, i) => i !== index))}
-                className="flex h-8 w-8 items-center justify-center justify-self-end rounded text-muted-foreground hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-30"
+                className="flex h-8 w-8 items-center justify-center justify-self-end rounded text-muted-foreground hover:bg-destructive/10 hover:text-destructive focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-30"
               >
                 <Trash2 className="h-3.5 w-3.5" aria-hidden />
               </button>
@@ -185,7 +185,7 @@ export function ChargesEditor({
       <button
         type="button"
         onClick={() => onChange([...heads, emptyHead()])}
-        className="inline-flex items-center gap-1 rounded-sm text-[11px] font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="inline-flex items-center gap-1 rounded-sm text-[11px] font-medium text-primary hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
       >
         <Plus className="h-3 w-3" aria-hidden />
         Add a charge

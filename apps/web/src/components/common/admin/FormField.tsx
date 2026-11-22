@@ -139,7 +139,7 @@ export function FormField({
           <input
             {...inputProps}
             className={cn(
-              'h-full min-w-0 flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed',
+              'h-full min-w-0 flex-1 bg-transparent px-2 text-sm outline-hidden placeholder:text-muted-foreground disabled:cursor-not-allowed',
               muted && 'text-muted-foreground',
               !prefix && 'pl-3',
               inputClassName,

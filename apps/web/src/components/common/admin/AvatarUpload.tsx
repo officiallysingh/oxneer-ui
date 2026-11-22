@@ -201,7 +201,7 @@ export function AvatarUpload({ value, onChange, fallbackText, error, label }: Av
       <button
         type="button"
         onClick={() => setPopupOpen(true)}
-        className="relative group w-16 h-16 rounded-full overflow-hidden border border-border bg-muted flex items-center justify-center shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="relative group w-16 h-16 rounded-full overflow-hidden border border-border bg-muted flex items-center justify-center shrink-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
         aria-label="Change profile picture"
       >
         {value ? (

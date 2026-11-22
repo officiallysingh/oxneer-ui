@@ -102,7 +102,7 @@ export function PaginationBar({
               value={pageSize}
               onChange={(e) => onPageSizeChange(Number(e.target.value))}
               disabled={isLoading}
-              className="h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              className="h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground focus:outline-hidden focus:ring-2 focus:ring-ring"
             >
               {pageSizeOptions.map((n) => (
                 <option key={n} value={n}>

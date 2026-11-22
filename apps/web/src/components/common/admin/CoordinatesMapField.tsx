@@ -33,7 +33,7 @@ const LeafletMap = dynamic(() => import('./LeafletMapInner'), {
 });
 
 const inputBase =
-  'w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground/60';
+  'w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-ring placeholder:text-muted-foreground/60';
 const numBase = `${inputBase} [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`;
 
 export function CoordinatesMapField({

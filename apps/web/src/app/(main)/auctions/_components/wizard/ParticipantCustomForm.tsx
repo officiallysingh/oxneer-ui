@@ -153,7 +153,7 @@ export function SingleField({ prop, value, onChange }: SingleFieldProps) {
     : null;
 
   const inputBase =
-    'w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring/40 transition-colors';
+    'w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-hidden focus:ring-2 focus:ring-ring/40 transition-colors';
 
   let input: React.ReactNode;
 

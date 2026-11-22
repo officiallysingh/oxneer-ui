@@ -303,7 +303,7 @@ export function StepList({
           type="button"
           aria-expanded={false}
           onClick={() => setOpenId(step.id)}
-          className="min-w-0 flex-1 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="min-w-0 flex-1 rounded-sm text-left focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
         >
           <span className="flex flex-wrap items-center gap-1.5">
             <span className="text-sm font-semibold text-foreground">{name}</span>
@@ -405,7 +405,7 @@ export function StepList({
       id={pre ? ISSUE_ANCHOR.stepsBeforeAuction : undefined}
       tabIndex={pre ? -1 : undefined}
       aria-label={title}
-      className="scroll-mt-4 overflow-hidden rounded-none border border-border bg-card focus-visible:outline-none"
+      className="scroll-mt-4 overflow-hidden rounded-none border border-border bg-card focus-visible:outline-hidden"
     >
       <header className="flex flex-wrap items-center gap-2.5 border-b border-border bg-muted/20 px-4 py-2.5">
         <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary">

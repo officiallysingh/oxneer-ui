@@ -19,7 +19,7 @@ interface AdminSidebarProps {
 
 // Shared item styles: one size, one hover, one active treatment across flat and grouped items.
 const focusRing =
-  'outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sidebar-ring';
+  'outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sidebar-ring';
 const itemBase = `flex items-center gap-3 h-9 rounded-lg text-sm transition-colors ${focusRing}`;
 const itemIdle = 'text-muted-foreground hover:text-foreground hover:bg-sidebar-accent';
 const itemActive = 'bg-primary/10 text-foreground font-medium';

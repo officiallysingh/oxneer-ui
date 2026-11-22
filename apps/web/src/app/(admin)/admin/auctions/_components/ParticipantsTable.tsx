@@ -204,7 +204,7 @@ export function ParticipantsTable({ auctionId, onParticipantRemoved }: Props) {
                 onChange={(e) => setPhraseInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 placeholder="Name, email or phone..."
-                className="w-full pl-8 pr-3 py-1.5 text-sm rounded-md border border-input bg-background outline-none focus:ring-2 focus:ring-ring"
+                className="w-full pl-8 pr-3 py-1.5 text-sm rounded-md border border-input bg-background outline-hidden focus:ring-2 focus:ring-ring"
               />
             </div>
           </div>

@@ -354,7 +354,7 @@ export function EditStepDialog({
                     type="checkbox"
                     checked={manualApproval}
                     onChange={(e) => setManualApproval(e.target.checked)}
-                    className="h-4 w-4 border-input text-primary focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="h-4 w-4 border-input text-primary focus:outline-hidden focus:ring-2 focus:ring-ring"
                   />
                   Require manual approval of each submission
                 </label>
@@ -472,7 +472,7 @@ export function EditStepDialog({
                           value={m.value}
                           checked={paymentModeValue === m.value}
                           onChange={() => setPaymentModeValue(m.value)}
-                          className="h-4 w-4 border-input text-primary focus:outline-none focus:ring-2 focus:ring-ring"
+                          className="h-4 w-4 border-input text-primary focus:outline-hidden focus:ring-2 focus:ring-ring"
                         />
                         {m.label}
                       </label>

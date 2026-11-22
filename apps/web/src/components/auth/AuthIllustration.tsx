@@ -8,7 +8,7 @@ export function AuthIllustration() {
       {/* Main illustration container */}
       <div className="relative">
         {/* Central card */}
-        <div className="bg-primary-foreground/10 backdrop-blur-sm rounded-2xl p-8 border border-primary-foreground/20">
+        <div className="bg-primary-foreground/10 backdrop-blur-xs rounded-2xl p-8 border border-primary-foreground/20">
           <div className="flex items-center justify-center mb-6">
             <div className="w-20 h-20 rounded-2xl bg-primary-foreground/20 flex items-center justify-center">
               <Shield className="w-10 h-10 text-primary-foreground" />
@@ -50,10 +50,10 @@ export function AuthIllustration() {
         </div>
 
         {/* Floating elements */}
-        <div className="absolute -top-4 -right-4 w-16 h-16 rounded-xl bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/20 flex items-center justify-center animate-pulse">
+        <div className="absolute -top-4 -right-4 w-16 h-16 rounded-xl bg-primary-foreground/10 backdrop-blur-xs border border-primary-foreground/20 flex items-center justify-center animate-pulse">
           <div className="w-8 h-8 rounded-lg bg-primary-foreground/30" />
         </div>
-        <div className="absolute -bottom-4 -left-4 w-12 h-12 rounded-full bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/20" />
+        <div className="absolute -bottom-4 -left-4 w-12 h-12 rounded-full bg-primary-foreground/10 backdrop-blur-xs border border-primary-foreground/20" />
       </div>
     </div>
   );

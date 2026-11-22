@@ -61,7 +61,7 @@ export function StepIndicator({
                       : isOptional
                         ? 'bg-violet-500/15 text-violet-600'
                         : 'bg-muted text-muted-foreground'
-                } ${clickable ? 'cursor-pointer hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-success/40' : ''}`}
+                } ${clickable ? 'cursor-pointer hover:opacity-80 focus:outline-hidden focus:ring-2 focus:ring-success/40' : ''}`}
               >
                 {s}
               </div>

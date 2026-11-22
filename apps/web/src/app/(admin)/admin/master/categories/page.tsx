@@ -192,7 +192,7 @@ export default function CategoriesPage() {
                 className="rounded-xl border border-border bg-card overflow-hidden flex flex-col transition-shadow hover:shadow-md hover:shadow-black/20"
               >
                 <div className="p-4 flex items-start gap-3">
-                  <div className="flex-shrink-0 h-12 w-12 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-2xl">
+                  <div className="shrink-0 h-12 w-12 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-2xl">
                     <CategoryIcon value={cat.icon} size={22} />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -201,7 +201,7 @@ export default function CategoriesPage() {
                       <span className="font-mono text-xs text-muted-foreground">{cat.code}</span>
                     )}
                   </div>
-                  <div className="flex items-center gap-0.5 flex-shrink-0">
+                  <div className="flex items-center gap-0.5 shrink-0">
                     <Tip label="Edit category">
                       <Button
                         variant="ghost"

@@ -296,7 +296,7 @@ function RoleEditorBody({
             onChange={(e) => set('description', e.target.value)}
             placeholder="What this role is for, e.g. runs day-to-day auctions"
             className={cn(
-              'flex w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+              'flex w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
               editing && descriptionChanged && 'border-primary',
             )}
           />
@@ -324,7 +324,7 @@ function RoleEditorBody({
                     (role.permissions ?? []).map((p) => p.id),
                   );
               }}
-              className="h-9 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="h-9 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value="">Start from a role…</option>
               {roles.map((r) => (

@@ -53,7 +53,7 @@ export function PermissionsTable({
                   type="button"
                   aria-expanded={open}
                   onClick={() => onToggleGroup(group.key)}
-                  className="flex w-full items-center gap-2.5 border-b border-border bg-muted/35 px-5 py-3 text-left hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                  className="flex w-full items-center gap-2.5 border-b border-border bg-muted/35 px-5 py-3 text-left hover:bg-muted/60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                 >
                   <Chevron className="h-4 w-4" aria-hidden />
                   <span className="font-semibold">{group.label}</span>
@@ -102,7 +102,7 @@ function PermissionRow({
         <button
           type="button"
           onClick={() => handlers.onEdit(permission)}
-          className="text-left font-semibold text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+          className="text-left font-semibold text-foreground hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
         >
           {permission.label}
         </button>

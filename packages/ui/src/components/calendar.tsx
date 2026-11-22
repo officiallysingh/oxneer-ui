@@ -68,7 +68,7 @@ function CustomCaption({
         <select
           value={currentMonth}
           onChange={handleMonthChange}
-          className="appearance-none cursor-pointer rounded-md border border-transparent bg-popover text-popover-foreground pl-2 pr-6 py-1 text-sm font-medium hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-colors"
+          className="appearance-none cursor-pointer rounded-md border border-transparent bg-popover text-popover-foreground pl-2 pr-6 py-1 text-sm font-medium hover:bg-accent hover:text-accent-foreground focus:outline-hidden focus:ring-2 focus:ring-ring transition-colors"
           aria-label="Select month"
         >
           {MONTH_NAMES.map((name, i) => (
@@ -85,7 +85,7 @@ function CustomCaption({
         <select
           value={currentYear}
           onChange={handleYearChange}
-          className="appearance-none cursor-pointer rounded-md border border-transparent bg-popover text-popover-foreground pl-2 pr-6 py-1 text-sm font-medium hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-colors"
+          className="appearance-none cursor-pointer rounded-md border border-transparent bg-popover text-popover-foreground pl-2 pr-6 py-1 text-sm font-medium hover:bg-accent hover:text-accent-foreground focus:outline-hidden focus:ring-2 focus:ring-ring transition-colors"
           aria-label="Select year"
         >
           {years.map((y) => (

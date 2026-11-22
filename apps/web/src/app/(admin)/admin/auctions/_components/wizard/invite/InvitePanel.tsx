@@ -326,7 +326,7 @@ export function InvitePanel({
                         value={mobileNo}
                         onChange={(event) => handlePhoneChange(event.target.value)}
                         placeholder="98765 43210"
-                        className="h-9 w-full bg-transparent pl-8 pr-3 text-sm text-foreground outline-none placeholder:text-muted-foreground/70"
+                        className="h-9 w-full bg-transparent pl-8 pr-3 text-sm text-foreground outline-hidden placeholder:text-muted-foreground/70"
                       />
                     </div>
                   </div>

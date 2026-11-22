@@ -32,7 +32,7 @@ export function FormErrorSummary({ errors, action }: FormErrorSummaryProps) {
       ref={ref}
       tabIndex={-1}
       role="alert"
-      className="flex items-start gap-3 rounded-lg border border-destructive/50 bg-destructive/[0.06] px-4 py-3.5 text-destructive focus:outline-none"
+      className="flex items-start gap-3 rounded-lg border border-destructive/50 bg-destructive/[0.06] px-4 py-3.5 text-destructive focus:outline-hidden"
     >
       <AlertCircle className="mt-0.5 h-[18px] w-[18px] shrink-0" aria-hidden />
       <div className="space-y-1.5">

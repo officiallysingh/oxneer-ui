@@ -7,7 +7,7 @@ export function RoleLinkBadge({ role }: { role: Pick<RoleVM, 'id' | 'label'> }) 
   return (
     <Link
       href={roleEditHref(role)}
-      className="inline-flex h-[22px] items-center whitespace-nowrap rounded-full bg-secondary px-2.5 text-xs font-medium text-secondary-foreground hover:bg-secondary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="inline-flex h-[22px] items-center whitespace-nowrap rounded-full bg-secondary px-2.5 text-xs font-medium text-secondary-foreground hover:bg-secondary/80 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
     >
       {role.label}
     </Link>

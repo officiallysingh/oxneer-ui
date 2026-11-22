@@ -31,7 +31,7 @@ export function PublicDetailRow({ label, children }: { label: string; children: 
 export function PublicAuctionOverview({ auction }: { auction: AuctionVM }) {
   return (
     <>
-      <div className="h-full rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
+      <div className="h-full rounded-2xl border border-border bg-card p-6 shadow-xs space-y-4">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-primary/10 shrink-0">
             <DollarSign className="h-5 w-5 text-primary" />
@@ -51,7 +51,7 @@ export function PublicAuctionOverview({ auction }: { auction: AuctionVM }) {
         </div>
       </div>
 
-      <div className="h-full rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
+      <div className="h-full rounded-2xl border border-border bg-card p-6 shadow-xs space-y-4">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-primary/10 shrink-0">
             <Settings2 className="h-5 w-5 text-primary" />
@@ -137,7 +137,7 @@ export function PublicWorkflow({
   );
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-5">
+    <section className="rounded-2xl border border-border bg-card p-6 shadow-xs space-y-5">
       <div className="flex items-start gap-3">
         <div className="p-2 rounded-lg bg-primary/10 shrink-0">
           <GitFork className="h-5 w-5 text-primary" />

@@ -205,7 +205,7 @@ export function CancelChequeUpload({ value, onChange, error, label }: CancelCheq
       <button
         type="button"
         onClick={() => setPopupOpen(true)}
-        className="relative group w-full h-28 rounded-lg overflow-hidden border border-dashed border-border bg-muted flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="relative group w-full h-28 rounded-lg overflow-hidden border border-dashed border-border bg-muted flex items-center justify-center focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
         aria-label="Upload cancelled cheque"
       >
         {value ? (

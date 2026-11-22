@@ -65,7 +65,7 @@ const AuctionCard = ({ item, index }: { item: AuctionItem; index: number }) => {
 
           <button
             onClick={() => setLiked(!liked)}
-            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-background/60 backdrop-blur-sm transition-colors hover:bg-background/80"
+            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-background/60 backdrop-blur-xs transition-colors hover:bg-background/80"
           >
             <Heart
               className={`h-4 w-4 transition-colors ${liked ? 'fill-ruby text-ruby' : 'text-foreground'}`}

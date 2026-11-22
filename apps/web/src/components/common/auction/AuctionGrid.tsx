@@ -124,7 +124,7 @@ function PublicAuctionCard({ auction, index }: { auction: AuctionVM; index: numb
       role="link"
       tabIndex={0}
       aria-label={`View details for ${auction.title}`}
-      className="group relative overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all duration-300 hover:border-primary/40 hover:shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+      className="group relative overflow-hidden rounded-xl border border-border bg-card shadow-xs transition-all duration-300 hover:border-primary/40 hover:shadow-md cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
       onClick={() => router.push(`/auctions/${auction.id}`)}
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {
@@ -351,7 +351,7 @@ const AuctionGrid = () => {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mx-auto mt-10  rounded-2xl border border-border bg-card/60 p-4 shadow-sm backdrop-blur"
+          className="mx-auto mt-10  rounded-2xl border border-border bg-card/60 p-4 shadow-xs backdrop-blur-sm"
         >
           <div className="flex flex-wrap items-end gap-3">
             <div className="min-w-[200px] flex-1 space-y-1.5">

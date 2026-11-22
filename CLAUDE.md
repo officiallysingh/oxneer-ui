@@ -19,7 +19,7 @@ Run `npm run typecheck` and `npm run lint` before you call UI work done.
 - **Colors:** use semantic token classes only (`bg-background`, `text-muted-foreground`, `bg-primary`, `text-success`, `bg-warning/15`, …). No raw palette classes (`bg-blue-500`, `text-gray-400`) and no hex values in TSX.
 - **Icons:** `lucide-react` only, and don't add new `react-icons` usages.
 - **Theme:** the app ships dark by default (`<html className="dark">`). Every screen must work in both dark and light.
-- **Tailwind:** v3 in `apps/web` (write v3 syntax, even though `packages/ui` declares v4), a JS config with the `@oxneer/ui` preset and `@tailwind` directives. Extend tokens in `packages/ui/tailwind.config.ts` and `packages/ui/src/globals.css`, not in feature code.
+- **Tailwind:** v4, CSS-first (no `tailwind.config`). Tokens are full `hsl()` values in `:root`/`.dark` and are mapped to utilities in the `@theme inline` block of `packages/ui/src/globals.css`; add or change tokens there, not in feature code. Use v4 syntax: `outline-hidden`, `shadow-xs`, `w-(--var)` for CSS variables. Animations come from `tw-animate-css`. In inline styles use `var(--primary)`, or `color-mix(in oklab, var(--primary) 20%, transparent)` for transparency (not `hsl(var(--x))`).
 - **Class merging:** use `cn()` from `@oxneer/ui`, not template-string concatenation, for conditional classes.
 
 ## Code conventions

@@ -129,7 +129,7 @@ export function StepFooter() {
   return (
     <>
       <SectionIssues />
-      <div className="sticky bottom-0 z-10 -mx-1 border-t border-border bg-background/95 px-1 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/85">
+      <div className="sticky bottom-0 z-10 -mx-1 border-t border-border bg-background/95 px-1 py-3 backdrop-blur-sm supports-[backdrop-filter]:bg-background/85">
         {errors.general && (
           <p role="alert" className="mb-2 text-xs text-destructive">
             {errors.general}

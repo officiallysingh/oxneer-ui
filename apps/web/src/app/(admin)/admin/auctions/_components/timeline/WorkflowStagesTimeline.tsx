@@ -172,7 +172,7 @@ export function WorkflowStagesTimeline({
               >
                 <div
                   className={cn(
-                    'flex items-center justify-center w-12 h-12 rounded-full border-4 border-background shadow-sm',
+                    'flex items-center justify-center w-12 h-12 rounded-full border-4 border-background shadow-xs',
                     stage.iconWrapClass,
                   )}
                 >
@@ -225,7 +225,7 @@ export function WorkflowStagesTimeline({
                     <ArrowRight className="absolute -right-1.5 -top-[7px] h-4 w-4 text-border" />
                   </div>
                   {durationToNext && (
-                    <span className="mt-2 text-[11px] font-semibold text-muted-foreground whitespace-nowrap bg-background border border-border rounded-full px-2.5 py-0.5 shadow-sm">
+                    <span className="mt-2 text-[11px] font-semibold text-muted-foreground whitespace-nowrap bg-background border border-border rounded-full px-2.5 py-0.5 shadow-xs">
                       {durationToNext}
                     </span>
                   )}

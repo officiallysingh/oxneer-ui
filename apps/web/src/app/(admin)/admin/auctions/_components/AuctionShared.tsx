@@ -113,7 +113,7 @@ export function SelectField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={loading}
-        className="w-full rounded-md border border-input bg-background px-3 py-[7px] text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
+        className="w-full rounded-md border border-input bg-background px-3 py-[7px] text-sm focus:outline-hidden focus:ring-2 focus:ring-ring disabled:opacity-60"
       >
         <option value="">{loading ? 'Loading...' : placeholder}</option>
         {options.map((opt) => (

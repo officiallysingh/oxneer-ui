@@ -57,7 +57,7 @@ export function SearchableCheckList({
             onChange={(e) => setSearch(e.target.value)}
             placeholder={searchPlaceholder}
             aria-label={searchPlaceholder}
-            className="w-full pl-8 pr-3 py-1.5 text-sm bg-muted/30 rounded border border-border outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+            className="w-full pl-8 pr-3 py-1.5 text-sm bg-muted/30 rounded border border-border outline-hidden focus:border-primary focus:ring-1 focus:ring-primary/20"
           />
         </div>
       </div>

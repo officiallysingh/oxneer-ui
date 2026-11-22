@@ -11,7 +11,7 @@ import { UserAvatar } from '@/components/common/admin/UserAvatar';
 import { ThemeToggle } from '@/components/common/Header/ThemeToggle';
 
 const iconButton =
-  'items-center justify-center h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring';
+  'items-center justify-center h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors outline-hidden focus-visible:ring-2 focus-visible:ring-ring';
 
 interface AdminTopbarProps {
   username: string;
@@ -80,7 +80,7 @@ export function AdminTopbar({
           trigger={
             <button
               type="button"
-              className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 border border-border hover:bg-muted transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 border border-border hover:bg-muted transition-colors outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
             >
               <UserAvatar
                 src={userInfo?.profilePicture}

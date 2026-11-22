@@ -173,7 +173,7 @@ function ItemCard({ item, track }: { item: TimelineItem; track: ReactNode }) {
         'relative rounded-md border px-[18px] pb-4 pt-3.5',
         item.policy
           ? 'border-policy-border bg-policy text-policy-foreground'
-          : 'border-border bg-card text-card-foreground shadow-sm',
+          : 'border-border bg-card text-card-foreground shadow-xs',
       )}
     >
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5">

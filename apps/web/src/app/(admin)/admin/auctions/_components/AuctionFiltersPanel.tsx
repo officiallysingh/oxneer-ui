@@ -150,7 +150,7 @@ export function AuctionFiltersPanel({
           <select
             value={accessibility}
             onChange={(e) => onAccessibilityChange(e.target.value)}
-            className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+            className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-hidden focus:ring-2 focus:ring-ring"
           >
             <option value="">All</option>
             <option value="PUBLIC">Public</option>
@@ -163,7 +163,7 @@ export function AuctionFiltersPanel({
           <select
             value={direction}
             onChange={(e) => onDirectionChange(e.target.value)}
-            className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+            className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-hidden focus:ring-2 focus:ring-ring"
           >
             <option value="">All</option>
             <option value="FORWARD">Forward</option>
@@ -176,7 +176,7 @@ export function AuctionFiltersPanel({
           <select
             value={status}
             onChange={(e) => onStatusChange(e.target.value)}
-            className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+            className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-hidden focus:ring-2 focus:ring-ring"
           >
             <option value="">All</option>
             <option value="DRAFT">Draft</option>

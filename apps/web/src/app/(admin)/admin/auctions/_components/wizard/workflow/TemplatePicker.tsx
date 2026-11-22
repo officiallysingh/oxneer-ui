@@ -102,7 +102,7 @@ export function TemplatePicker({
           placeholder="Search form templates by name"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          className="h-9 w-full rounded-md border border-input bg-background pl-8 pr-8 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+          className="h-9 w-full rounded-md border border-input bg-background pl-8 pr-8 text-sm outline-hidden focus:border-ring focus:ring-2 focus:ring-ring/30"
         />
         {searching && (
           <Loader2
@@ -133,9 +133,9 @@ export function TemplatePicker({
                 })
               }
               className={cn(
-                'flex w-full items-start gap-2.5 px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+                'flex w-full items-start gap-2.5 px-3 py-2.5 text-left transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
                 selected
-                  ? 'bg-primary/10 shadow-[inset_3px_0_0_hsl(var(--primary))]'
+                  ? 'bg-primary/10 shadow-[inset_3px_0_0_var(--primary)]'
                   : 'hover:bg-muted/40',
               )}
             >

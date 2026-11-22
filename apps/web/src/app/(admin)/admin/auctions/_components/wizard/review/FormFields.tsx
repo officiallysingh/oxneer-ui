@@ -157,7 +157,7 @@ export function DisclosureToggle({
       aria-expanded={open}
       aria-controls={controls}
       onClick={() => onToggle(!open)}
-      className="inline-flex min-h-7 shrink-0 items-center gap-1 rounded-sm text-xs font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="inline-flex min-h-7 shrink-0 items-center gap-1 rounded-sm text-xs font-semibold text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
     >
       {children}
       <ChevronDown

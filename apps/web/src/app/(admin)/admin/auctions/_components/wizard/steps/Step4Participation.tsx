@@ -66,7 +66,7 @@ export function Step4Participation({
   const checkAt = minimumCheckAt(startTime, form);
   const relative = checkMinutes ? `${dhm(checkMinutes)} before start` : 'at the start';
   const input =
-    'h-9 w-14 rounded-md border border-input bg-background px-2 text-sm tabular-nums outline-none focus:border-ring focus:ring-2 focus:ring-ring/30';
+    'h-9 w-14 rounded-md border border-input bg-background px-2 text-sm tabular-nums outline-hidden focus:border-ring focus:ring-2 focus:ring-ring/30';
 
   // Steps due after the check: anyone still working on them won't count yet.
   const deadlines = effectiveDeadlines(workflow.pre);

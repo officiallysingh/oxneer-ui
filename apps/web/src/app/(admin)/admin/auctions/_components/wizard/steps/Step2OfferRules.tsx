@@ -77,7 +77,7 @@ function JumpPicker({
               aria-label={`Allow ×1 to ×${max}`}
               onClick={() => onChange(range(max))}
               className={cn(
-                'rounded px-2 py-0.5 text-[11px] font-semibold tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                'rounded px-2 py-0.5 text-[11px] font-semibold tabular-nums transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring',
                 isRange(max) ? 'bg-primary/15 text-foreground' : 'text-primary hover:bg-primary/10',
               )}
             >
@@ -98,7 +98,7 @@ function JumpPicker({
               title={formatMoney(jump * stepAmount, currencyUnit)}
               onClick={() => toggle(jump)}
               className={cn(
-                'h-9 min-w-[44px] rounded-md border px-2.5 text-xs font-medium tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                'h-9 min-w-[44px] rounded-md border px-2.5 text-xs font-medium tabular-nums transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring',
                 on
                   ? 'border-primary bg-primary/25 text-foreground'
                   : 'border-input bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground',
@@ -193,7 +193,7 @@ function PercentField({
         step="0.5"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-full w-full bg-transparent px-2.5 text-sm tabular-nums outline-none"
+        className="h-full w-full bg-transparent px-2.5 text-sm tabular-nums outline-hidden"
       />
       <span className="pr-2.5 text-xs text-muted-foreground">%</span>
     </div>
@@ -279,7 +279,7 @@ function WindowEditor({
             onClick={() => onMove(-1)}
             disabled={index === 0}
             aria-label={`Move window ${n} earlier`}
-            className="flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-30"
+            className="flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-30"
           >
             <ChevronUp className="h-3.5 w-3.5" aria-hidden />
           </button>
@@ -288,7 +288,7 @@ function WindowEditor({
             onClick={() => onMove(1)}
             disabled={isLast}
             aria-label={`Move window ${n} later`}
-            className="flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-30"
+            className="flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-30"
           >
             <ChevronDown className="h-3.5 w-3.5" aria-hidden />
           </button>
@@ -297,7 +297,7 @@ function WindowEditor({
             onClick={onRemove}
             disabled={count === 1}
             aria-label={`Remove window ${n}`}
-            className="flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-30"
+            className="flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:bg-destructive/10 hover:text-destructive focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-30"
           >
             <Trash2 className="h-3.5 w-3.5" aria-hidden />
           </button>
@@ -544,7 +544,7 @@ export function Step2OfferRules({
       <div
         id={ISSUE_ANCHOR.mechanism}
         tabIndex={-1}
-        className="scroll-mt-4 focus-visible:outline-none"
+        className="scroll-mt-4 focus-visible:outline-hidden"
       >
         <WizardRow
           label="Mechanism"

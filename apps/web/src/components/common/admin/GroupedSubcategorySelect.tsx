@@ -22,9 +22,9 @@ const groupHeaderStyles: CSSProperties = {
 };
 
 const groupBadgeStyles: CSSProperties = {
-  backgroundColor: 'hsl(var(--muted))',
+  backgroundColor: 'var(--muted)',
   borderRadius: '2em',
-  color: 'hsl(var(--muted-foreground))',
+  color: 'var(--muted-foreground)',
   display: 'inline-block',
   fontSize: 11,
   fontWeight: 500,
@@ -66,18 +66,20 @@ export function makeReactSelectStyles<IsMulti extends boolean = false>(): Styles
   return {
     control: (base, state) => ({
       ...base,
-      backgroundColor: 'hsl(var(--background))',
-      borderColor: state.isFocused ? 'hsl(var(--ring))' : 'hsl(var(--border))',
-      boxShadow: state.isFocused ? '0 0 0 2px hsl(var(--ring) / 0.3)' : 'none',
+      backgroundColor: 'var(--background)',
+      borderColor: state.isFocused ? 'var(--ring)' : 'var(--border)',
+      boxShadow: state.isFocused
+        ? '0 0 0 2px color-mix(in oklab, var(--ring) 30%, transparent)'
+        : 'none',
       borderRadius: '6px',
       minHeight: '36px',
       fontSize: '14px',
-      '&:hover': { borderColor: 'hsl(var(--ring))' },
+      '&:hover': { borderColor: 'var(--ring)' },
     }),
     menu: (base) => ({
       ...base,
-      backgroundColor: 'hsl(var(--card))',
-      border: '1px solid hsl(var(--border))',
+      backgroundColor: 'var(--card)',
+      border: '1px solid var(--border)',
       borderRadius: '8px',
       boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
       zIndex: 9999,
@@ -86,79 +88,79 @@ export function makeReactSelectStyles<IsMulti extends boolean = false>(): Styles
     option: (base, state) => ({
       ...base,
       backgroundColor: state.isSelected
-        ? 'hsl(var(--primary))'
+        ? 'var(--primary)'
         : state.isFocused
-          ? 'hsl(var(--muted))'
+          ? 'var(--muted)'
           : 'transparent',
-      color: state.isSelected ? 'hsl(var(--primary-foreground))' : 'hsl(var(--foreground))',
+      color: state.isSelected ? 'var(--primary-foreground)' : 'var(--foreground)',
       fontSize: '13px',
       padding: '6px 12px',
       cursor: 'pointer',
-      '&:active': { backgroundColor: 'hsl(var(--primary) / 0.85)' },
+      '&:active': { backgroundColor: 'color-mix(in oklab, var(--primary) 85%, transparent)' },
     }),
     groupHeading: (base) => ({
       ...base,
       fontSize: '11px',
       fontWeight: '600',
-      color: 'hsl(var(--muted-foreground))',
+      color: 'var(--muted-foreground)',
       textTransform: 'uppercase',
       letterSpacing: '0.05em',
       padding: '6px 12px 2px',
     }),
     multiValue: (base) => ({
       ...base,
-      backgroundColor: 'hsl(var(--muted))',
+      backgroundColor: 'var(--muted)',
       borderRadius: '9999px',
       padding: '0 2px',
     }),
     multiValueLabel: (base) => ({
       ...base,
-      color: 'hsl(var(--foreground))',
+      color: 'var(--foreground)',
       fontSize: '12px',
       padding: '1px 6px',
     }),
     multiValueRemove: (base) => ({
       ...base,
-      color: 'hsl(var(--muted-foreground))',
+      color: 'var(--muted-foreground)',
       borderRadius: '0 9999px 9999px 0',
       cursor: 'pointer',
       '&:hover': {
-        backgroundColor: 'hsl(var(--destructive) / 0.15)',
-        color: 'hsl(var(--destructive))',
+        backgroundColor: 'color-mix(in oklab, var(--destructive) 15%, transparent)',
+        color: 'var(--destructive)',
       },
     }),
     singleValue: (base) => ({
       ...base,
-      color: 'hsl(var(--foreground))',
+      color: 'var(--foreground)',
       fontSize: '13px',
     }),
     placeholder: (base) => ({
       ...base,
-      color: 'hsl(var(--muted-foreground))',
+      color: 'var(--muted-foreground)',
       fontSize: '13px',
     }),
     input: (base) => ({
       ...base,
-      color: 'hsl(var(--foreground))',
+      color: 'var(--foreground)',
       fontSize: '13px',
     }),
     indicatorSeparator: () => ({ display: 'none' }),
     dropdownIndicator: (base) => ({
       ...base,
-      color: 'hsl(var(--muted-foreground))',
+      color: 'var(--muted-foreground)',
       padding: '0 6px',
-      '&:hover': { color: 'hsl(var(--foreground))' },
+      '&:hover': { color: 'var(--foreground)' },
     }),
     clearIndicator: (base) => ({
       ...base,
-      color: 'hsl(var(--muted-foreground))',
+      color: 'var(--muted-foreground)',
       padding: '0 4px',
       cursor: 'pointer',
-      '&:hover': { color: 'hsl(var(--foreground))' },
+      '&:hover': { color: 'var(--foreground)' },
     }),
     noOptionsMessage: (base) => ({
       ...base,
-      color: 'hsl(var(--muted-foreground))',
+      color: 'var(--muted-foreground)',
       fontSize: '13px',
     }),
   };

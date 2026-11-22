@@ -190,7 +190,7 @@ function DecisionArea({
           }}
           rows={3}
           placeholder="Say what needs fixing before they can take part."
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-ring focus:ring-2 focus:ring-ring/30"
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-hidden transition-colors placeholder:text-muted-foreground/70 focus:border-ring focus:ring-2 focus:ring-ring/30"
         />
         {reasonError && <p className="text-[11px] text-destructive">{reasonError}</p>}
         <div className="flex items-center gap-2">

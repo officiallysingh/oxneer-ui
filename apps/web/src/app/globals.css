@@ -1,4 +1,8 @@
+@import 'tailwindcss';
 @import '@oxneer/ui/globals.css';
+
+/* Scan the shared UI package for class names too (it lives outside this app). */
+@source '../../../../packages/ui/src';
 
 /* App-specific overrides can go here */
 html,
@@ -21,12 +25,12 @@ a {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--border));
+  background: var(--border);
   border-radius: 9999px;
   transition: background 0.2s;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.4);
+  background: color-mix(in oklab, var(--muted-foreground) 40%, transparent);
 }
 ::-webkit-scrollbar-corner {
   background: transparent;

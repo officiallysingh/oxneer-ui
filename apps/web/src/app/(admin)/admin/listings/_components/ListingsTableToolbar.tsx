@@ -27,7 +27,7 @@ export function ListingsTableToolbar({
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search property listings by title, code, location..."
-          className="w-full pl-10 pr-9 py-2 text-sm bg-background border border-border rounded-xl placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+          className="w-full pl-10 pr-9 py-2 text-sm bg-background border border-border rounded-xl placeholder:text-muted-foreground/70 focus:outline-hidden focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
         />
         {searchQuery && (
           <button

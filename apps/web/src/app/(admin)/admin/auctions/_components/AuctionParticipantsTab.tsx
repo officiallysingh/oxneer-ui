@@ -159,7 +159,7 @@ export function AuctionParticipantsTab({ auctionId }: Props) {
               onChange={(e) => handleQueryChange(e.target.value)}
               onFocus={() => query.trim() && setOpen(true)}
               placeholder="Search by name, username, email or mobile..."
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-hidden focus:ring-2 focus:ring-ring"
             />
             {open && (query.trim() || searching) && (
               <div className="absolute z-10 mt-1 w-full rounded-md border border-border bg-popover shadow-lg max-h-64 overflow-y-auto">
@@ -229,7 +229,7 @@ export function AuctionParticipantsTab({ auctionId }: Props) {
               value={emailId}
               onChange={(e) => handleEmailChange(e.target.value)}
               placeholder="abc@xyz.com"
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-hidden focus:ring-2 focus:ring-ring"
             />
             <FieldError message={emailError} />
           </div>
@@ -247,7 +247,7 @@ export function AuctionParticipantsTab({ auctionId }: Props) {
               value={mobileNo}
               onChange={(e) => handlePhoneChange(e.target.value)}
               placeholder="7082690057"
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-hidden focus:ring-2 focus:ring-ring"
             />
             <FieldError message={phoneError} />
           </div>

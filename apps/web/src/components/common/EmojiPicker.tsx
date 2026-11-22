@@ -360,7 +360,7 @@ export default function EmojiPicker({
     <div className="space-y-2">
       {/* Preview + clear */}
       <div className="flex items-center gap-2">
-        <div className="h-10 w-10 rounded-lg border border-border bg-muted/30 flex items-center justify-center flex-shrink-0">
+        <div className="h-10 w-10 rounded-lg border border-border bg-muted/30 flex items-center justify-center shrink-0">
           {value ? (
             <CategoryIcon value={value} size={20} />
           ) : (
@@ -392,7 +392,7 @@ export default function EmojiPicker({
           onClick={() => switchMode('emoji')}
           className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
             mode === 'emoji'
-              ? 'bg-background text-foreground shadow-sm'
+              ? 'bg-background text-foreground shadow-xs'
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
@@ -403,7 +403,7 @@ export default function EmojiPicker({
           onClick={() => switchMode('icon')}
           className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
             mode === 'icon'
-              ? 'bg-background text-foreground shadow-sm'
+              ? 'bg-background text-foreground shadow-xs'
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
@@ -430,7 +430,7 @@ export default function EmojiPicker({
               key={g.label}
               type="button"
               onClick={() => setActiveGroup(g.label)}
-              className={`flex-shrink-0 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+              className={`shrink-0 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                 activeGroup === g.label
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground'

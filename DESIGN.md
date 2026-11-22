@@ -4,8 +4,8 @@ Oxneer is an auction platform. The visual identity is **navy + gold on cream**: 
 
 Sources of truth:
 
-- Tokens: `packages/ui/src/globals.css` (CSS vars, HSL channels)
-- Tailwind mapping: `packages/ui/tailwind.config.ts`
+- Tokens: `packages/ui/src/globals.css` (`:root`/`.dark` CSS vars holding `hsl()` values)
+- Tailwind mapping: the `@theme inline` block in the same file (Tailwind v4, no JS config)
 - Primitives: `packages/ui/src/components/*` (shadcn new-york)
 - Admin patterns: `apps/web/src/components/common/admin/*`
 - Reference screen: `apps/web/src/app/(admin)/admin/users/page.tsx`
@@ -14,7 +14,7 @@ Sources of truth:
 
 ## 1. Color
 
-All colors are HSL channel CSS variables, used as `hsl(var(--x))` and exposed as Tailwind classes. **Use semantic classes only.** No raw palette classes (`blue-500`, `gray-400`) and no hex in components.
+All colors are CSS variables holding `hsl()` values, used as `var(--x)` and exposed as Tailwind classes. **Use semantic classes only.** No raw palette classes (`blue-500`, `gray-400`) and no hex in components.
 
 | Token                           | Light                                      | Dark                                | Use                                                          |
 | ------------------------------- | ------------------------------------------ | ----------------------------------- | ------------------------------------------------------------ |

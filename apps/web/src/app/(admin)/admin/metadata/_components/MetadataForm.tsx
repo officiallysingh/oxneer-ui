@@ -277,7 +277,7 @@ export function MetadataForm({
                   id="mt-type"
                   value={form.type}
                   onChange={(e) => set('type', e.target.value)}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-ring"
                 >
                   {typeOptions.map((t) => (
                     <option key={t.key} value={t.key}>
@@ -379,7 +379,7 @@ export function MetadataForm({
                       onClick={() => setPreviewTab(tab.key)}
                       className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
                         previewTab === tab.key
-                          ? 'bg-background text-foreground shadow-sm'
+                          ? 'bg-background text-foreground shadow-xs'
                           : 'text-muted-foreground hover:text-foreground'
                       }`}
                     >

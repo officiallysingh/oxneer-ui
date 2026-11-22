@@ -48,7 +48,7 @@ export function AuctionSearchForm({ categories, onSearch }: Props) {
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      className="mx-auto mt-10 max-w-4xl rounded-2xl border border-border bg-card/60 p-4 shadow-sm backdrop-blur"
+      className="mx-auto mt-10 max-w-4xl rounded-2xl border border-border bg-card/60 p-4 shadow-xs backdrop-blur-sm"
     >
       <div className="flex flex-wrap items-end gap-3">
         <div className="min-w-[200px] flex-1 space-y-1.5">
@@ -69,7 +69,7 @@ export function AuctionSearchForm({ categories, onSearch }: Props) {
           <select
             value={values.category}
             onChange={(e) => update({ category: e.target.value })}
-            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-hidden focus:ring-2 focus:ring-ring"
           >
             {categories.map((cat) => (
               <option key={cat} value={cat}>

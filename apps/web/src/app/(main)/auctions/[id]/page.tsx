@@ -180,7 +180,7 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
   if (error || !auction) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center px-4">
-        <div className="rounded-2xl border border-border bg-card p-8 text-center max-w-md shadow-sm">
+        <div className="rounded-2xl border border-border bg-card p-8 text-center max-w-md shadow-xs">
           <div className="w-14 h-14 rounded-full bg-destructive/15 flex items-center justify-center mx-auto mb-4">
             <AlertCircle className="h-7 w-7 text-destructive" />
           </div>
@@ -221,7 +221,7 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
         </button>
 
         {/* ── Header card ─────────────────────────────────────────────────────── */}
-        <div className="rounded-2xl border border-border bg-card p-6 md:p-8 shadow-sm space-y-6">
+        <div className="rounded-2xl border border-border bg-card p-6 md:p-8 shadow-xs space-y-6">
           {/* Status + badges */}
           <div className="flex flex-wrap items-center gap-2">
             <span
@@ -442,7 +442,7 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
         {/* ── Auction item + detail cards ─────────────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
           {auction.unit && (
-            <div className="h-full rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
+            <div className="h-full rounded-2xl border border-border bg-card p-6 shadow-xs space-y-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-primary/10 shrink-0">
                   <Tag className="h-5 w-5 text-primary" />

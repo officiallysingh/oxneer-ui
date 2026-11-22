@@ -173,7 +173,7 @@ export function CreatePermissionForm({
             );
           }}
           aria-invalid={!!errors.resourceKey && !values.newResource}
-          className={`h-10 w-full rounded-md border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring ${errors.resourceKey && !values.newResource ? 'border-destructive' : 'border-input'}`}
+          className={`h-10 w-full rounded-md border bg-background px-3 text-sm outline-hidden focus:ring-2 focus:ring-ring ${errors.resourceKey && !values.newResource ? 'border-destructive' : 'border-input'}`}
         >
           <option value="">Select a resource…</option>
           {resourceGroups.map((g) => (

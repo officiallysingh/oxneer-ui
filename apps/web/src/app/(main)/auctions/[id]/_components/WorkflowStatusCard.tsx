@@ -40,7 +40,7 @@ export function WorkflowStatusCard({
   const progressPct = entries.length > 0 ? (completedCount / entries.length) * 100 : 0;
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
+    <div className="rounded-2xl border border-border bg-card p-6 shadow-xs space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-base font-semibold text-foreground flex items-center gap-2">

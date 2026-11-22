@@ -152,7 +152,7 @@ export function Combobox({
           disabled={disabled}
           onClick={() => (open ? setOpen(false) : openMenu())}
           onKeyDown={onKeyDown}
-          className={cn(controlClass, 'justify-between text-left outline-none', className)}
+          className={cn(controlClass, 'justify-between text-left outline-hidden', className)}
         >
           <span className={cn('truncate', !current && 'text-muted-foreground')}>
             {current?.label ?? placeholder}
@@ -276,7 +276,7 @@ export function ChipCombobox({
                   aria-label={`Remove ${label}`}
                   disabled={disabled}
                   onClick={() => remove(value)}
-                  className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-destructive/15 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-destructive/15 hover:text-destructive focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <X className="h-3 w-3" aria-hidden />
                 </button>
@@ -302,7 +302,7 @@ export function ChipCombobox({
               setOpen(true);
             }}
             onKeyDown={onKeyDown}
-            className="h-7 min-w-[64px] flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/70"
+            className="h-7 min-w-[64px] flex-1 bg-transparent text-sm outline-hidden placeholder:text-muted-foreground/70"
           />
           {values.length > 0 && (
             <button
@@ -310,7 +310,7 @@ export function ChipCombobox({
               aria-label="Clear all"
               disabled={disabled}
               onClick={() => onChange([])}
-              className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
             >
               <X className="h-3.5 w-3.5" aria-hidden />
             </button>

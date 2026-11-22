@@ -897,7 +897,7 @@ function ScalarValue({
           href={href}
           target={newTab ? '_blank' : undefined}
           rel={newTab ? 'noopener noreferrer' : undefined}
-          className="inline-flex items-center gap-1 rounded-sm text-sm font-medium text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="inline-flex items-center gap-1 rounded-sm text-sm font-medium text-primary underline-offset-2 hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
         >
           {label}
           {newTab && <ExternalLink className="h-3 w-3" aria-hidden />}

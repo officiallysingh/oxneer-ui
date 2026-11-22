@@ -185,14 +185,14 @@ function BlobMetaEditor({
           {entries.map(([k, v]) => (
             <div key={k} className="flex items-center gap-0.5">
               <input
-                className="w-16 shrink-0 text-[9px] bg-muted/80 rounded px-1 py-px border border-border focus:outline-none focus:border-primary font-medium text-muted-foreground"
+                className="w-16 shrink-0 text-[9px] bg-muted/80 rounded px-1 py-px border border-border focus:outline-hidden focus:border-primary font-medium text-muted-foreground"
                 value={k}
                 readOnly
                 title={k}
               />
               <span className="text-[9px] text-muted-foreground shrink-0">:</span>
               <input
-                className="flex-1 min-w-0 text-[9px] bg-muted/80 rounded px-1 py-px border border-border focus:outline-none focus:border-primary"
+                className="flex-1 min-w-0 text-[9px] bg-muted/80 rounded px-1 py-px border border-border focus:outline-hidden focus:border-primary"
                 value={v}
                 onChange={(e) => update(k, e.target.value)}
               />
@@ -211,7 +211,7 @@ function BlobMetaEditor({
               <input
                 autoFocus
                 placeholder="key"
-                className="w-16 shrink-0 text-[9px] bg-muted/80 rounded px-1 py-px border border-border focus:outline-none focus:border-primary"
+                className="w-16 shrink-0 text-[9px] bg-muted/80 rounded px-1 py-px border border-border focus:outline-hidden focus:border-primary"
                 value={newKey}
                 onChange={(e) => setNewKey(e.target.value)}
                 onKeyDown={(e) => {
@@ -221,7 +221,7 @@ function BlobMetaEditor({
               />
               <input
                 placeholder="value"
-                className="flex-1 min-w-0 text-[9px] bg-muted/80 rounded px-1 py-px border border-border focus:outline-none focus:border-primary"
+                className="flex-1 min-w-0 text-[9px] bg-muted/80 rounded px-1 py-px border border-border focus:outline-hidden focus:border-primary"
                 value={newVal}
                 onChange={(e) => setNewVal(e.target.value)}
                 onKeyDown={(e) => {
@@ -467,7 +467,7 @@ function MediaBlock({
                   )}
                   {!u.uploading && u.blob && (
                     <div className="absolute top-1 left-1">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-success drop-shadow" />
+                      <CheckCircle2 className="h-3.5 w-3.5 text-success drop-shadow-sm" />
                     </div>
                   )}
                   <button

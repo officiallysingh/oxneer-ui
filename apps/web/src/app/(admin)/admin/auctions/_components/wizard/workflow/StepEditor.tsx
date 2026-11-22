@@ -56,7 +56,7 @@ function DeadlineField({
 }) {
   const total = draftMinutes(draft);
   const input =
-    'h-9 w-14 rounded-md border border-input bg-background px-2 text-sm tabular-nums outline-none focus:border-ring focus:ring-2 focus:ring-ring/30';
+    'h-9 w-14 rounded-md border border-input bg-background px-2 text-sm tabular-nums outline-hidden focus:border-ring focus:ring-2 focus:ring-ring/30';
   return (
     <div className="space-y-2">
       {/* The exact time and the quick picks share one line. */}
@@ -101,7 +101,7 @@ function DeadlineField({
               aria-pressed={total === minutes}
               onClick={() => onChange(setDraftMinutes(minutes))}
               className={cn(
-                'h-7 rounded-full border px-3 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                'h-7 rounded-full border px-3 text-[11px] font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring',
                 total === minutes
                   ? 'border-primary bg-primary/10 text-foreground'
                   : 'border-border text-muted-foreground hover:text-foreground',
@@ -255,7 +255,7 @@ export function StepEditor({
   return (
     <article
       aria-label={isNew ? `New ${kind.toLowerCase()} step` : `Edit ${draft.name || kind}`}
-      className="overflow-hidden rounded-lg border border-primary/40 bg-card shadow-sm"
+      className="overflow-hidden rounded-lg border border-primary/40 bg-card shadow-xs"
     >
       <header
         className={cn(
@@ -268,7 +268,7 @@ export function StepEditor({
           aria-expanded={!collapsed}
           aria-controls={bodyId}
           onClick={() => setCollapsed((value) => !value)}
-          className="flex min-w-0 flex-1 flex-wrap items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex min-w-0 flex-1 flex-wrap items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-muted/60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
         >
           <ChevronDown
             className={cn(

@@ -95,50 +95,52 @@ export function PhrasesInput({
           styles={{
             control: (base, state) => ({
               ...base,
-              backgroundColor: 'hsl(var(--background))',
+              backgroundColor: 'var(--background)',
               borderColor: invalid
-                ? 'hsl(var(--destructive))'
+                ? 'var(--destructive)'
                 : state.isFocused
-                  ? 'hsl(var(--primary))'
-                  : 'hsl(var(--input))',
-              boxShadow: state.isFocused ? '0 0 0 2px hsl(var(--primary) / 0.2)' : 'none',
+                  ? 'var(--primary)'
+                  : 'var(--input)',
+              boxShadow: state.isFocused
+                ? '0 0 0 2px color-mix(in oklab, var(--primary) 20%, transparent)'
+                : 'none',
               borderRadius: '0.375rem',
               minHeight: '2.5rem',
               paddingLeft: showSearchIcon ? '1.75rem' : undefined,
               paddingRight: trailingWidth ? `${trailingWidth + 0.25}rem` : undefined,
-              '&:hover': { borderColor: 'hsl(var(--primary) / 0.5)' },
+              '&:hover': { borderColor: 'color-mix(in oklab, var(--primary) 50%, transparent)' },
             }),
             multiValue: (base) => ({
               ...base,
-              backgroundColor: 'hsl(var(--primary) / 0.1)',
-              border: '1px solid hsl(var(--primary) / 0.2)',
+              backgroundColor: 'color-mix(in oklab, var(--primary) 10%, transparent)',
+              border: '1px solid color-mix(in oklab, var(--primary) 20%, transparent)',
               borderRadius: '9999px',
               padding: '0 2px',
             }),
             multiValueLabel: (base) => ({
               ...base,
-              color: 'hsl(var(--primary))',
+              color: 'var(--primary)',
               fontSize: '0.75rem',
               fontWeight: 500,
               padding: '1px 4px',
             }),
             multiValueRemove: (base) => ({
               ...base,
-              color: 'hsl(var(--primary))',
+              color: 'var(--primary)',
               borderRadius: '9999px',
               '&:hover': {
-                backgroundColor: 'hsl(var(--destructive) / 0.1)',
-                color: 'hsl(var(--destructive))',
+                backgroundColor: 'color-mix(in oklab, var(--destructive) 10%, transparent)',
+                color: 'var(--destructive)',
               },
             }),
             input: (base) => ({
               ...base,
-              color: 'hsl(var(--foreground))',
+              color: 'var(--foreground)',
               fontSize: '0.875rem',
             }),
             placeholder: (base) => ({
               ...base,
-              color: 'hsl(var(--muted-foreground))',
+              color: 'var(--muted-foreground)',
               fontSize: '0.875rem',
             }),
             menu: () => ({ display: 'none' }),

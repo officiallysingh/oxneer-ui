@@ -168,7 +168,7 @@ export function EditAreaDialog({ area, states, onClose, onUpdated }: EditAreaDia
               id="ea-state"
               value={stateId}
               onChange={(e) => setStateId(e.target.value)}
-              className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-hidden focus:ring-2 focus:ring-ring"
             >
               {states.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -184,7 +184,7 @@ export function EditAreaDialog({ area, states, onClose, onUpdated }: EditAreaDia
               value={cityId}
               onChange={(e) => setCityId(e.target.value)}
               disabled={citiesLoading || !cities.length}
-              className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+              className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-hidden focus:ring-2 focus:ring-ring disabled:opacity-50"
             >
               {cities.length === 0 && <option value="">No cities in this state</option>}
               {cities.map((c) => (

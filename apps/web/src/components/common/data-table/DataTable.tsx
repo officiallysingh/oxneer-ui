@@ -320,7 +320,7 @@ export function DataTable<TData>({
                         <button
                           type="button"
                           onClick={header.column.getToggleSortingHandler()}
-                          className={`flex select-none items-center gap-1 uppercase tracking-wide hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm ${
+                          className={`flex select-none items-center gap-1 uppercase tracking-wide hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring rounded-sm ${
                             header.column.getIsSorted() ? 'text-foreground' : ''
                           }`}
                         >
@@ -393,7 +393,7 @@ export function DataTable<TData>({
                     }
                     className={`hover:bg-muted/30 transition-colors data-[state=selected]:bg-primary/[0.06] ${
                       onRowClick
-                        ? 'cursor-pointer focus-visible:outline-none focus-visible:bg-muted/40'
+                        ? 'cursor-pointer focus-visible:outline-hidden focus-visible:bg-muted/40'
                         : ''
                     }`}
                   >

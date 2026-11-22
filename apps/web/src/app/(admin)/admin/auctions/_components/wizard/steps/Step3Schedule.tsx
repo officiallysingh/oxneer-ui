@@ -180,7 +180,7 @@ export function Step3Schedule({
                         max={720}
                         value={form.durationHours}
                         onChange={(e) => onChange({ durationHours: e.target.value })}
-                        className="h-9 w-16 rounded-md border border-input bg-background px-2 text-sm tabular-nums outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+                        className="h-9 w-16 rounded-md border border-input bg-background px-2 text-sm tabular-nums outline-hidden focus:border-ring focus:ring-2 focus:ring-ring/30"
                         aria-label="Hours of bidding"
                       />
                       <span className="text-xs text-muted-foreground">h</span>
@@ -191,7 +191,7 @@ export function Step3Schedule({
                         step={5}
                         value={form.durationMinutes}
                         onChange={(e) => onChange({ durationMinutes: e.target.value })}
-                        className="h-9 w-16 rounded-md border border-input bg-background px-2 text-sm tabular-nums outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+                        className="h-9 w-16 rounded-md border border-input bg-background px-2 text-sm tabular-nums outline-hidden focus:border-ring focus:ring-2 focus:ring-ring/30"
                         aria-label="Minutes of bidding"
                       />
                       <span className="text-xs text-muted-foreground">min</span>

@@ -17,7 +17,7 @@ export function WizardHeader() {
         <nav aria-label="Breadcrumb" className="text-[11px] text-muted-foreground">
           <Link
             href="/admin/auctions"
-            className="rounded-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="rounded-sm transition-colors hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
           >
             Auctions
           </Link>

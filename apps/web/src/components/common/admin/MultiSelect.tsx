@@ -83,7 +83,7 @@ export function MultiSelect({
             setOpen(false);
           }
         }}
-        className={`min-h-10 w-full rounded-md border px-3 py-1.5 flex items-center gap-1.5 flex-wrap cursor-pointer transition-colors bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${borderClass}`}
+        className={`min-h-10 w-full rounded-md border px-3 py-1.5 flex items-center gap-1.5 flex-wrap cursor-pointer transition-colors bg-background focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring ${borderClass}`}
       >
         {selected.length === 0 ? (
           <span className="text-sm text-muted-foreground flex-1">{placeholder}</span>

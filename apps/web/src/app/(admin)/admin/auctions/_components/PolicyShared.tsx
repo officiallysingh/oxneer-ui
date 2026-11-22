@@ -309,10 +309,10 @@ export function PolicyInfoButton({ description }: { description: string }) {
 }
 
 export const SELECT_CLS =
-  'w-full rounded-md border border-input bg-background px-3 py-[7px] text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60';
+  'w-full rounded-md border border-input bg-background px-3 py-[7px] text-sm focus:outline-hidden focus:ring-2 focus:ring-ring disabled:opacity-60';
 
 export const TEXTAREA_CLS =
-  'w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none';
+  'w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-ring resize-none';
 
 export function moveItem<T>(arr: T[], i: number, dir: -1 | 1): T[] {
   const copy = [...arr];
@@ -394,7 +394,7 @@ export function DayHourDropdowns({
         <select
           value={daysValue}
           onChange={(e) => onDaysChange(e.target.value)}
-          className="w-24 rounded-md border border-input bg-background px-2 py-[7px] text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-24 rounded-md border border-input bg-background px-2 py-[7px] text-sm focus:outline-hidden focus:ring-2 focus:ring-ring"
         >
           <option value="">Select</option>
           {[1, 2, 3, 4, 5].map((d) => (
@@ -407,7 +407,7 @@ export function DayHourDropdowns({
         <select
           value={hoursValue}
           onChange={(e) => onHoursChange(e.target.value)}
-          className="w-20 rounded-md border border-input bg-background px-2 py-[7px] text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-20 rounded-md border border-input bg-background px-2 py-[7px] text-sm focus:outline-hidden focus:ring-2 focus:ring-ring"
         >
           {Array.from({ length: 24 }, (_, i) => (
             <option key={i} value={String(i)}>
@@ -485,7 +485,7 @@ export function humanizeIsoDuration(ms: number): string {
 
 /** Select-dropdown styling shared with the Price Progression window's Time Window fields. */
 const OFFSET_SELECT_CLS =
-  'w-20 rounded-md border border-input bg-background px-2 py-[7px] text-sm focus:outline-none focus:ring-2 focus:ring-ring';
+  'w-20 rounded-md border border-input bg-background px-2 py-[7px] text-sm focus:outline-hidden focus:ring-2 focus:ring-ring';
 
 export function DayHourMinuteFields({
   daysValue,

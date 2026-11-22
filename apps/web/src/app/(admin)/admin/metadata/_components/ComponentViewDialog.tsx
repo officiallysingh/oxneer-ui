@@ -84,7 +84,7 @@ export function ComponentViewDialog({ componentId, onClose }: ComponentViewDialo
                     onClick={() => setPreviewTab(tab.key)}
                     className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
                       previewTab === tab.key
-                        ? 'bg-background text-foreground shadow-sm'
+                        ? 'bg-background text-foreground shadow-xs'
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >

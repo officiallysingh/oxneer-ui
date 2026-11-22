@@ -117,7 +117,7 @@ export function AuctionViewHeader({
         <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 text-sm">
           <Link
             href="/admin/auctions"
-            className="inline-flex min-h-9 shrink-0 items-center gap-1 whitespace-nowrap rounded-md text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex min-h-9 shrink-0 items-center gap-1 whitespace-nowrap rounded-md text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
           >
             <ChevronLeft className="h-4 w-4" aria-hidden />
             All auctions
@@ -167,7 +167,7 @@ export function AuctionViewHeader({
                 type="button"
                 onClick={onCopyId}
                 aria-label={`Copy auction ID ${auction.id}`}
-                className="inline-flex min-h-8 items-center gap-1 rounded-md px-1 font-mono text-xs tabular-nums transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="inline-flex min-h-8 items-center gap-1 rounded-md px-1 font-mono text-xs tabular-nums transition-colors hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <Copy className="h-3.5 w-3.5" aria-hidden />
                 {shortId(auction.id)}

@@ -13,7 +13,7 @@ interface StickyActionBarProps {
  */
 export function StickyActionBar({ status, children }: StickyActionBarProps) {
   return (
-    <div className="sticky bottom-0 z-10 -mx-6 -mb-6 border-t border-border bg-background/90 px-6 py-3.5 backdrop-blur">
+    <div className="sticky bottom-0 z-10 -mx-6 -mb-6 border-t border-border bg-background/90 px-6 py-3.5 backdrop-blur-sm">
       <div className="flex flex-wrap items-center gap-2">
         <div className="min-w-0 flex-[1_1_200px] text-[13px] text-muted-foreground">{status}</div>
         {children}

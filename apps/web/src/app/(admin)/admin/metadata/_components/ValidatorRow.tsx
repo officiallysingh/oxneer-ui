@@ -75,7 +75,7 @@ export function ValidatorRow({
         <select
           value={typeKey}
           onChange={(e) => handleTypeChange(e.target.value)}
-          className="rounded-md border border-input bg-background px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-ring w-40 shrink-0"
+          className="rounded-md border border-input bg-background px-2 py-1 text-xs focus:outline-hidden focus:ring-1 focus:ring-ring w-40 shrink-0"
         >
           {validatorOptions.map((v) => (
             <option key={v.key} value={v.key}>
@@ -146,7 +146,7 @@ export function ValidatorRow({
                 <select
                   value={selectedPreset}
                   onChange={(e) => handleRegexPresetChange(e.target.value)}
-                  className="rounded-md border border-input bg-background px-2 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-ring shrink-0"
+                  className="rounded-md border border-input bg-background px-2 py-1 text-[10px] focus:outline-hidden focus:ring-1 focus:ring-ring shrink-0"
                 >
                   <option value="custom">Custom</option>
                   {REGEX_PRESETS.map((preset) => (

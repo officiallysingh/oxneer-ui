@@ -5,7 +5,7 @@ import { Check, Info, type LucideIcon } from 'lucide-react';
 import { cn } from '@oxneer/ui';
 
 export const inputClass =
-  'w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-60';
+  'w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-hidden transition-colors placeholder:text-muted-foreground/70 focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-60';
 
 export const selectClass = `${inputClass} appearance-none pr-8`;
 
@@ -55,7 +55,7 @@ export function WizardRow({
       id={id}
       tabIndex={id ? -1 : undefined}
       className={cn(
-        'grid scroll-mt-4 gap-2 px-4 py-3 focus-visible:outline-none md:grid-cols-[148px_minmax(0,1fr)] md:gap-6',
+        'grid scroll-mt-4 gap-2 px-4 py-3 focus-visible:outline-hidden md:grid-cols-[148px_minmax(0,1fr)] md:gap-6',
         className,
       )}
     >
@@ -320,7 +320,7 @@ export function MoneyField({
           disabled={disabled}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="h-9 w-full bg-transparent px-2.5 text-sm tabular-nums text-foreground outline-none placeholder:text-muted-foreground/60 disabled:opacity-60"
+          className="h-9 w-full bg-transparent px-2.5 text-sm tabular-nums text-foreground outline-hidden placeholder:text-muted-foreground/60 disabled:opacity-60"
         />
       </div>
       {error && <p className="mt-1 text-[11px] text-destructive">{error}</p>}
@@ -353,7 +353,7 @@ export function DurationFields({
         max={maxHours}
         value={hours}
         onChange={(e) => onHours(e.target.value)}
-        className="h-9 w-14 rounded-md border border-input bg-background px-2 text-sm tabular-nums outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+        className="h-9 w-14 rounded-md border border-input bg-background px-2 text-sm tabular-nums outline-hidden focus:border-ring focus:ring-2 focus:ring-ring/30"
         aria-label="Hours"
       />
       <span className="text-xs text-muted-foreground">{hoursLabel}</span>
@@ -363,7 +363,7 @@ export function DurationFields({
         max={59}
         value={minutes}
         onChange={(e) => onMinutes(e.target.value)}
-        className="h-9 w-14 rounded-md border border-input bg-background px-2 text-sm tabular-nums outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+        className="h-9 w-14 rounded-md border border-input bg-background px-2 text-sm tabular-nums outline-hidden focus:border-ring focus:ring-2 focus:ring-ring/30"
         aria-label="Minutes"
       />
       <span className="text-xs text-muted-foreground">{minutesLabel}</span>

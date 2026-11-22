@@ -52,7 +52,7 @@ export function PageErrorProvider({ children }: { children: ReactNode }) {
         <div className="shrink-0 px-6 pt-4">
           <div
             role="alert"
-            className="flex items-start gap-3 rounded-lg border border-destructive/40 border-l-4 bg-destructive/10 px-4 py-3 text-sm text-destructive shadow-sm"
+            className="flex items-start gap-3 rounded-lg border border-destructive/40 border-l-4 bg-destructive/10 px-4 py-3 text-sm text-destructive shadow-xs"
           >
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
             <p className="min-w-0 flex-1 font-body leading-5">{visible.message}</p>

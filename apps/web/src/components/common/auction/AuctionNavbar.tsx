@@ -96,7 +96,7 @@ const AuctionNavbar = () => {
                   </>
                 }
                 trigger={
-                  <button className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-secondary transition-colors outline-none">
+                  <button className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-secondary transition-colors outline-hidden">
                     <UserAvatar
                       src={userInfo?.profilePicture}
                       firstName={userInfo?.firstName}

@@ -160,38 +160,38 @@ export function Step3Catalog({
             styles={{
               control: (base, state) => ({
                 ...base,
-                backgroundColor: 'hsl(var(--background))',
-                borderColor: state.isFocused ? 'hsl(var(--primary))' : 'hsl(var(--input))',
-                boxShadow: state.isFocused ? '0 0 0 2px hsl(var(--primary) / 0.2)' : 'none',
+                backgroundColor: 'var(--background)',
+                borderColor: state.isFocused ? 'var(--primary)' : 'var(--input)',
+                boxShadow: state.isFocused
+                  ? '0 0 0 2px color-mix(in oklab, var(--primary) 20%, transparent)'
+                  : 'none',
                 borderRadius: '0.375rem',
                 minHeight: '2.25rem',
                 fontSize: '0.875rem',
-                '&:hover': { borderColor: 'hsl(var(--primary) / 0.5)' },
+                '&:hover': { borderColor: 'color-mix(in oklab, var(--primary) 50%, transparent)' },
               }),
               option: (base, state) => ({
                 ...base,
                 backgroundColor: state.isSelected
-                  ? 'hsl(var(--primary))'
+                  ? 'var(--primary)'
                   : state.isFocused
-                    ? 'hsl(var(--muted))'
-                    : 'hsl(var(--background))',
-                color: state.isSelected
-                  ? 'hsl(var(--primary-foreground))'
-                  : 'hsl(var(--foreground))',
+                    ? 'var(--muted)'
+                    : 'var(--background)',
+                color: state.isSelected ? 'var(--primary-foreground)' : 'var(--foreground)',
                 cursor: 'pointer',
               }),
               menu: (base) => ({
                 ...base,
-                backgroundColor: 'hsl(var(--background))',
-                border: '1px solid hsl(var(--border))',
-                boxShadow: '0 4px 16px hsl(var(--foreground)/0.08)',
+                backgroundColor: 'var(--background)',
+                border: '1px solid var(--border)',
+                boxShadow: '0 4px 16px color-mix(in oklab, var(--foreground) 8%, transparent)',
                 zIndex: 50,
               }),
-              singleValue: (base) => ({ ...base, color: 'hsl(var(--foreground))' }),
-              input: (base) => ({ ...base, color: 'hsl(var(--foreground))' }),
+              singleValue: (base) => ({ ...base, color: 'var(--foreground)' }),
+              input: (base) => ({ ...base, color: 'var(--foreground)' }),
               placeholder: (base) => ({
                 ...base,
-                color: 'hsl(var(--muted-foreground))',
+                color: 'var(--muted-foreground)',
                 fontSize: '0.875rem',
               }),
             }}

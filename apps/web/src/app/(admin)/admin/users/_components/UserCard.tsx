@@ -30,7 +30,7 @@ export function UserCard({ user, handlers, selected, onSelectedChange }: UserCar
         <button
           type="button"
           onClick={() => handlers.onView(user)}
-          className="min-w-0 flex-1 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="min-w-0 flex-1 rounded text-left focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
         >
           <UserIdentity user={user} size="md" />
         </button>

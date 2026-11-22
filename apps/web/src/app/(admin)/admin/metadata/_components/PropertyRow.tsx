@@ -251,7 +251,7 @@ export function PropertyRow({
                     ...(isContainer ? { dataType: undefined as unknown as DataType } : {}),
                   });
                 }}
-                className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-ring"
               >
                 {(depth >= 2
                   ? PROPERTY_TYPES.filter((t) => !HAS_CHILDREN.includes(t.key as PropertyType))
@@ -269,7 +269,7 @@ export function PropertyRow({
                 <select
                   value={extractDataTypeKey(prop.dataType)}
                   onChange={(e) => handleDataTypeChange(e.target.value)}
-                  className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-ring"
                 >
                   {dataTypes.map((t) => (
                     <option key={t.key} value={t.key}>

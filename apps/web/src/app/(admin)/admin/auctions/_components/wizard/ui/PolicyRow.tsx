@@ -82,14 +82,14 @@ export function PolicyRow({
       <section
         {...anchor}
         aria-label={title}
-        className="flex scroll-mt-4 flex-wrap items-center gap-x-3 gap-y-2 rounded-none border border-policy-border bg-policy px-3 py-3 text-policy-foreground focus-visible:outline-none sm:flex-nowrap sm:px-4"
+        className="flex scroll-mt-4 flex-wrap items-center gap-x-3 gap-y-2 rounded-none border border-policy-border bg-policy px-3 py-3 text-policy-foreground focus-visible:outline-hidden sm:flex-nowrap sm:px-4"
       >
         {iconBox}
         <button
           type="button"
           aria-expanded={false}
           onClick={onToggle}
-          className="min-w-0 flex-1 rounded-md px-1 py-0.5 text-left transition-colors hover:bg-policy-foreground/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="min-w-0 flex-1 rounded-md px-1 py-0.5 text-left transition-colors hover:bg-policy-foreground/10 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
         >
           {head}
           <span className="mt-1 flex flex-wrap gap-x-2 text-xs text-policy-foreground/75">
@@ -128,7 +128,7 @@ export function PolicyRow({
     <article
       {...anchor}
       aria-label={`Edit ${title.toLowerCase()}`}
-      className="scroll-mt-4 overflow-hidden rounded-none border border-border bg-card focus-visible:outline-none"
+      className="scroll-mt-4 overflow-hidden rounded-none border border-border bg-card focus-visible:outline-hidden"
     >
       <header className="flex flex-wrap items-center gap-3 bg-policy px-3 py-2.5 text-policy-foreground sm:px-4">
         {iconBox}

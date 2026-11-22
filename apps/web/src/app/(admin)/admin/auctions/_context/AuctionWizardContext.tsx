@@ -21,7 +21,7 @@ export function AuctionWizardProvider({
   children: ReactNode;
 }) {
   const value = useAuctionWizardController(config);
-  return <AuctionWizardContext.Provider value={value}>{children}</AuctionWizardContext.Provider>;
+  return <AuctionWizardContext value={value}>{children}</AuctionWizardContext>;
 }
 
 export function useAuctionWizard(): AuctionWizardContextValue {

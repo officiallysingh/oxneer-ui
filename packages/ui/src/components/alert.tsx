@@ -19,31 +19,39 @@ const alertVariants = cva(
   },
 );
 
-const Alert = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
->(({ className, variant, ...props }, ref) => (
-  <div ref={ref} role="alert" className={cn(alertVariants({ variant }), className)} {...props} />
-));
-Alert.displayName = 'Alert';
+function Alert({
+  className,
+  variant,
+  ...props
+}: React.ComponentProps<'div'> & VariantProps<typeof alertVariants>) {
+  return (
+    <div
+      data-slot="alert"
+      role="alert"
+      className={cn(alertVariants({ variant }), className)}
+      {...props}
+    />
+  );
+}
 
-const AlertTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(
-  ({ className, ...props }, ref) => (
+function AlertTitle({ className, ...props }: React.ComponentProps<'h3'>) {
+  return (
     <h5
-      ref={ref}
+      data-slot="alert-title"
       className={cn('mb-1 font-medium leading-none tracking-tight', className)}
       {...props}
     />
-  ),
-);
-AlertTitle.displayName = 'AlertTitle';
+  );
+}
 
-const AlertDescription = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement>
->(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn('text-sm [&_p]:leading-relaxed', className)} {...props} />
-));
-AlertDescription.displayName = 'AlertDescription';
+function AlertDescription({ className, ...props }: React.ComponentProps<'p'>) {
+  return (
+    <div
+      data-slot="alert-description"
+      className={cn('text-sm [&_p]:leading-relaxed', className)}
+      {...props}
+    />
+  );
+}
 
 export { Alert, AlertTitle, AlertDescription };

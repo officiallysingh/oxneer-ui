@@ -139,7 +139,7 @@ export function Combobox({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverAnchor asChild>
+      <PopoverAnchor data-slot="combobox" asChild>
         <button
           id={id}
           type="button"
@@ -261,7 +261,7 @@ export function ChipCombobox({
 
   return (
     <Popover open={open && !disabled} onOpenChange={setOpen}>
-      <PopoverAnchor asChild>
+      <PopoverAnchor data-slot="chip-combobox" asChild>
         <div className={cn(controlClass, 'flex-wrap', className)}>
           {values.map((value) => {
             const label = chipLabel(value);

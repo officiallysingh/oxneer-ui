@@ -34,7 +34,7 @@ export function InviteAuctionProvider({
   value: InviteAuctionContextValue;
   children: ReactNode;
 }) {
-  return <InviteAuctionContext.Provider value={value}>{children}</InviteAuctionContext.Provider>;
+  return <InviteAuctionContext value={value}>{children}</InviteAuctionContext>;
 }
 
 export function useInviteAuction(): InviteAuctionContextValue {

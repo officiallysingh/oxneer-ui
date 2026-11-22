@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useImperativeHandle, forwardRef, useCallback } from 'react';
+import { useState, useRef, useEffect, useImperativeHandle, useCallback, type Ref } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { Input, Label } from '@oxneer/ui';
 
@@ -71,12 +71,11 @@ export interface TextCaptchaHandle {
 
 export interface TextCaptchaProps {
   className?: string;
+  /** Exposes validate()/reset() to the parent form (React 19: ref is a regular prop). */
+  ref?: Ref<TextCaptchaHandle>;
 }
 
-export const TextCaptcha = forwardRef<TextCaptchaHandle, TextCaptchaProps>(function TextCaptcha(
-  { className },
-  ref,
-) {
+export function TextCaptcha({ className, ref }: TextCaptchaProps) {
   const [code, setCode] = useState(() => generateCode());
   const [value, setValue] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -145,4 +144,4 @@ export const TextCaptcha = forwardRef<TextCaptchaHandle, TextCaptchaProps>(funct
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );
-});
+}

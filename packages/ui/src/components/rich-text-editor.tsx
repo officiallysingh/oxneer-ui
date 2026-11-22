@@ -171,6 +171,7 @@ export function RichTextEditor({
 
   return (
     <div
+      data-slot="rich-text-editor"
       className={cn(
         'rounded-md border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring',
         disabled && 'opacity-60',

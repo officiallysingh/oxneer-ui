@@ -115,6 +115,7 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
 
   return (
     <DayPicker
+      data-slot="calendar"
       showOutsideDays={showOutsideDays}
       className={cn('p-3', className)}
       classNames={{
@@ -163,6 +164,5 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
     />
   );
 }
-Calendar.displayName = 'Calendar';
 
 export { Calendar };

@@ -47,7 +47,7 @@ export function PageErrorProvider({ children }: { children: ReactNode }) {
   const visible = current && current.id !== dismissedId ? current : null;
 
   return (
-    <PageErrorContext.Provider value={value}>
+    <PageErrorContext value={value}>
       {visible && (
         <div className="shrink-0 px-6 pt-4">
           <div
@@ -68,6 +68,6 @@ export function PageErrorProvider({ children }: { children: ReactNode }) {
         </div>
       )}
       {children}
-    </PageErrorContext.Provider>
+    </PageErrorContext>
   );
 }

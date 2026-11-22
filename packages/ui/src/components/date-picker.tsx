@@ -166,7 +166,7 @@ export function YearPicker({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+      <PopoverTrigger data-slot="year-picker" asChild>
         <Button
           id={id}
           type="button"
@@ -237,7 +237,7 @@ export function DateRangePicker({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+      <PopoverTrigger data-slot="date-range-picker" asChild>
         <Button
           id={id}
           type="button"
@@ -296,7 +296,7 @@ export function DatePicker({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+      <PopoverTrigger data-slot="date-picker" asChild>
         <Button
           id={id}
           type="button"
@@ -353,7 +353,7 @@ export function TimePicker({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+      <PopoverTrigger data-slot="time-picker" asChild>
         <Button
           id={id}
           type="button"
@@ -491,7 +491,7 @@ export function DateTimePicker({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+      <PopoverTrigger data-slot="date-time-picker" asChild>
         <Button
           id={id}
           type="button"
@@ -577,7 +577,7 @@ export function OffsetTimePicker({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+      <PopoverTrigger data-slot="offset-time-picker" asChild>
         <Button
           id={id}
           type="button"
@@ -667,7 +667,7 @@ export function OffsetDateTimePicker({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+      <PopoverTrigger data-slot="offset-date-time-picker" asChild>
         <Button
           id={id}
           type="button"

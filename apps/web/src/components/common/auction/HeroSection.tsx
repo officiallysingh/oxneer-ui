@@ -77,6 +77,8 @@ const FeaturedAuctionCard = () => {
           alt="Auction participation illustration"
           width={600}
           height={500}
+          // Above the fold and the page's LCP element: load it right away.
+          loading="eager"
           className="h-[420px] w-full object-cover"
         />
       </div>

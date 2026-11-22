@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { TooltipProvider } from '@repo/ui';
-import type { PropertyDef } from '@repo/api';
+import { TooltipProvider } from '@oxneer/ui';
+import type { PropertyDef } from '@oxneer/api';
 import { AttrPropertySections } from '../AttrValue';
 import { AttrField } from '../AttrField';
 

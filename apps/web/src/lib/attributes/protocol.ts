@@ -1,4 +1,4 @@
-import type { PropertyType } from '@repo/api';
+import type { PropertyType } from '@oxneer/api';
 
 /**
  * Attribute protocol: every `namespace:key` a property attribute can hold, which

@@ -1,7 +1,7 @@
 'use client';
 
 import { Loader2 } from 'lucide-react';
-import { Button, type ButtonProps } from '@repo/ui';
+import { Button, type ButtonProps } from '@oxneer/ui';
 
 interface SaveButtonProps extends Omit<ButtonProps, 'children'> {
   saving: boolean;

@@ -12,7 +12,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
   Button,
-} from '@repo/ui';
+} from '@oxneer/ui';
 import { useAuctionWizard } from '../../../_context';
 import { STEP_LABELS, isSetupStep } from '../../../_lib/wizard/steps';
 import { formatTime } from '../../../_lib/wizard/summary';

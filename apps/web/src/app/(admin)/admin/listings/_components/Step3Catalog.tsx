@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { ArrowLeft, ArrowRight, Loader2, Search } from 'lucide-react';
-import { Button, Label } from '@repo/ui';
-import { ManagedTypeVM, ManagedTypeListItemFull, PropertyDef, metadataApi } from '@repo/api';
+import { Button, Label } from '@oxneer/ui';
+import { ManagedTypeVM, ManagedTypeListItemFull, PropertyDef, metadataApi } from '@oxneer/api';
 import ReactSelect from 'react-select';
 import type { SingleValue } from 'react-select';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';

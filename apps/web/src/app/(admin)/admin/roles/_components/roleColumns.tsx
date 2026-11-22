@@ -2,8 +2,8 @@
 
 import type { ColumnDef } from '@tanstack/react-table';
 import { Pencil } from 'lucide-react';
-import type { RoleVM } from '@repo/api';
-import { Badge, Button } from '@repo/ui';
+import type { RoleVM } from '@oxneer/api';
+import { Badge, Button } from '@oxneer/ui';
 import { resourcesCovered, type PermissionGroups } from '@/lib/access/permission-matrix';
 import { RoleActionsMenu, type RoleRowHandlers } from './RoleActionsMenu';
 

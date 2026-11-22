@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { ClipboardCheck, Loader2, Send } from 'lucide-react';
-import { Button } from '@repo/ui';
+import { Button } from '@oxneer/ui';
 import type { ParticipantView } from '../../../../_components/wizard/invite/invite';
 import { formatDateTime } from '../../../../_lib/wizard/summary';
 import type { WizardState } from '../../../../_lib/wizard/types';

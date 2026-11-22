@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronDown } from 'lucide-react';
-import { Button, Popover, PopoverContent, PopoverTrigger } from '@repo/ui';
+import { Button, Popover, PopoverContent, PopoverTrigger } from '@oxneer/ui';
 import { SearchableCheckList, type CheckListOption } from './SearchableCheckList';
 
 interface FacetFilterProps {

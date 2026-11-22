@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Loader2, Plus, RefreshCw, Send, Users } from 'lucide-react';
-import type { AuctionWorkflowStep } from '@repo/api';
-import { Button, Card, Skeleton } from '@repo/ui';
+import type { AuctionWorkflowStep } from '@oxneer/api';
+import { Button, Card, Skeleton } from '@oxneer/ui';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';
 import { SegmentedControl, type SegmentOption } from '@/components/common/admin/SegmentedControl';
 import type { ParticipantView } from '../../../../_components/wizard/invite/invite';

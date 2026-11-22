@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronDown, Filter } from 'lucide-react';
-import { Button, Popover, PopoverContent, PopoverTrigger } from '@repo/ui';
+import { Button, Popover, PopoverContent, PopoverTrigger } from '@oxneer/ui';
 import { CountBadge } from '@/components/common/admin/FacetFilter';
 import { SegmentedControl } from '@/components/common/admin/SegmentedControl';
 import {

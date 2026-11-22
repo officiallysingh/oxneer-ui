@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { cn } from '@repo/ui';
+import { cn } from '@oxneer/ui';
 
 export type PillTone = 'success' | 'warning' | 'destructive' | 'info' | 'muted' | 'outline';
 

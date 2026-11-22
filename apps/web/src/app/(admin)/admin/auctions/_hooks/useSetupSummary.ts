@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { auctionsApi, type AuctionSetupSummary, type SetupStepKey } from '@repo/api';
+import { auctionsApi, type AuctionSetupSummary, type SetupStepKey } from '@oxneer/api';
 
 /** Wizard step number → the API's setup step. Review (6) and Invite (7) have none. */
 export const SETUP_STEP_KEY: Record<number, SetupStepKey> = {

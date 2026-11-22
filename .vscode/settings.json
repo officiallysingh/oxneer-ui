@@ -1,3 +1,6 @@
 {
-  "kiroAgent.configureMCP": "Disabled"
+  "kiroAgent.configureMCP": "Disabled",
+  // Each workspace has its own eslint.config.mjs; use the one nearest each file.
+  "eslint.options": { "flags": ["unstable_config_lookup_from_file"] },
+  "typescript.tsdk": "node_modules/typescript/lib"
 }

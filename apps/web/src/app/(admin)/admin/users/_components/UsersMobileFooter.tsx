@@ -1,7 +1,7 @@
 'use client';
 
 import { UserPlus } from 'lucide-react';
-import { Button } from '@repo/ui';
+import { Button } from '@oxneer/ui';
 import { PaginationBar } from '@/components/common/admin/PaginationBar';
 
 interface UsersMobileFooterProps {

@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { ChevronDown, Loader2, Users } from 'lucide-react';
-import { Button, cn } from '@repo/ui';
-import { participantsApi } from '@repo/api';
+import { Button, cn } from '@oxneer/ui';
+import { participantsApi } from '@oxneer/api';
 import { parseApiError } from '@/lib/api-errors';
 import { UserAvatar } from '@/components/common/admin/UserAvatar';
 import { DismissibleError } from '../../../_components/AuctionShared';

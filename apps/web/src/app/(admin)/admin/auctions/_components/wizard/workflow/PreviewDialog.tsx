@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@repo/ui';
+} from '@oxneer/ui';
 
 /** A one-line summary of what participants will see, with a Preview button
  *  that opens the full view in a dialog. Keeps step editors short: the

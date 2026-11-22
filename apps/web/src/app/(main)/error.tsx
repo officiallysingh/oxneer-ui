@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
-import { Button } from '@repo/ui';
+import { Button } from '@oxneer/ui';
 import { AlertCircle, Home, RefreshCw } from 'lucide-react';
 
 export default function MainError({

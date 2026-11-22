@@ -2,13 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Loader2, Search } from 'lucide-react';
-import { cn } from '@repo/ui';
+import { cn } from '@oxneer/ui';
 import {
   metadataApi,
   type ManagedTypeListItemFull,
   type ManagedTypeVM,
   type PropertyDef,
-} from '@repo/api';
+} from '@oxneer/api';
 import { PropertyFormPreview } from '../../../../metadata/_components/PropertyFormPreview';
 import { PreviewDialog } from './PreviewDialog';
 

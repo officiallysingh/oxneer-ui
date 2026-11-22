@@ -2,8 +2,8 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import { Check, Loader2, Plus, Search } from 'lucide-react';
-import { Popover, PopoverAnchor, PopoverContent, cn } from '@repo/ui';
-import { listingsApi, type ListingSummaryVM, type ListingVM } from '@repo/api';
+import { Popover, PopoverAnchor, PopoverContent, cn } from '@oxneer/ui';
+import { listingsApi, type ListingSummaryVM, type ListingVM } from '@oxneer/api';
 import { parseApiError } from '@/lib/api-errors';
 import { inputClass } from '../ui/wizard-ui';
 

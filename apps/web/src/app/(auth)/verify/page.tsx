@@ -13,8 +13,8 @@ import {
   InputOTP,
   InputOTPGroup,
   InputOTPSlot,
-} from '@repo/ui';
-import { authApi } from '@repo/api';
+} from '@oxneer/ui';
+import { authApi } from '@oxneer/api';
 import { useAuthStore, useAuthHydrated } from '@/store/authStore';
 import { motion, AnimatePresence } from 'framer-motion';
 

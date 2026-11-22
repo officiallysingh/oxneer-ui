@@ -1,9 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { masterApi, type StateVM, type CityVM, type AreaVM } from '@repo/api';
+import { masterApi, type StateVM, type CityVM, type AreaVM } from '@oxneer/api';
 import { Loader2, Trash2, Pencil, Building2, ChevronDown, ChevronRight, Plus } from 'lucide-react';
-import { Button } from '@repo/ui';
+import { Button } from '@oxneer/ui';
 import { SearchInput } from '@/components/common/admin/SearchInput';
 import PageHeader from '@/components/common/admin/PageHeader';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';

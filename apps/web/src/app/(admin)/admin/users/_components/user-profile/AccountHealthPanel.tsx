@@ -1,5 +1,5 @@
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
-import type { UserDetailVM } from '@repo/api';
+import type { UserDetailVM } from '@oxneer/api';
 import { accountHealthChecks } from '../../_lib/account-health';
 
 /** Sign-in checks with a segmented progress bar. */

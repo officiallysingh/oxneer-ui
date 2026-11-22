@@ -1,6 +1,6 @@
 'use client';
 
-import { metadataApi } from '@repo/api';
+import { metadataApi } from '@oxneer/api';
 import { ComponentForm, ComponentFormValues } from '../_components/ComponentForm';
 import { sanitizeProperties } from '../../_components/types';
 

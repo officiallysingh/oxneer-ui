@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { usersApi } from '@repo/api';
+import { usersApi } from '@oxneer/api';
 import {
   applyStatusTab,
   EMPTY_FILTERS,

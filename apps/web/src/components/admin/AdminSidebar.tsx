@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronDown, ChevronRight, LogOut } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@repo/ui';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@oxneer/ui';
 import { UserAvatar } from '@/components/common/admin/UserAvatar';
 import { navEntries, groupHasActive } from './nav-config';
 import type { UserInfoLike } from './UserMenu';

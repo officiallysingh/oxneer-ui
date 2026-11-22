@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { auctionsApi, participantsApi } from '@repo/api';
-import { toast } from '@repo/ui';
+import { auctionsApi, participantsApi } from '@oxneer/api';
+import { toast } from '@oxneer/ui';
 import { parseApiError } from '@/lib/api-errors';
 import type { ParticipantView } from '../../../_components/wizard/invite/invite';
 

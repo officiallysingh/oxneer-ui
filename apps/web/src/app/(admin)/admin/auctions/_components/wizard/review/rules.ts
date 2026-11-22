@@ -1,4 +1,4 @@
-import type { AuctionWorkflowStep } from '@repo/api';
+import type { AuctionWorkflowStep } from '@oxneer/api';
 import type { WizardState } from '../../../_lib/wizard/types';
 import {
   endTimeFor,

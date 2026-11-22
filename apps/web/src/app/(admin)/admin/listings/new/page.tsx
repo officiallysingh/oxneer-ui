@@ -2,9 +2,9 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { listingsApi, masterApi, metadataApi, CategoryVM, ManagedTypeVM } from '@repo/api';
+import { listingsApi, masterApi, metadataApi, CategoryVM, ManagedTypeVM } from '@oxneer/api';
 import { ArrowLeft } from 'lucide-react';
-import { Button } from '@repo/ui';
+import { Button } from '@oxneer/ui';
 import PageHeader from '@/components/common/admin/PageHeader';
 import { parseApiError } from '@/lib/api-errors';
 import { useAuthStore } from '@/store/authStore';

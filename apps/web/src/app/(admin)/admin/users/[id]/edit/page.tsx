@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { usersApi, type UserDetailVM } from '@repo/api';
+import { usersApi, type UserDetailVM } from '@oxneer/api';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';
 import { PageLoading } from '@/components/common/admin/SectionCard';
 import { UsersBreadcrumb } from '../../_components/UsersBreadcrumb';

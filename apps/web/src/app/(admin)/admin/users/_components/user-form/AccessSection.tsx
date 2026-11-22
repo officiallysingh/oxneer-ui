@@ -2,8 +2,8 @@
 
 import { useMemo } from 'react';
 import { ShieldCheck } from 'lucide-react';
-import type { PermissionVM, RoleVM } from '@repo/api';
-import { Label } from '@repo/ui';
+import type { PermissionVM, RoleVM } from '@oxneer/api';
+import { Label } from '@oxneer/ui';
 import { ChangedDot } from '@/components/common/admin/ChangedDot';
 import { FormSection } from '@/components/common/admin/FormSection';
 import { MultiSelect } from '@/components/common/admin/MultiSelect';

@@ -1,7 +1,7 @@
 'use client';
 
 import { AlertTriangle, Lock } from 'lucide-react';
-import { Button } from '@repo/ui';
+import { Button } from '@oxneer/ui';
 import { useAuctionWizard } from '../../../_context';
 import { REVIEW_REASON_TEXT, isSetupStep, type WizardStepId } from '../../../_lib/wizard/steps';
 import { formatDateTime } from '../../../_lib/wizard/summary';

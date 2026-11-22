@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { metadataApi, type ManagedTypeVM, type PropertyDef } from '@repo/api';
+import { metadataApi, type ManagedTypeVM, type PropertyDef } from '@oxneer/api';
 
 /**
  * Fetches a managed type by ID and returns its properties.

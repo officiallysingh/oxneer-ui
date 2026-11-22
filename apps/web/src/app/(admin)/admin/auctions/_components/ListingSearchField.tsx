@@ -9,9 +9,9 @@ import {
   ListingVM,
   ListingBlobRef,
   CategoryVM,
-} from '@repo/api';
+} from '@oxneer/api';
 import { Search, X, Loader2, Eye, Package, Tag } from 'lucide-react';
-import { Input, Button, Dialog, DialogContent, DialogHeader, DialogTitle, Label } from '@repo/ui';
+import { Input, Button, Dialog, DialogContent, DialogHeader, DialogTitle, Label } from '@oxneer/ui';
 import Select from 'react-select';
 import type { MultiValue } from 'react-select';
 import {

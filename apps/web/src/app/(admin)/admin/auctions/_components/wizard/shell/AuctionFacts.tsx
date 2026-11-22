@@ -13,7 +13,7 @@ import {
   Timer,
   type LucideIcon,
 } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@oxneer/ui';
 import { useAuctionWizard } from '../../../_context';
 
 function Fact({

@@ -1,4 +1,4 @@
-import type { ManagedTypeVM } from '@repo/api';
+import type { ManagedTypeVM } from '@oxneer/api';
 import { prepareManagedTypeForCreate } from '../(admin)/admin/metadata/_components/types';
 
 type ManagedProperty = NonNullable<ManagedTypeVM['properties']>[number];

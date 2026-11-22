@@ -31,8 +31,8 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react';
-import { cn } from '@repo/ui';
-import type { PropertyDef, PropertyType } from '@repo/api';
+import { cn } from '@oxneer/ui';
+import type { PropertyDef, PropertyType } from '@oxneer/api';
 import { ICON_REGISTRY } from '@/components/common/iconRegistry';
 import { resolveAttrs } from '@/lib/attributes/protocol';
 import {

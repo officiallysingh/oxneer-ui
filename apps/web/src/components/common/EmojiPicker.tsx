@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Input } from '@repo/ui';
+import { Input } from '@oxneer/ui';
 import { Search } from 'lucide-react';
 import { ICON_GROUPS, ICON_REGISTRY, ICON_LABEL_MAP, isIconId } from './iconRegistry';
 import { CategoryIcon } from './CategoryIcon';

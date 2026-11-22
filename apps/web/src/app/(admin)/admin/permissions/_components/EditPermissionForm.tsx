@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Copy } from 'lucide-react';
-import { adminApi, type PermissionUpdateReq, type PermissionVM, type RoleVM } from '@repo/api';
-import { Button, toast } from '@repo/ui';
+import { adminApi, type PermissionUpdateReq, type PermissionVM, type RoleVM } from '@oxneer/api';
+import { Button, toast } from '@oxneer/ui';
 import { ChangedDot } from '@/components/common/admin/ChangedDot';
 import { FormField } from '@/components/common/admin/FormField';
 import { SaveButton } from '@/components/common/admin/SaveButton';

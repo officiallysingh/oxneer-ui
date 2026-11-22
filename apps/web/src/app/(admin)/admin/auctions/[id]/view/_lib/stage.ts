@@ -1,4 +1,4 @@
-import type { AuctionVM, AuctionWorkflowStep } from '@repo/api';
+import type { AuctionVM, AuctionWorkflowStep } from '@oxneer/api';
 import type { PillTone } from '@/components/common/admin/Pill';
 import { resolveStr } from '@/components/common/admin/format';
 import { effectiveDeadlines } from '../../../_lib/wizard/deadlines';
@@ -6,12 +6,7 @@ import { formatShortDate, formatTime } from '../../../_lib/wizard/summary';
 
 /** Where the auction is in its life, from the admin's point of view. */
 export type AuctionStage =
-  | 'draft'
-  | 'registration'
-  | 'bidding'
-  | 'closed'
-  | 'completed'
-  | 'cancelled';
+  'draft' | 'registration' | 'bidding' | 'closed' | 'completed' | 'cancelled';
 
 export const STAGE_META: Record<AuctionStage, { label: string; tone: PillTone }> = {
   draft: { label: 'Draft', tone: 'muted' },

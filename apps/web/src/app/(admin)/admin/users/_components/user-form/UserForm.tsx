@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AlertCircle } from 'lucide-react';
-import { usersApi, type UserDetailVM } from '@repo/api';
-import { Button, toast } from '@repo/ui';
+import { usersApi, type UserDetailVM } from '@oxneer/api';
+import { Button, toast } from '@oxneer/ui';
 import { ChangedDot } from '@/components/common/admin/ChangedDot';
 import { FormErrorSummary } from '@/components/common/admin/FormErrorSummary';
 import { SaveButton } from '@/components/common/admin/SaveButton';
@@ -33,8 +33,7 @@ import { ProfileSection } from './ProfileSection';
 import { SecuritySection } from './SecuritySection';
 
 type UserFormProps =
-  | { mode: 'create' }
-  | { mode: 'edit'; user: UserDetailVM; initialValues: UserFormValues };
+  { mode: 'create' } | { mode: 'edit'; user: UserDetailVM; initialValues: UserFormValues };
 
 const USERS_PATH = '/admin/users';
 

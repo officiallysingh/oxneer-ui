@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter, Space_Grotesk } from 'next/font/google';
-import { ThemeProvider, TooltipProvider, Toaster } from '@repo/ui';
+import { ThemeProvider, TooltipProvider, Toaster } from '@oxneer/ui';
 import { ApiSessionWatcher } from '@/components/common/ApiSessionWatcher';
 import './globals.css';
 

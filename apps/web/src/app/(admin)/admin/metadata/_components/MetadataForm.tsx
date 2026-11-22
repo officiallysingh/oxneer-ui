@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { metadataApi, PropertyDef } from '@repo/api';
+import { metadataApi, PropertyDef } from '@oxneer/api';
 import { Loader2, ArrowLeft, ArrowRight } from 'lucide-react';
-import { Button, Input, Label } from '@repo/ui';
+import { Button, Input, Label } from '@oxneer/ui';
 import PageHeader from '@/components/common/admin/PageHeader';
 import { parseApiError } from '@/lib/api-errors';
 import { PropertyBuilder } from './PropertyBuilder';

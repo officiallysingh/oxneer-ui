@@ -3,12 +3,12 @@
  * `com.neolama.oxneer.common.core.RegularExpressions` class.
  *
  * Keep these in sync with the backend whenever the server-side patterns change.
- * IFSC / Bank Account patterns live in `@repo/api` (bankDetails.ts) and are
+ * IFSC / Bank Account patterns live in `@oxneer/api` (bankDetails.ts) and are
  * re-exported here for convenience.
  */
 
-// ── Re-exports from @repo/api so consumers need only one import ───────────────
-export { IFSC_REGEX, ACCOUNT_NO_REGEX } from '@repo/api';
+// ── Re-exports from @oxneer/api so consumers need only one import ───────────────
+export { IFSC_REGEX, ACCOUNT_NO_REGEX } from '@oxneer/api';
 
 export const IFSC_TIP = 'Format: 4 letters + 0 + 6 alphanumeric · e.g. ICIC0000733';
 export const ACCOUNT_NO_TIP = '9–18 digit bank account number · e.g. 123456789012';

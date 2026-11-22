@@ -5,12 +5,9 @@
  */
 import { spawn } from 'node:child_process';
 
-const colors = { api: '\x1b[36m', web: '\x1b[35m', reset: '\x1b[0m' };
+const colors = { web: '\x1b[35m', reset: '\x1b[0m' };
 
-const tasks = [
-  { name: 'api', args: ['run', 'dev', '--workspace=@repo/api'] },
-  { name: 'web', args: ['run', 'dev', '--workspace=web'] },
-];
+const tasks = [{ name: 'web', args: ['run', 'dev', '--workspace=@oxneer/web'] }];
 
 const children = new Set();
 let shuttingDown = false;

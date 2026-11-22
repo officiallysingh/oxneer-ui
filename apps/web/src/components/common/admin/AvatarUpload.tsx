@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useCallback } from 'react';
 import { Pencil, Upload, X, ImageIcon } from 'lucide-react';
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Label } from '@repo/ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Label } from '@oxneer/ui';
 
 const MAX_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
 

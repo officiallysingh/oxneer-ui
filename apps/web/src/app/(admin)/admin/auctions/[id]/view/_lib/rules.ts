@@ -1,4 +1,4 @@
-import type { AuctionVM, AuctionWorkflowStep } from '@repo/api';
+import type { AuctionVM, AuctionWorkflowStep } from '@oxneer/api';
 import { resolveStr } from '@/components/common/admin/format';
 import type { WizardState } from '../../../_lib/wizard/types';
 import {
@@ -18,14 +18,7 @@ import { depositFor, minimumRaise, money, words } from './facts';
 import { strong, type Phrase } from './phrase';
 
 export type RuleIcon =
-  | 'people'
-  | 'gavel'
-  | 'eye'
-  | 'clock'
-  | 'trophy'
-  | 'flag'
-  | 'alert'
-  | 'wallet';
+  'people' | 'gavel' | 'eye' | 'clock' | 'trophy' | 'flag' | 'alert' | 'wallet';
 
 export interface ExampleBid {
   who: string;
@@ -179,9 +172,9 @@ function biddingCard({ state }: RulesInput): RuleCard {
           '. People confirm to stay in; the last one left wins.',
         ],
       ],
-      list: windows.map(
-        (window, index): Phrase => [`Window ${index + 1}: ${windowSummary(window, symbol)}`],
-      ),
+      list: windows.map((window, index): Phrase => [
+        `Window ${index + 1}: ${windowSummary(window, symbol)}`,
+      ]),
       tech,
     };
   }
@@ -204,12 +197,10 @@ function biddingCard({ state }: RulesInput): RuleCard {
     paragraphs,
     list:
       windows.length > 1
-        ? windows.map(
-            (window, index): Phrase => [
-              `Window ${index + 1}${index === windows.length - 1 ? ' (to the close)' : ` · ${formatDuration(window.duration)}`}: `,
-              strong(windowSummary(window, symbol)),
-            ],
-          )
+        ? windows.map((window, index): Phrase => [
+            `Window ${index + 1}${index === windows.length - 1 ? ' (to the close)' : ` · ${formatDuration(window.duration)}`}: `,
+            strong(windowSummary(window, symbol)),
+          ])
         : undefined,
     examples: exampleBids(state),
     tech,

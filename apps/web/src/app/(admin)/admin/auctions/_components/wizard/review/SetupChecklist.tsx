@@ -1,8 +1,8 @@
 'use client';
 
 import { AlertCircle, AlertTriangle, Loader2 } from 'lucide-react';
-import { Button } from '@repo/ui';
-import type { AuctionSetupSummary, SetupFinding, SetupStepSummary } from '@repo/api';
+import { Button } from '@oxneer/ui';
+import type { AuctionSetupSummary, SetupFinding, SetupStepSummary } from '@oxneer/api';
 import { SETUP_STEP_KEY } from '../../../_hooks/useSetupSummary';
 import type { ReviewFlags, WizardStepId } from '../../../_lib/wizard/steps';
 import type { ReviewIssue } from '../../../_lib/wizard/validation';

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Search, X } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Button, Input } from '@repo/ui';
+import { Button, Input } from '@oxneer/ui';
 
 export interface AuctionSearchValues {
   phrase: string;

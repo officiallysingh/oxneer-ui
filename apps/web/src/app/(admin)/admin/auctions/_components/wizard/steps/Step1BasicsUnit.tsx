@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import { Package, Trash2 } from 'lucide-react';
-import { Switch, Tooltip, TooltipContent, TooltipTrigger, cn } from '@repo/ui';
-import type { ListingSummaryVM } from '@repo/api';
+import { Switch, Tooltip, TooltipContent, TooltipTrigger, cn } from '@oxneer/ui';
+import type { ListingSummaryVM } from '@oxneer/api';
 import { ListingPicker } from '../basics/ListingPicker';
 import { ListingViewDialog } from '../../../../listings/_components/ListingViewDialog';
 import type { SelectOption } from '../../../_components/AuctionShared';

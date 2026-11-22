@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { cn } from '@repo/ui';
+import { cn } from '@oxneer/ui';
 import type { InviteBucket } from './invite';
 
 const BUCKET_CLASS: Record<InviteBucket, string> = {

@@ -1,4 +1,4 @@
-import { Card } from '@repo/ui';
+import { Card } from '@oxneer/ui';
 import { ListingThumbnail } from '@/components/common/admin/ListingThumbnail';
 import { Pill } from '@/components/common/admin/Pill';
 import type { WizardState } from '../../../_lib/wizard/types';

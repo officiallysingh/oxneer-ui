@@ -2,6 +2,8 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  // Workspace packages ship TypeScript source; Next compiles them with the app.
+  transpilePackages: ['@oxneer/api', '@oxneer/ui'],
   poweredByHeader: false,
   reactStrictMode: true,
   images: {

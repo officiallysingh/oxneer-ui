@@ -1,23 +1,21 @@
 {
-  "name": "@repo/api",
+  "name": "@oxneer/api",
   "version": "0.1.0",
   "private": true,
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./dist/index.js"
+    ".": "./src/index.ts"
   },
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
-    "lint": "eslint src --ext .ts,.tsx",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "axios": "^1.21.1"
   },
   "devDependencies": {
-    "typescript": "^5.9.3",
-    "@repo/config-ts": "file:../config-ts"
+    "@oxneer/config-eslint": "*",
+    "@oxneer/config-ts": "*",
+    "eslint": "^9.39.5",
+    "typescript": "^5.9.3"
   }
 }

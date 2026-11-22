@@ -1,7 +1,7 @@
 'use client';
 
 import { Plus, RefreshCw, type LucideIcon } from 'lucide-react';
-import { Button } from '@repo/ui';
+import { Button } from '@oxneer/ui';
 
 interface ListToolbarActionsProps {
   onAdd: () => void;

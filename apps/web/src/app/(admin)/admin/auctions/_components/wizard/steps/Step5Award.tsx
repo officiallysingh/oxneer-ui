@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Banknote, Flag, Scale, Trophy } from 'lucide-react';
-import { Button } from '@repo/ui';
+import { Button } from '@oxneer/ui';
 import { useWorkflow, type WorkflowDrafts } from '../../../_hooks/useWorkflow';
 import { paymentStepData, resolveStr } from '../../../_components/PolicyShared';
 import type { AwardState, OfferVisibilityChoice } from '../../../_lib/wizard/types';

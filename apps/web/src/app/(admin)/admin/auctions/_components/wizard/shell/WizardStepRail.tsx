@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { AlertCircle, AlertTriangle, Check, ChevronDown } from 'lucide-react';
-import type { SetupStepSummary } from '@repo/api';
-import { cn } from '@repo/ui';
+import type { SetupStepSummary } from '@oxneer/api';
+import { cn } from '@oxneer/ui';
 import { useAuctionWizard, type AuctionWizardContextValue } from '../../../_context';
 import Tip from '@/components/common/admin/Tip';
 import { SETUP_STEP_KEY } from '../../../_hooks/useSetupSummary';

@@ -4,7 +4,7 @@ import type {
   PolicyHeadRQ,
   WorkflowStepPhase,
   WorkflowStepType,
-} from '@repo/api';
+} from '@oxneer/api';
 import {
   formatOffsetDuration,
   parseOffsetDuration,

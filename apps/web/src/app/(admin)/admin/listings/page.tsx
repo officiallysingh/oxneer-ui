@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { listingsApi, masterApi, ListingVM, ListingCategoryRef, CategoryVM } from '@repo/api';
+import { listingsApi, masterApi, ListingVM, ListingCategoryRef, CategoryVM } from '@oxneer/api';
 import {
   Loader2,
   Trash2,
@@ -16,7 +16,7 @@ import {
   List,
 } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
-import { Button, Label } from '@repo/ui';
+import { Button, Label } from '@oxneer/ui';
 import Select from 'react-select';
 import type { MultiValue } from 'react-select';
 import { GroupedSubcategorySelect } from '@/components/common/admin/GroupedSubcategorySelect';

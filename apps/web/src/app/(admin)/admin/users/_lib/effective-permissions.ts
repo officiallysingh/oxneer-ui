@@ -1,4 +1,4 @@
-import type { PermissionVM, RoleVM } from '@repo/api';
+import type { PermissionVM, RoleVM } from '@oxneer/api';
 
 export interface EffectivePermission {
   id: string;

@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { Plus, Puzzle } from 'lucide-react';
-import { Button } from '@repo/ui';
-import type { PropertyDef } from '@repo/api';
+import { Button } from '@oxneer/ui';
+import type { PropertyDef } from '@oxneer/api';
 import { PropertyRow } from './PropertyRow';
 import { emptyProperty, sanitizeProperties } from './types';
 import { ComponentPicker } from './ComponentPicker';

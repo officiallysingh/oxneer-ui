@@ -1,7 +1,7 @@
 'use client';
 
-import type { PermissionVM, RoleVM } from '@repo/api';
-import { Sheet, SheetContent } from '@repo/ui';
+import type { PermissionVM, RoleVM } from '@oxneer/api';
+import { Sheet, SheetContent } from '@oxneer/ui';
 import type { ResourceGroup } from '@/lib/access/permission-matrix';
 import type { PermissionEditorTarget } from '../_lib/permission-form';
 import { CreatePermissionForm } from './CreatePermissionForm';

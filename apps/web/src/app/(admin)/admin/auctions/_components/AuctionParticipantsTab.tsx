@@ -2,8 +2,8 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { Loader2, Mail, Phone, Search, Send, UserPlus } from 'lucide-react';
-import { Button, Label } from '@repo/ui';
-import { participantsApi, usersApi, type UserSummary } from '@repo/api';
+import { Button, Label } from '@oxneer/ui';
+import { participantsApi, usersApi, type UserSummary } from '@oxneer/api';
 import { UserAvatar } from '@/components/common/admin/UserAvatar';
 import { parseApiError } from '@/lib/api-errors';
 import { DismissibleError, FieldError } from './AuctionShared';

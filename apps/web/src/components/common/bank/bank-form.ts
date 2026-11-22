@@ -1,4 +1,4 @@
-import type { BankDetailCreationRQ, BankDetailUpdationRQ, BankDetailVM } from '@repo/api';
+import type { BankDetailCreationRQ, BankDetailUpdationRQ, BankDetailVM } from '@oxneer/api';
 import {
   ACCOUNT_NO_ERROR,
   hasCheque,

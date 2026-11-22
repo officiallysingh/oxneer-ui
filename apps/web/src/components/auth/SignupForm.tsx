@@ -3,8 +3,16 @@
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, ArrowRight, Loader2, Mail, Phone, HelpCircle } from 'lucide-react';
-import { Button, Input, Label, Separator, Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui';
-import { authApi, usersApi } from '@repo/api';
+import {
+  Button,
+  Input,
+  Label,
+  Separator,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@oxneer/ui';
+import { authApi, usersApi } from '@oxneer/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { parseApiError } from '@/lib/api-errors';
 import { USERNAME_RULES, PASSWORD_PATTERN, PASSWORD_RULES, PASSWORD_ERROR } from '@/lib/validation';

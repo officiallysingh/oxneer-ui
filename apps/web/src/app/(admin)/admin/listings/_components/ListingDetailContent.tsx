@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { blobsApi, ListingVM, ListingBlobRef, ManagedTypeVM } from '@repo/api';
+import { blobsApi, ListingVM, ListingBlobRef, ManagedTypeVM } from '@oxneer/api';
 import { Tag, Play, FileText, Download } from 'lucide-react';
-import { Badge } from '@repo/ui';
+import { Badge } from '@oxneer/ui';
 import { ICON_REGISTRY } from '@/components/common/iconRegistry';
 import { AttrPropertySections } from '@/components/common/attributes/AttrValue';
 import { embeddedToValues, mergeDefs, type EmbeddedProp } from '@/lib/attributes/values';

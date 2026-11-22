@@ -1,7 +1,7 @@
 'use client';
 
-import type { UserDetailVM } from '@repo/api';
-import { Checkbox } from '@repo/ui';
+import type { UserDetailVM } from '@oxneer/api';
+import { Checkbox } from '@oxneer/ui';
 import { UserAccessTags } from './UserAccessTags';
 import { UserActionsMenu, type UserRowHandlers } from './UserActionsMenu';
 import { UserContact } from './UserContact';

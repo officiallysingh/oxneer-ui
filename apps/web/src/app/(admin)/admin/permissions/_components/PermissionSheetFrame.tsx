@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { SheetDescription, SheetTitle } from '@repo/ui';
+import { SheetDescription, SheetTitle } from '@oxneer/ui';
 
 interface PermissionSheetFrameProps {
   title: string;

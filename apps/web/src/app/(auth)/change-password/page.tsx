@@ -17,8 +17,8 @@ import {
   TooltipContent,
   TooltipTrigger,
   toast,
-} from '@repo/ui';
-import { authApi, getApiErrorMessage } from '@repo/api';
+} from '@oxneer/ui';
+import { authApi, getApiErrorMessage } from '@oxneer/api';
 import { useAuthStore, useAuthHydrated } from '@/store/authStore';
 import { AuthIllustration } from '@/components/auth/AuthIllustration';
 import { PASSWORD_PATTERN, PASSWORD_ERROR, PASSWORD_RULES } from '@/lib/validation';

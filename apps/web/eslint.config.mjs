@@ -1,28 +1,13 @@
-import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTs from "eslint-config-next/typescript";
+import path from 'node:path';
+import { defineConfig } from 'eslint/config';
+import next from '@oxneer/config-eslint/next';
 
-const eslintConfig = defineConfig([
-  ...nextVitals,
-  ...nextTs,
+export default defineConfig([
+  ...next,
   {
     rules: {
-      '@next/next/no-html-link-for-pages': ['error', 'src/app'],
-      // React Compiler rules turned on by eslint-plugin-react-hooks 7.1. Existing code
-      // has ~60 hits; kept as warnings until those components are refactored.
-      'react-hooks/set-state-in-effect': 'warn',
-      'react-hooks/refs': 'warn',
-      'react-hooks/static-components': 'warn',
+      // App Router only: point the rule at app/ (absolute, so it works from any cwd).
+      '@next/next/no-html-link-for-pages': ['error', path.join(import.meta.dirname, 'src/app')],
     },
   },
-  // Override default ignores of eslint-config-next.
-  globalIgnores([
-    // Default ignores of eslint-config-next:
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
-  ]),
 ]);
-
-export default eslintConfig;

@@ -13,8 +13,8 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { participantsApi, type AuctionWorkflowStep, type ParticipantVM } from '@repo/api';
-import { Button } from '@repo/ui';
+import { participantsApi, type AuctionWorkflowStep, type ParticipantVM } from '@oxneer/api';
+import { Button } from '@oxneer/ui';
 import { Loader2, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
 import { resolveStr, formatLabel } from '@/components/common/admin/format';
 import { parseApiError } from '@/lib/api-errors';
@@ -129,7 +129,7 @@ export function WorkflowWizard({ auctionId, workflow, onClose }: WorkflowWizardP
 
       const type = resolveStepType(currentStep);
 
-      const rq: import('@repo/api').ParticipantWorkflowStepRQ = {
+      const rq: import('@oxneer/api').ParticipantWorkflowStepRQ = {
         id: currentStep.id,
         type,
       };

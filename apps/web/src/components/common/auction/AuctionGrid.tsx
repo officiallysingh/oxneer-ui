@@ -9,7 +9,7 @@ import {
   type AuctionVM,
   type PublicAuctionsFilter,
   type CategoryVM,
-} from '@repo/api';
+} from '@oxneer/api';
 import { resolveStr, formatLabel } from '@/components/common/admin/format';
 import { formatDateTime } from '@/components/common/admin/format';
 import {
@@ -26,7 +26,7 @@ import {
   Globe,
   Lock,
 } from 'lucide-react';
-import { Button, Input, Badge } from '@repo/ui';
+import { Button, Input, Badge } from '@oxneer/ui';
 import Select from 'react-select';
 import type { MultiValue } from 'react-select';
 import {

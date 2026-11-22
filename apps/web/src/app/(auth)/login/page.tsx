@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { AuthForm } from '@/components/auth/AuthForm';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@oxneer/ui';
 import { AuthIllustration } from '@/components/auth/AuthIllustration';
 
 export default function LoginPage() {

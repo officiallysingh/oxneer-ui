@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { AlertTriangle, ArrowLeft, Check, Info, Lock, Users } from 'lucide-react';
-import { Button, toast } from '@repo/ui';
-import { auctionsApi, type AuctionWorkflowStep } from '@repo/api';
+import { Button, toast } from '@oxneer/ui';
+import { auctionsApi, type AuctionWorkflowStep } from '@oxneer/api';
 import { parseApiError } from '@/lib/api-errors';
 import { DismissibleError } from '../../../_components/AuctionShared';
 import { useInviteAuction } from '../../../_context';
@@ -148,7 +148,7 @@ export function Step7Invite({
     decision: 'APPROVED' | 'REJECTED',
     reason?: string,
   ) => {
-    // The participant approve/reject endpoint is not part of @repo/api yet, so
+    // The participant approve/reject endpoint is not part of @oxneer/api yet, so
     // the decision is kept in this session until the backend exposes it.
     setDecisions((prev) => ({
       ...prev,

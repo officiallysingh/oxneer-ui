@@ -1,1 +1,1 @@
-module.exports = require('@repo/config-prettier');
+module.exports = require('@oxneer/config-prettier');

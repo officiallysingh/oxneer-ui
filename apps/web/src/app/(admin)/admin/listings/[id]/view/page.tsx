@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { listingsApi, metadataApi, ListingVM, ManagedTypeVM } from '@repo/api';
+import { listingsApi, metadataApi, ListingVM, ManagedTypeVM } from '@oxneer/api';
 import { ArrowLeft, Loader2, Pencil } from 'lucide-react';
-import { Button } from '@repo/ui';
+import { Button } from '@oxneer/ui';
 import PageHeader from '@/components/common/admin/PageHeader';
 import { ListingDetailContent } from '../../_components/ListingDetailContent';
 

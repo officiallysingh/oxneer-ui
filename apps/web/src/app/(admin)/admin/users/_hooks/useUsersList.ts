@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import type { SortingState } from '@tanstack/react-table';
-import { usersApi, type UserDetailVM } from '@repo/api';
+import { usersApi, type UserDetailVM } from '@oxneer/api';
 import { useFetchPaginatedList } from '@/hooks/admin';
 import { toApiFilter, type UsersFilters } from '../_lib/users-filters';
 

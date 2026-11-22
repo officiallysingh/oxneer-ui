@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { usersApi, type UserDetailVM } from '@repo/api';
+import { usersApi, type UserDetailVM } from '@oxneer/api';
 
 /**
  * The user with `id`: `loaded` when the caller already has it (e.g. on the current list

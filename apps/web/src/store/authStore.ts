@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import type { UserInfo } from '@repo/api';
+import type { UserInfo } from '@oxneer/api';
 import { useSyncExternalStore } from 'react';
 
 export interface UserRole {

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Button } from '@repo/ui';
+import { Button } from '@oxneer/ui';
 import { Home, ArrowLeft } from 'lucide-react';
 
 export default function NotFound() {

@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import { Plus, RefreshCw } from 'lucide-react';
-import { adminApi, getApiErrorMessage, type PermissionVM, type RoleVM } from '@repo/api';
-import { Button, Tabs, TabsList, TabsTrigger, toast } from '@repo/ui';
+import { adminApi, getApiErrorMessage, type PermissionVM, type RoleVM } from '@oxneer/api';
+import { Button, Tabs, TabsList, TabsTrigger, toast } from '@oxneer/ui';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';
 import PageHeader from '@/components/common/admin/PageHeader';
 import { QuickSearchInput } from '@/components/common/admin/QuickSearchInput';

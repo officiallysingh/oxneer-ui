@@ -1,7 +1,7 @@
 'use client';
 
 import { Search, X, Plus } from 'lucide-react';
-import { Button } from '@repo/ui';
+import { Button } from '@oxneer/ui';
 
 interface ListingsTableToolbarProps {
   searchQuery: string;

@@ -6,7 +6,7 @@ const config: Config = {
   moduleNameMapper: { '^@/(.*)$': '<rootDir>/src/$1' },
   testPathIgnorePatterns: ['/node_modules/', '/.next/', '/e2e/'],
   // Next's tsconfig uses jsx: "preserve", so compile TS/TSX (including the
-  // workspace @repo/* source packages) with the React JSX runtime for Jest.
+  // workspace @oxneer/* source packages) with the React JSX runtime for Jest.
   transform: {
     '^.+\\.(t|j)sx?$': [
       'ts-jest',
@@ -20,7 +20,7 @@ const config: Config = {
       },
     ],
   },
-  transformIgnorePatterns: ['/node_modules/(?!@repo/)'],
+  transformIgnorePatterns: ['/node_modules/(?!@oxneer/)'],
 };
 
 export default config;

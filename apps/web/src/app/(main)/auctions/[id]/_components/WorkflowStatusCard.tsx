@@ -1,7 +1,7 @@
 'use client';
 
-import { type AuctionWorkflowStep, type ParticipantWorkflowStepStatus } from '@repo/api';
-import { Button } from '@repo/ui';
+import { type AuctionWorkflowStep, type ParticipantWorkflowStepStatus } from '@oxneer/api';
+import { Button } from '@oxneer/ui';
 import { CheckCircle2, Loader2, ClipboardList } from 'lucide-react';
 import { resolveStr, formatLabel, formatDateTime } from '@/components/common/admin/format';
 

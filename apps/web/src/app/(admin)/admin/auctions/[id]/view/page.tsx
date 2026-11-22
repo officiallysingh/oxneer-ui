@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
-import { Button } from '@repo/ui';
+import { Button } from '@oxneer/ui';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';
 import { useAuctionView } from './_hooks/useAuctionView';
 import { AuctionViewContent } from './_components/AuctionViewContent';

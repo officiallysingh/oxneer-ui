@@ -17,9 +17,9 @@ import {
   ChevronUp,
   Plus,
 } from 'lucide-react';
-import { Button } from '@repo/ui';
-import { blobsApi, BlobVM, BlobProperties } from '@repo/api';
-import type { BlobPropertyPatch } from '@repo/api';
+import { Button } from '@oxneer/ui';
+import { blobsApi, BlobVM, BlobProperties } from '@oxneer/api';
+import type { BlobPropertyPatch } from '@oxneer/api';
 
 interface UploadedFile {
   file: File;

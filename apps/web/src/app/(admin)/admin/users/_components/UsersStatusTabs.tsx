@@ -1,6 +1,6 @@
 'use client';
 
-import { Tabs, TabsList, TabsTrigger } from '@repo/ui';
+import { Tabs, TabsList, TabsTrigger } from '@oxneer/ui';
 import { STATUS_TABS, type StatusTabId } from '../_lib/users-filters';
 import { TabCount } from '@/components/common/admin/TabCount';
 import type { StatusCounts } from '../_hooks/useUserStatusCounts';

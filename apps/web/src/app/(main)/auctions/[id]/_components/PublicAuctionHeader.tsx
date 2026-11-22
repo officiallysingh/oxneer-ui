@@ -1,8 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { AuctionVM } from '@repo/api';
-import { Button } from '@repo/ui';
+import { AuctionVM } from '@oxneer/api';
+import { Button } from '@oxneer/ui';
 import { ArrowLeft, Building2, Globe, Lock, TrendingUp, TrendingDown, Hash } from 'lucide-react';
 import { StatusBadge } from '@/components/common/admin/AuctionStatusBadge';
 import { formatLabel, resolveStr } from '@/components/common/admin/format';

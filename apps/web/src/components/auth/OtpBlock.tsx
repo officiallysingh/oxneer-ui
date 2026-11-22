@@ -2,7 +2,7 @@
 
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button, InputOTP, InputOTPGroup, InputOTPSlot } from '@repo/ui';
+import { Button, InputOTP, InputOTPGroup, InputOTPSlot } from '@oxneer/ui';
 
 export interface OtpBlockProps {
   title: string;

@@ -9,7 +9,7 @@ import {
   Button,
   Input,
   toast,
-} from '@repo/ui';
+} from '@oxneer/ui';
 import type { AuctionItem } from './AuctionCard';
 
 interface BidDialogProps {

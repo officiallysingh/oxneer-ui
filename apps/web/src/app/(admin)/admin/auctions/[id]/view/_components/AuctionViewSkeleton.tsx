@@ -1,4 +1,4 @@
-import { Card, Skeleton } from '@repo/ui';
+import { Card, Skeleton } from '@oxneer/ui';
 
 /** Shaped like the header and the overview tab, so the page doesn't jump. */
 export function AuctionViewSkeleton() {

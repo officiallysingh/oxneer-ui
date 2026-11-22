@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { CalendarDays, Eye, Package, ShieldCheck, Users, type LucideIcon } from 'lucide-react';
-import { TabsList, TabsTrigger } from '@repo/ui';
+import { TabsList, TabsTrigger } from '@oxneer/ui';
 import { TabCount } from '@/components/common/admin/TabCount';
 import type { ViewTab } from '../_hooks/useViewTab';
 

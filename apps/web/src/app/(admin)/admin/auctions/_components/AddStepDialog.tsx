@@ -21,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
   RichTextEditor,
-} from '@repo/ui';
+} from '@oxneer/ui';
 import {
   auctionsApi,
   metadataApi,
@@ -32,7 +32,7 @@ import {
   WorkflowStepPhase,
   PolicyHeadRQ,
   AddWorkflowStepRQ,
-} from '@repo/api';
+} from '@oxneer/api';
 import { DismissibleError } from './AuctionShared';
 import {
   resolveStr,

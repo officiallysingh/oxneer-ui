@@ -1,6 +1,10 @@
 {
-    "name": "@repo/config-ts",
-    "version": "0.0.0",
-    "private": true,
-    "main": "base.json"
+  "name": "@oxneer/config-ts",
+  "version": "0.0.0",
+  "private": true,
+  "files": [
+    "base.json",
+    "nextjs.json",
+    "react-library.json"
+  ]
 }

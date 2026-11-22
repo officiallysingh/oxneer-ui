@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { metadataApi, ManagedTypeVM } from '@repo/api';
-import { Dialog, DialogContent, DialogTitle } from '@repo/ui';
+import { metadataApi, ManagedTypeVM } from '@oxneer/api';
+import { Dialog, DialogContent, DialogTitle } from '@oxneer/ui';
 import { TagList } from '@/components/common/admin/TagList';
 import { PropertyFormPreview, ListingViewPreview } from './PropertyFormPreview';
 

@@ -1,4 +1,4 @@
-import type { AuctionWorkflowStep, PolicyHeadRQ } from '@repo/api';
+import type { AuctionWorkflowStep, PolicyHeadRQ } from '@oxneer/api';
 import { fmtLabel, paymentStepData, resolveStr } from '../../_components/PolicyShared';
 import { formatMoney, offsetLabelParts } from './summary';
 

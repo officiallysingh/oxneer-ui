@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { Info } from 'lucide-react';
-import { DateTimePicker, cn } from '@repo/ui';
+import { DateTimePicker, cn } from '@oxneer/ui';
 import type { AuctionMechanism, ScheduleState } from '../../../_lib/wizard/types';
 import {
   ChoiceCardGroup,

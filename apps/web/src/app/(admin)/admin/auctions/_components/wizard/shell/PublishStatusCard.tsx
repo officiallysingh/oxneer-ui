@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, cn } from '@repo/ui';
+import { Button, cn } from '@oxneer/ui';
 import { useAuctionWizard } from '../../../_context';
 import { formatDateTime } from '../../../_lib/wizard/summary';
 

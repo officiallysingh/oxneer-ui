@@ -7,8 +7,8 @@ import {
   masterApi,
   type BankDetailVM,
   type BankVM,
-} from '@repo/api';
-import { toast } from '@repo/ui';
+} from '@oxneer/api';
+import { toast } from '@oxneer/ui';
 import { accountLabel } from './bank-utils';
 
 interface Loaded {

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { Check, Loader2, Lock, Search } from 'lucide-react';
-import { adminApi, type RoleVM, type RoleUpdateReq } from '@repo/api';
+import { adminApi, type RoleVM, type RoleUpdateReq } from '@oxneer/api';
 import {
   Button,
   Input,
@@ -13,7 +13,7 @@ import {
   SheetTitle,
   cn,
   toast,
-} from '@repo/ui';
+} from '@oxneer/ui';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';
 import { FormField } from '@/components/common/admin/FormField';
 import { SaveButton } from '@/components/common/admin/SaveButton';

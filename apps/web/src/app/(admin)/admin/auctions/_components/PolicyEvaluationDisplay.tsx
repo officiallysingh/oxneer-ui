@@ -10,8 +10,8 @@ import {
   IndianRupee,
   ArrowRight,
 } from 'lucide-react';
-import { auctionsApi, type PolicyEvaluation, type PolicyEvaluationMap } from '@repo/api';
-import { Badge, Button } from '@repo/ui';
+import { auctionsApi, type PolicyEvaluation, type PolicyEvaluationMap } from '@oxneer/api';
+import { Badge, Button } from '@oxneer/ui';
 import Tip from '@/components/common/admin/Tip';
 import ConfirmDialog from '@/components/common/admin/ConfirmDialog';
 import { fmtLabel, resolveStr } from './PolicyShared';

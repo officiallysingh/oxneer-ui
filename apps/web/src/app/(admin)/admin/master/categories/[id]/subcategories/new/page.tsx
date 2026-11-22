@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { masterApi } from '@repo/api';
+import { masterApi } from '@oxneer/api';
 import { Loader2, ArrowLeft } from 'lucide-react';
-import { Button, Input, Label } from '@repo/ui';
+import { Button, Input, Label } from '@oxneer/ui';
 import PageHeader from '@/components/common/admin/PageHeader';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';
 import EmojiPicker from '@/components/common/EmojiPicker';

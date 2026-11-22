@@ -16,8 +16,8 @@ import {
   OnChangeFn,
 } from '@tanstack/react-table';
 import { ChevronDown, ChevronUp, ChevronsUpDown, Loader2, Search } from 'lucide-react';
-import { Button } from '@repo/ui';
-import { Input } from '@repo/ui';
+import { Button } from '@oxneer/ui';
+import { Input } from '@oxneer/ui';
 import { SearchInput } from '@/components/common/admin/SearchInput';
 import { PaginationBar } from '@/components/common/admin/PaginationBar';
 

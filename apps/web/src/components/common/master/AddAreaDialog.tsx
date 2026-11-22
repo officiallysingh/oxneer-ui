@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { masterApi, CityVM, AreaVM } from '@repo/api';
+import { masterApi, CityVM, AreaVM } from '@oxneer/api';
 import { Loader2 } from 'lucide-react';
 import {
   Button,
@@ -13,7 +13,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@repo/ui';
+} from '@oxneer/ui';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';
 import { LabelWithTip } from '@/components/common/admin/LabelWithTip';
 import {

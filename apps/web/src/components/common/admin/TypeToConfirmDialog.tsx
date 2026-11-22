@@ -14,7 +14,7 @@ import {
   cn,
   Input,
   Label,
-} from '@repo/ui';
+} from '@oxneer/ui';
 
 interface TypeToConfirmDialogProps {
   open: boolean;

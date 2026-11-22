@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { UserDetailVM } from '@repo/api';
+import type { UserDetailVM } from '@oxneer/api';
 import { TagList } from '@/components/common/admin/TagList';
 import { VerificationMark } from './VerificationMark';
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { Loader2 } from 'lucide-react';
-import { Button } from '@repo/ui';
+import { Button } from '@oxneer/ui';
 import { FormSection } from '@/components/common/admin/FormSection';
 import { SettingRow } from '@/components/common/admin/SettingRow';
 import { ToggleField } from '@/components/common/admin/ToggleField';

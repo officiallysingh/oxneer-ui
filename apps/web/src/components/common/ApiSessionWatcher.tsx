@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import { toast } from '@repo/ui';
-import { SESSION_ERROR_EVENT } from '@repo/api';
+import { toast } from '@oxneer/ui';
+import { SESSION_ERROR_EVENT } from '@oxneer/api';
 
 /**
  * Surfaces API errors raised when the session expires (401, or a 403 whose

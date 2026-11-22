@@ -1,4 +1,4 @@
-import type { UsersFilter } from '@repo/api';
+import type { UsersFilter } from '@oxneer/api';
 import type { SegmentOption } from '@/components/common/admin/SegmentedControl';
 
 /** Search limits enforced by GET /api/v1/users. */

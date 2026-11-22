@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import type { UserDetailVM } from '@repo/api';
+import type { UserDetailVM } from '@oxneer/api';
 import { UserAvatar } from '@/components/common/admin/UserAvatar';
 import { fullName } from '../_lib/user-display';
 

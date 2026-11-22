@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import type { BankDetailVM } from '@repo/api';
+import type { BankDetailVM } from '@oxneer/api';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -12,7 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   Button,
-} from '@repo/ui';
+} from '@oxneer/ui';
 import { accountLabel } from './bank-utils';
 
 interface RemoveBankAccountDialogProps {

@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { RotateCcw } from 'lucide-react';
-import { Button } from '@repo/ui';
-import type { PropertyDef } from '@repo/api';
+import { Button } from '@oxneer/ui';
+import type { PropertyDef } from '@oxneer/api';
 import { AttrField } from '@/components/common/attributes/AttrField';
 import { AttrPropertySections } from '@/components/common/attributes/AttrValue';
 import {

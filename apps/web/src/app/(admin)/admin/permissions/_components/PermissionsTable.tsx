@@ -1,8 +1,8 @@
 'use client';
 
 import { ChevronDown, ChevronRight, Pencil } from 'lucide-react';
-import type { PermissionVM, RoleVM } from '@repo/api';
-import { Button } from '@repo/ui';
+import type { PermissionVM, RoleVM } from '@oxneer/api';
+import { Button } from '@oxneer/ui';
 import { Pill } from '@/components/common/admin/Pill';
 import Tip from '@/components/common/admin/Tip';
 import type { ResourceGroup } from '@/lib/access/permission-matrix';

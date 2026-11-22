@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Button } from '@repo/ui';
+import { Button } from '@oxneer/ui';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
 export default function AdminError({

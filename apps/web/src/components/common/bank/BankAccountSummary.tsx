@@ -1,5 +1,5 @@
 import { Star } from 'lucide-react';
-import type { BankDetailVM } from '@repo/api';
+import type { BankDetailVM } from '@oxneer/api';
 import { bankShortName, maskAccountNo } from './bank-utils';
 
 /** Bank tile + name + masked number + Primary badge, with the IFSC underneath. */

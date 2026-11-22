@@ -1,8 +1,8 @@
 'use client';
 
 import { Search, X } from 'lucide-react';
-import type { CategoryVM } from '@repo/api';
-import { Button, DateTimePicker, Label } from '@repo/ui';
+import type { CategoryVM } from '@oxneer/api';
+import { Button, DateTimePicker, Label } from '@oxneer/ui';
 import Select from 'react-select';
 import type { MultiValue } from 'react-select';
 import { PhrasesInput } from '@/components/common/admin/PhrasesInput';

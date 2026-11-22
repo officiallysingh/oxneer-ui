@@ -2,13 +2,13 @@
 
 import { useState } from 'react';
 import { ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
-import { Input, Label } from '@repo/ui';
+import { Input, Label } from '@oxneer/ui';
 import type {
   AuctionWorkflowStep,
   PolicyEvaluationMap,
   PolicyHeadRQ,
   PolicyItemRQ,
-} from '@repo/api';
+} from '@oxneer/api';
 import { resolveStr as resolveStrShared } from '@/components/common/admin/format';
 
 // Re-export the shared resolveStr under the same local name so existing

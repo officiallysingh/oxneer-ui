@@ -1,4 +1,4 @@
-import { ACCOUNT_NO_REGEX, IFSC_REGEX, type BankDetailVM, type BankVM } from '@repo/api';
+import { ACCOUNT_NO_REGEX, IFSC_REGEX, type BankDetailVM, type BankVM } from '@oxneer/api';
 
 export const IFSC_LENGTH = 11;
 export const IFSC_ERROR = 'IFSC has 11 characters: 4 letters, 0, then 6 letters or digits';

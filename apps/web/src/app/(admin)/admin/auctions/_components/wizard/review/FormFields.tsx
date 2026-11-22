@@ -2,8 +2,8 @@
 
 import { useId, useState, type ReactNode } from 'react';
 import { ChevronDown, Loader2 } from 'lucide-react';
-import type { PropertyDef } from '@repo/api';
-import { cn } from '@repo/ui';
+import type { PropertyDef } from '@oxneer/api';
+import { cn } from '@oxneer/ui';
 import { resolveStr } from '@/components/common/admin/format';
 import { useManagedType } from '@/hooks/useManagedType';
 import { SingleField } from '@/app/(main)/auctions/_components/wizard/ParticipantCustomForm';

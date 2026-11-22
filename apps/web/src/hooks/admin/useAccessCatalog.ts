@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { adminApi, type PermissionVM, type RoleVM } from '@repo/api';
+import { adminApi, type PermissionVM, type RoleVM } from '@oxneer/api';
 import type { CheckListOption } from '@/components/common/admin/SearchableCheckList';
 import { groupPermissions } from '@/lib/access/permission-matrix';
 

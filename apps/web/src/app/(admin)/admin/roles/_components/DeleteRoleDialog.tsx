@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import type { RoleVM } from '@repo/api';
+import type { RoleVM } from '@oxneer/api';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -13,7 +13,7 @@ import {
   AlertDialogTitle,
   Badge,
   Button,
-} from '@repo/ui';
+} from '@oxneer/ui';
 import { plural } from '../_lib/role-form';
 
 const MAX_BADGES = 8;

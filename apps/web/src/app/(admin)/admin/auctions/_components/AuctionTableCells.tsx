@@ -1,8 +1,8 @@
 'use client';
 
 import { ArrowDown, ArrowUp, Globe, Info, Lock, TrendingUp, Users } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui';
-import type { AuctionVM } from '@repo/api';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@oxneer/ui';
+import type { AuctionVM } from '@oxneer/api';
 import { formatLabel, resolveStr } from '@/components/common/admin/format';
 
 export function DirectionCell({ value }: { value?: unknown }) {

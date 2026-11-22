@@ -11,7 +11,7 @@ Read `DESIGN.md` first. Compare the target against it and against the reference 
 
 Run `node .claude/hooks/check-ui-rules.js <target-dir>` and fix each line it reports (raw palette classes, hex and rgb colors, template-string `className`, `react-icons` imports). Brand logos are the only exception. Map raw colors to `muted`, `destructive`, `success`, `warning`, `info` or `primary`.
 
-Then grep the target for `<button`, `<input`, `<select` and `<textarea`, and replace hand-rolled controls with `@repo/ui` primitives.
+Then grep the target for `<button`, `<input`, `<select` and `<textarea`, and replace hand-rolled controls with `@oxneer/ui` primitives.
 
 ## Pass 2: structure
 

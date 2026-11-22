@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { RoleVM } from '@repo/api';
+import type { RoleVM } from '@oxneer/api';
 import { roleEditHref } from '../_lib/permission-usage';
 
 /** Role chip that opens the role in the Roles editor. */

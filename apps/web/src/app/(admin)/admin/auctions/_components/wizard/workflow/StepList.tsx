@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { AlertTriangle, Lock, Pencil, Plus, Trash2, type LucideIcon } from 'lucide-react';
-import { Button, cn } from '@repo/ui';
-import type { AuctionWorkflowStep, WorkflowStepPhase, WorkflowStepType } from '@repo/api';
+import { Button, cn } from '@oxneer/ui';
+import type { AuctionWorkflowStep, WorkflowStepPhase, WorkflowStepType } from '@oxneer/api';
 import ConfirmDialog from '@/components/common/admin/ConfirmDialog';
 import {
   allowedStepTypesAt,

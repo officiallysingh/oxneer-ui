@@ -1,7 +1,7 @@
 'use client';
 
 import { type ReactNode } from 'react';
-import { type AuctionVM, type AuctionWorkflowStep } from '@repo/api';
+import { type AuctionVM, type AuctionWorkflowStep } from '@oxneer/api';
 import { GitFork, DollarSign, Settings2 } from 'lucide-react';
 import { resolveStr, formatLabel } from '@/components/common/admin/format';
 import { WorkflowStagesTimeline } from '@/app/(admin)/admin/auctions/_components/timeline/WorkflowStagesTimeline';

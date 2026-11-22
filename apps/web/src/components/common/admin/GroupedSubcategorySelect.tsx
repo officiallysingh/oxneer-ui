@@ -3,7 +3,7 @@
 import { CSSProperties } from 'react';
 import Select, { components } from 'react-select';
 import type { StylesConfig, GroupBase, MultiValueRemoveProps } from 'react-select';
-import type { CategoryVM } from '@repo/api';
+import type { CategoryVM } from '@oxneer/api';
 
 interface Option {
   value: string;

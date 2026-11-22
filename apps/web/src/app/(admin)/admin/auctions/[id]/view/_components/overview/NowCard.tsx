@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Check, Info } from 'lucide-react';
-import { Card, cn } from '@repo/ui';
+import { Card, cn } from '@oxneer/ui';
 import { Pill } from '@/components/common/admin/Pill';
 import type { Phrase } from '../../_lib/phrase';
 import type { ProgressStep } from '../../_lib/stage';

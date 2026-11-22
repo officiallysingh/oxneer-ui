@@ -1,4 +1,4 @@
-import type { AuctionVM, AuctionUnitVM, PolicyItemRQ } from '@repo/api';
+import type { AuctionVM, AuctionUnitVM, PolicyItemRQ } from '@oxneer/api';
 import { resolveStr } from '@/components/common/admin/format';
 import type { BasicsState, OfferState, PriceWindow, SelectedListing, WizardState } from './types';
 import { initialWizardState } from './types';
@@ -42,9 +42,7 @@ function policyType(policy: PolicyItemRQ): string {
 
 function itemFromUnit(
   value:
-    | string
-    | { id: string; name?: string; description?: string; quantity?: number }
-    | undefined,
+    string | { id: string; name?: string; description?: string; quantity?: number } | undefined,
   fallbackName: string,
   fallbackQuantity: number,
 ): SelectedListing | null {

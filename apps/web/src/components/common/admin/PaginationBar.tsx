@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button, cn } from '@repo/ui';
+import { Button, cn } from '@oxneer/ui';
 
 interface PaginationBarProps {
   pageIndex: number;

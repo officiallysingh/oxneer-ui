@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { metadataApi, ManagedTypeVM } from '@repo/api';
+import { metadataApi, ManagedTypeVM } from '@oxneer/api';
 import { sanitizeProperties, normalizeProperties } from '../../../_components/types';
 import { Loader2 } from 'lucide-react';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';

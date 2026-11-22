@@ -1,8 +1,8 @@
 'use client';
 
 import { AlertTriangle, Plus, Trash2 } from 'lucide-react';
-import { Switch, cn } from '@repo/ui';
-import type { PolicyHeadRQ } from '@repo/api';
+import { Switch, cn } from '@oxneer/ui';
+import type { PolicyHeadRQ } from '@oxneer/api';
 import { formatMoney } from '../../../_lib/wizard/summary';
 import { emptyHead } from '../../../_lib/wizard/stepDraft';
 import { inputClass, selectClass } from '../ui/wizard-ui';

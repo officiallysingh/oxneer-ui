@@ -1,4 +1,4 @@
-import type { UserDetailVM } from '@repo/api';
+import type { UserDetailVM } from '@oxneer/api';
 
 export type UserStatus = 'active' | 'disabled' | 'locked' | 'account-expired' | 'password-expired';
 

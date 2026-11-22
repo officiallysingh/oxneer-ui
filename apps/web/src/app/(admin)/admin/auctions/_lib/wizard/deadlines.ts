@@ -1,4 +1,4 @@
-import type { AuctionWorkflowStep } from '@repo/api';
+import type { AuctionWorkflowStep } from '@oxneer/api';
 import { paymentStepData, resolveStr } from '../../_components/PolicyShared';
 import { formatDateTime } from './summary';
 import { offsetMinutes } from './workflow';

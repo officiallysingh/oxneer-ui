@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '@repo/ui';
+import { cn } from '@oxneer/ui';
 
 export interface SegmentOption<T extends string> {
   value: T;

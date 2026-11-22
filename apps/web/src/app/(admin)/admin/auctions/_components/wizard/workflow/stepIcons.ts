@@ -6,7 +6,7 @@ import {
   SquarePen,
   type LucideIcon,
 } from 'lucide-react';
-import type { WorkflowStepType } from '@repo/api';
+import type { WorkflowStepType } from '@oxneer/api';
 
 export const STEP_ICON: Record<WorkflowStepType, LucideIcon> = {
   TNC_FORM_STEP: FileText,

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { auctionsApi, type PolicyItemRQ } from '@repo/api';
+import { auctionsApi, type PolicyItemRQ } from '@oxneer/api';
 import { parseApiError } from '@/lib/api-errors';
 import { mapAuctionToWizardState, type EditWizardSnapshot } from '../_lib/wizard/editWizardMapping';
 import { isPostStep } from '../_lib/wizard/workflow';

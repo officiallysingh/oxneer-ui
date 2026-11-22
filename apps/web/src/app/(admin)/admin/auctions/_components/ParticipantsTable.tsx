@@ -12,8 +12,8 @@ import {
   ChevronRight,
   Users,
 } from 'lucide-react';
-import { Button, Label } from '@repo/ui';
-import { participantsApi, type ParticipantVM, type InvitationStatus } from '@repo/api';
+import { Button, Label } from '@oxneer/ui';
+import { participantsApi, type ParticipantVM, type InvitationStatus } from '@oxneer/api';
 import { UserAvatar } from '@/components/common/admin/UserAvatar';
 import { parseApiError } from '@/lib/api-errors';
 import { DismissibleError } from './AuctionShared';

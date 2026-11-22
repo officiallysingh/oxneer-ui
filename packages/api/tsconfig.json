@@ -1,22 +1,5 @@
 {
-  "extends": "@repo/config-ts/base.json",
-  "compilerOptions": {
-    "target": "ES2020",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "declaration": true,
-    "declarationMap": true,
-    "rootDir": "./src",
-    "outDir": "dist"
-  },
+  "extends": "@oxneer/config-ts/react-library.json",
   "include": ["src"],
   "exclude": ["node_modules"]
 }

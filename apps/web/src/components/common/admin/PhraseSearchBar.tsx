@@ -1,7 +1,7 @@
 'use client';
 
 import { Search, X } from 'lucide-react';
-import { Button } from '@repo/ui';
+import { Button } from '@oxneer/ui';
 import { PhrasesInput } from './PhrasesInput';
 
 interface PhraseSearchBarProps {

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { masterApi, SubCategoryVM } from '@repo/api';
+import { masterApi, SubCategoryVM } from '@oxneer/api';
 import { Loader2 } from 'lucide-react';
 import {
   Button,
@@ -13,7 +13,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@repo/ui';
+} from '@oxneer/ui';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';
 import EmojiPicker from '@/components/common/EmojiPicker';
 import { parseApiError } from '@/lib/api-errors';

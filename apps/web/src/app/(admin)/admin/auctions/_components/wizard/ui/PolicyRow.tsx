@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { AlertTriangle, ChevronUp, Pencil, Trash2, Zap, type LucideIcon } from 'lucide-react';
-import { Button, cn } from '@repo/ui';
+import { Button, cn } from '@oxneer/ui';
 import { useRevealIssue } from './revealIssue';
 
 export interface PolicySummaryChip {

@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { type AuctionWorkflowStep, type PropertyDef } from '@repo/api';
-import { Button, Label } from '@repo/ui';
+import { type AuctionWorkflowStep, type PropertyDef } from '@oxneer/api';
+import { Button, Label } from '@oxneer/ui';
 import { Loader2, ArrowRight, AlertCircle } from 'lucide-react';
 import { resolveStr, formatLabel } from '@/components/common/admin/format';
 import { buildPathWiseState } from '@/lib/pathWiseState';

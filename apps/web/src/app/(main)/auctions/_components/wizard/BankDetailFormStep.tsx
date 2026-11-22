@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import type { AuctionWorkflowStep } from '@repo/api';
-import { Button } from '@repo/ui';
+import type { AuctionWorkflowStep } from '@oxneer/api';
+import { Button } from '@oxneer/ui';
 import { Loader2, Landmark, Plus, ArrowRight, AlertCircle } from 'lucide-react';
 import { BankAccountDialog, BankAccountSummary, useBankAccounts } from '@/components/common/bank';
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { Copy, CopyPlus, MoreVertical, Pencil, Trash2 } from 'lucide-react';
-import type { RoleVM } from '@repo/api';
+import type { RoleVM } from '@oxneer/api';
 import {
   Button,
   DropdownMenu,
@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@repo/ui';
+} from '@oxneer/ui';
 
 /** Everything a row or card can do to a role. Built once by the page. */
 export interface RoleRowHandlers {

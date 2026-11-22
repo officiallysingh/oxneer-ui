@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '@repo/ui';
+import { cn } from '@oxneer/ui';
 import type { PriceWindow } from '../../../_lib/wizard/types';
 import { formatTime, parseDuration, windowSummary } from '../../../_lib/wizard/summary';
 

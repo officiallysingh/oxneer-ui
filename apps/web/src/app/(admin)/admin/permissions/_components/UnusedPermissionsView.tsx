@@ -1,7 +1,7 @@
 'use client';
 
 import { Info } from 'lucide-react';
-import type { PermissionVM, RoleVM } from '@repo/api';
+import type { PermissionVM, RoleVM } from '@oxneer/api';
 import {
   AddToRoleMenu,
   PermissionActionsMenu,

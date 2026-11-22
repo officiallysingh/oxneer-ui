@@ -7,7 +7,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@repo/ui';
+} from '@oxneer/ui';
 import { AlertTriangle } from 'lucide-react';
 
 interface ConfirmDialogProps {

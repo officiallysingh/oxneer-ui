@@ -1,4 +1,4 @@
-import type { PropertyType, DataType, PropertyDef, ValidatorDef } from '@repo/api';
+import type { PropertyType, DataType, PropertyDef, ValidatorDef } from '@oxneer/api';
 
 export interface KV {
   key: string;

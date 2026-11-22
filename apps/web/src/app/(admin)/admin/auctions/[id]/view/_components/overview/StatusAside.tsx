@@ -1,5 +1,5 @@
 import { Check, ChevronRight, CircleHelp, TriangleAlert } from 'lucide-react';
-import { Button, Card, Skeleton, cn } from '@repo/ui';
+import { Button, Card, Skeleton, cn } from '@oxneer/ui';
 import type { GlossaryTerm } from '../../_lib/facts';
 import type { ComingUpEvent } from '../../_lib/now';
 import { activeCount, type PeopleCounts } from '../../_lib/people';

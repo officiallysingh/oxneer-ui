@@ -1,4 +1,4 @@
-import type { UserDetailVM } from '@repo/api';
+import type { UserDetailVM } from '@oxneer/api';
 import { TagList } from '@/components/common/admin/TagList';
 
 /** Roles (info) then direct permissions (outline), collapsed after `max`. */

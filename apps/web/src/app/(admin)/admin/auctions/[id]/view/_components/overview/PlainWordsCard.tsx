@@ -1,5 +1,5 @@
 import { ChevronRight } from 'lucide-react';
-import { Button, Card } from '@repo/ui';
+import { Button, Card } from '@oxneer/ui';
 import type { KeyAmount, SummaryLine } from '../../_lib/facts';
 import { PhraseText } from '../PhraseText';
 import { AMOUNT_ICON, SUMMARY_ICON } from '../viewIcons';

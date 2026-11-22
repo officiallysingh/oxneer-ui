@@ -3,8 +3,8 @@
 import { Ban, CalendarClock, Eye, Info, Loader2, Pencil, Send, Trash2 } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
-import type { AuctionVM } from '@repo/api';
-import { Button, Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui';
+import type { AuctionVM } from '@oxneer/api';
+import { Button, Tooltip, TooltipContent, TooltipTrigger } from '@oxneer/ui';
 import Tip from '@/components/common/admin/Tip';
 import { StatusBadge } from '@/components/common/admin/AuctionStatusBadge';
 import { currencySymbol, formatLabel, resolveStr } from '@/components/common/admin/format';

@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { Eye, Layers, Package } from 'lucide-react';
-import { listingsApi, blobsApi, AuctionVM, AuctionUnitVM } from '@repo/api';
-import { Badge, Button } from '@repo/ui';
+import { listingsApi, blobsApi, AuctionVM, AuctionUnitVM } from '@oxneer/api';
+import { Badge, Button } from '@oxneer/ui';
 import { ListingViewDialog } from '../../listings/_components/ListingViewDialog';
 import { formatLabel, resolveStr } from '@/components/common/admin/format';
 
@@ -64,14 +64,12 @@ export function AuctionUnitSection({ auction }: { auction: AuctionVM }) {
             };
             return row;
           })
-          .catch(
-            (): UnitItemRow => ({
-              id: it.id,
-              name: it.name ?? it.id,
-              description: it.description,
-              quantity: it.quantity,
-            }),
-          ),
+          .catch((): UnitItemRow => ({
+            id: it.id,
+            name: it.name ?? it.id,
+            description: it.description,
+            quantity: it.quantity,
+          })),
       ),
     ).then((results) => {
       if (!cancelled) setRows(results);

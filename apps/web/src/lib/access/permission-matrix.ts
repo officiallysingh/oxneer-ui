@@ -1,4 +1,4 @@
-import type { PermissionVM } from '@repo/api';
+import type { PermissionVM } from '@oxneer/api';
 
 /**
  * Permission names follow `<resource>.<action>`, e.g. `master.data.categories.view`.

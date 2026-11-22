@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
-import { Button } from '@repo/ui';
+import { Button } from '@oxneer/ui';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';
 import { AuctionWizardProvider, type AuctionWizardConfig } from '../../_context';
 import { AuctionWizard } from '../../_components/wizard/AuctionWizard';

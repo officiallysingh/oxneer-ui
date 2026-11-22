@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { Package } from 'lucide-react';
-import { blobsApi } from '@repo/api';
-import { cn } from '@repo/ui';
+import { blobsApi } from '@oxneer/api';
+import { cn } from '@oxneer/ui';
 
 /** Fetches a listing's thumbnail via GET /api/v1/blobs/listing/{id}/thumbnail and renders it.
  *  40px by default; pass `className` to size it differently. */

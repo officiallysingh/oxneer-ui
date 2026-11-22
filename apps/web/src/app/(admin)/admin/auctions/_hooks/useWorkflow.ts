@@ -1,7 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { auctionsApi, blobsApi, type AuctionWorkflowStep, type WorkflowStepPhase } from '@repo/api';
+import {
+  auctionsApi,
+  blobsApi,
+  type AuctionWorkflowStep,
+  type WorkflowStepPhase,
+} from '@oxneer/api';
 import { parseApiError } from '@/lib/api-errors';
 import { isPostStep } from '../_lib/wizard/workflow';
 import {

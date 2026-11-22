@@ -1,4 +1,4 @@
-import type { RoleVM } from '@repo/api';
+import type { RoleVM } from '@oxneer/api';
 
 export interface RoleFormValues {
   label: string;
@@ -16,8 +16,7 @@ export const EMPTY_ROLE_FORM: RoleFormValues = {
 
 /** What the editor sheet is doing: creating (optionally prefilled) or editing a role. */
 export type RoleEditorTarget =
-  | { mode: 'create'; initial?: Partial<RoleFormValues> }
-  | { mode: 'edit'; role: RoleVM };
+  { mode: 'create'; initial?: Partial<RoleFormValues> } | { mode: 'edit'; role: RoleVM };
 
 /** "Auction Manager" → "auction.manager" */
 export function nameFromLabel(label: string): string {

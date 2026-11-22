@@ -1,4 +1,4 @@
-import { Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@oxneer/ui';
 
 export default function Tip({ label, children }: { label: string; children: React.ReactNode }) {
   return (

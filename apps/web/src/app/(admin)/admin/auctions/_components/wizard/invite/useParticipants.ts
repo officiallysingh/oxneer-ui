@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { participantsApi, type AuctionWorkflowStep, type ParticipantVM } from '@repo/api';
+import { participantsApi, type AuctionWorkflowStep, type ParticipantVM } from '@oxneer/api';
 import { parseApiError } from '@/lib/api-errors';
 import { buildParticipantViews, inviteCounts, type AuctionDirection } from './invite';
 

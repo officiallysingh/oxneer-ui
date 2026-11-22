@@ -10,9 +10,9 @@ import {
   ListingCategoryRef,
   CategoryVM,
   ManagedTypeVM,
-} from '@repo/api';
+} from '@oxneer/api';
 import { Loader2, ArrowLeft } from 'lucide-react';
-import { Button } from '@repo/ui';
+import { Button } from '@oxneer/ui';
 import PageHeader from '@/components/common/admin/PageHeader';
 import { parseApiError } from '@/lib/api-errors';
 import { useAuthStore } from '@/store/authStore';

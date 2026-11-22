@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from 'react';
 import { Check, FileText, X } from 'lucide-react';
-import { Button } from '@repo/ui';
+import { Button } from '@oxneer/ui';
 import { UserAvatar } from '@/components/common/admin/UserAvatar';
 import { formatDateTime } from '../../../_lib/wizard/summary';
 import type { InviteDecision, ParticipantView } from './invite';

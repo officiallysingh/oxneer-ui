@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
-import { Button, Card, CardContent } from '@repo/ui';
+import { Button, Card, CardContent } from '@oxneer/ui';
 import { useAuthStore } from '@/store/authStore';
 import { establishAuthSession } from '@/lib/auth-session';
 import { OidcNewUserForm } from './_components/OidcNewUserForm';

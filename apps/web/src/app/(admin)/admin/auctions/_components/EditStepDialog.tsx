@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
   RichTextEditor,
-} from '@repo/ui';
+} from '@oxneer/ui';
 import {
   auctionsApi,
   blobsApi,
@@ -21,7 +21,7 @@ import {
   ManagedTypeVM,
   PolicyHeadRQ,
   WorkflowStepPhase,
-} from '@repo/api';
+} from '@oxneer/api';
 import { DismissibleError } from './AuctionShared';
 import {
   resolveStr,

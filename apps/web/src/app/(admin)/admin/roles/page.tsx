@@ -3,8 +3,8 @@
 import { useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Plus, RefreshCw } from 'lucide-react';
-import { adminApi, type RoleVM } from '@repo/api';
-import { Button, toast } from '@repo/ui';
+import { adminApi, type RoleVM } from '@oxneer/api';
+import { Button, toast } from '@oxneer/ui';
 import { DataTable } from '@/components/common/data-table';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';
 import PageHeader from '@/components/common/admin/PageHeader';

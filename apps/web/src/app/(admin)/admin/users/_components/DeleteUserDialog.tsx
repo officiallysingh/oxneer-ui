@@ -1,6 +1,6 @@
 'use client';
 
-import type { UserDetailVM } from '@repo/api';
+import type { UserDetailVM } from '@oxneer/api';
 import { TypeToConfirmDialog } from '@/components/common/admin/TypeToConfirmDialog';
 import { fullName } from '../_lib/user-display';
 

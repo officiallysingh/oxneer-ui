@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronDown, X } from 'lucide-react';
-import type { RoleVM } from '@repo/api';
+import type { RoleVM } from '@oxneer/api';
 import {
   Button,
   DropdownMenu,
@@ -10,7 +10,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@repo/ui';
+} from '@oxneer/ui';
 
 interface UsersBulkBarProps {
   count: number;

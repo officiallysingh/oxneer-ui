@@ -2,7 +2,7 @@
 
 import { useId, useState } from 'react';
 import { AlertTriangle, ChevronDown, ChevronUp, Info, Plus, Trash2 } from 'lucide-react';
-import { Button, Combobox, Switch, cn, type ComboboxOption } from '@repo/ui';
+import { Button, Combobox, Switch, cn, type ComboboxOption } from '@oxneer/ui';
 import { ISSUE_ANCHOR } from '../../../_lib/wizard/validation';
 import type { OfferState, PriceWindow, ScheduleState } from '../../../_lib/wizard/types';
 import {

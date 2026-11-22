@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { Search } from 'lucide-react';
-import { Input } from '@repo/ui';
+import { Input } from '@oxneer/ui';
 
 interface SearchInputProps {
   value?: string;

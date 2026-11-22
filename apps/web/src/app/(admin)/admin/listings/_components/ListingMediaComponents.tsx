@@ -1,7 +1,7 @@
 'use client';
 
-import { blobsApi, type ListingBlobRef, type ListingVM } from '@repo/api';
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle } from '@repo/ui';
+import { blobsApi, type ListingBlobRef, type ListingVM } from '@oxneer/api';
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle } from '@oxneer/ui';
 import {
   ImageIcon,
   Film,

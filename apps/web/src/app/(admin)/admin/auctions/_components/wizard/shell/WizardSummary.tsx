@@ -19,7 +19,7 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@oxneer/ui';
 import { currencySymbol } from '@/components/common/admin/format';
 import { useAuctionWizard } from '../../../_context';
 import {

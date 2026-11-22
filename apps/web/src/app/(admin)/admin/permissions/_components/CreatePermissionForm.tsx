@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import { Check, Info, Loader2 } from 'lucide-react';
-import { adminApi, type PermissionVM } from '@repo/api';
-import { Badge, Button, Label, toast } from '@repo/ui';
+import { adminApi, type PermissionVM } from '@oxneer/api';
+import { Badge, Button, Label, toast } from '@oxneer/ui';
 import { FormField } from '@/components/common/admin/FormField';
 import { SaveButton } from '@/components/common/admin/SaveButton';
 import { SegmentedControl, type SegmentOption } from '@/components/common/admin/SegmentedControl';

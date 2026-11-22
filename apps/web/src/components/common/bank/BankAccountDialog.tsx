@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { Check, Eye, EyeOff } from 'lucide-react';
-import { bankDetailsApi, type BankDetailVM, type BankVM } from '@repo/api';
+import { bankDetailsApi, type BankDetailVM, type BankVM } from '@oxneer/api';
 import {
   Button,
   Dialog,
@@ -13,7 +13,7 @@ import {
   DialogTitle,
   Label,
   toast,
-} from '@repo/ui';
+} from '@oxneer/ui';
 import { CancelChequeUpload } from '@/components/common/admin/CancelChequeUpload';
 import { FormField } from '@/components/common/admin/FormField';
 import { SaveButton } from '@/components/common/admin/SaveButton';

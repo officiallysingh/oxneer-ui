@@ -10,7 +10,7 @@ import {
   type AddWorkflowStepRQ,
   type PolicyItemRQ,
   type WorkflowStepPhase,
-} from '@repo/api';
+} from '@oxneer/api';
 import {
   AUCTION_TYPE,
   buildOfferRules,

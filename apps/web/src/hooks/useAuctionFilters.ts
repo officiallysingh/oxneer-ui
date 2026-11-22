@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { AuctionVM } from '@repo/api';
+import { AuctionVM } from '@oxneer/api';
 import { resolveStr } from '../app/(admin)/admin/auctions/_components/PolicyShared';
 
 export function useAuctionFilters(auctions: AuctionVM[]) {

@@ -1,4 +1,4 @@
-import type { AuctionWorkflowStep, InvitationStatus, ParticipantVM } from '@repo/api';
+import type { AuctionWorkflowStep, InvitationStatus, ParticipantVM } from '@oxneer/api';
 import { resolveStr } from '@/components/common/admin/format';
 import { fmtLabel } from '../../../_components/PolicyShared';
 import { formatDateTime, formatShortDate, formatTime } from '../../../_lib/wizard/summary';

@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@repo/ui';
+import { Button } from '@oxneer/ui';
 import type { ReviewIssue } from '../../../_lib/wizard/validation';
 import { STEP_LABELS } from '../../../_lib/wizard/validation';
 import { StatusPill } from './StatusPill';

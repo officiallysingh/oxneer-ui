@@ -2,7 +2,7 @@
 
 import { useRef } from 'react';
 import { Search } from 'lucide-react';
-import { cn, Input } from '@repo/ui';
+import { cn, Input } from '@oxneer/ui';
 import { useFocusShortcut } from '@/hooks/useFocusShortcut';
 import { ShortcutHint } from './ShortcutHint';
 

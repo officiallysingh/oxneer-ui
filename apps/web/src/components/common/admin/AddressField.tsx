@@ -2,8 +2,8 @@
 
 import { useRef, useState } from 'react';
 import { Loader2, MapPin } from 'lucide-react';
-import { Label } from '@repo/ui';
-import { masterApi, AreaVM } from '@repo/api';
+import { Label } from '@oxneer/ui';
+import { masterApi, AreaVM } from '@oxneer/api';
 import { CoordinatesMapField } from './CoordinatesMapField';
 
 // ── Types ─────────────────────────────────────────────────────────────────────

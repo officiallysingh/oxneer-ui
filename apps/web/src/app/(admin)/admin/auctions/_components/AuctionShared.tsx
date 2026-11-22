@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { Label } from '@repo/ui';
+import { Label } from '@oxneer/ui';
 
 export interface SelectOption {
   value: string;

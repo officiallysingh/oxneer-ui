@@ -1,5 +1,5 @@
 import { Check } from 'lucide-react';
-import { Card, cn } from '@repo/ui';
+import { Card, cn } from '@oxneer/ui';
 import { Pill, type PillTone } from '@/components/common/admin/Pill';
 import type { StepActor, StepRow, StepSection, StepState } from '../_lib/steps';
 import { ACTOR_META } from './viewIcons';

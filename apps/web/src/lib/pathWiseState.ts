@@ -1,4 +1,4 @@
-import type { ManagedTypeVM, PropertyDef } from '@repo/api';
+import type { ManagedTypeVM, PropertyDef } from '@oxneer/api';
 
 const INTEGER_DATA_TYPES = new Set(['BYTE', 'SHORT', 'INTEGER', 'LONG', 'BIG_INTEGER']);
 

@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { CreditCard, Landmark, ShieldCheck, UserCheck, FileText, Upload } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { AuctionWorkflowStep } from '@repo/api';
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle } from '@repo/ui';
+import { AuctionWorkflowStep } from '@oxneer/api';
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle } from '@oxneer/ui';
 import { resolveStr, fmtLabel, paymentStepData, formatOffsetLabel } from './PolicyShared';
 import { PropertyFormPreview } from '@/app/(admin)/admin/metadata/_components/PropertyFormPreview';
 

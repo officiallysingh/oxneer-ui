@@ -1,8 +1,8 @@
 'use client';
 
 import { Trash2 } from 'lucide-react';
-import { Input } from '@repo/ui';
-import type { ValidatorDef } from '@repo/api';
+import { Input } from '@oxneer/ui';
+import type { ValidatorDef } from '@oxneer/api';
 import type { KV } from './types';
 
 interface ValidatorRowProps {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { usersApi, authApi } from '@repo/api';
+import { usersApi, authApi } from '@oxneer/api';
 import { useAuthStore, useAuthHydrated } from '@/store/authStore';
 import { Loader2, User, Lock, CheckCircle2, Eye, EyeOff, HelpCircle } from 'lucide-react';
 import {
@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@repo/ui';
+} from '@oxneer/ui';
 import { parseApiError } from '@/lib/api-errors';
 import { PASSWORD_PATTERN, PASSWORD_RULES, PASSWORD_ERROR } from '@/lib/validation';
 import { AvatarUpload } from '@/components/common/admin/AvatarUpload';

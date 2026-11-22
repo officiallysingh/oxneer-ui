@@ -24,8 +24,8 @@ import {
   TimePicker,
   YearPicker,
   cn,
-} from '@repo/ui';
-import type { PropertyDef } from '@repo/api';
+} from '@oxneer/ui';
+import type { PropertyDef } from '@oxneer/api';
 import { AddressField } from '@/components/common/admin/AddressField';
 import { CoordinatesMapField } from '@/components/common/admin/CoordinatesMapField';
 import { SegmentedControl } from '@/components/common/admin/SegmentedControl';
@@ -560,12 +560,7 @@ interface ControlProps {
 }
 
 type OptionMode =
-  | 'select'
-  | 'radio'
-  | 'segmented'
-  | 'option-pills'
-  | 'multi-pills'
-  | 'checkbox-group';
+  'select' | 'radio' | 'segmented' | 'option-pills' | 'multi-pills' | 'checkbox-group';
 
 const OPTION_MODES: OptionMode[] = [
   'select',

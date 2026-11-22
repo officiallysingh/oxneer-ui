@@ -2,9 +2,9 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { ChevronDown, ChevronUp, Trash2, Plus } from 'lucide-react';
-import { Input, Label, Button } from '@repo/ui';
-import { metadataApi } from '@repo/api';
-import type { PropertyDef, ValidatorDef, DataType, PropertyType } from '@repo/api';
+import { Input, Label, Button } from '@oxneer/ui';
+import { metadataApi } from '@oxneer/api';
+import type { PropertyDef, ValidatorDef, DataType, PropertyType } from '@oxneer/api';
 import { ValidatorRow } from './ValidatorRow';
 import { AttributeEditor } from './AttributeEditor';
 import { PROPERTY_TYPES, HAS_CHILDREN, emptyProperty, extractDataTypeKey } from './types';

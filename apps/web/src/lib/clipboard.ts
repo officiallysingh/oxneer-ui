@@ -1,4 +1,4 @@
-import { toast } from '@repo/ui';
+import { toast } from '@oxneer/ui';
 
 /** Copies text and confirms with a toast, e.g. `copyText(role.name)`. */
 export async function copyText(text: string, successMessage = `Copied ${text}`) {

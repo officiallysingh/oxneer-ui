@@ -1,5 +1,5 @@
 import { CheckCircle2, KeyRound, Plus, SearchX } from 'lucide-react';
-import { Button, Skeleton } from '@repo/ui';
+import { Button, Skeleton } from '@oxneer/ui';
 
 const SKELETON_WIDTHS = ['34%', '28%', '40%', '30%', '36%', '26%'];
 

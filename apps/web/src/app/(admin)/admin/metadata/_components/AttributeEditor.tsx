@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Info, Trash2 } from 'lucide-react';
-import type { PropertyType } from '@repo/api';
+import type { PropertyType } from '@oxneer/api';
 import {
   Button,
   Input,
@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
   cn,
-} from '@repo/ui';
+} from '@oxneer/ui';
 import Tip from '@/components/common/admin/Tip';
 import {
   ATTRIBUTE_PROTOCOL,

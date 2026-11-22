@@ -1,4 +1,4 @@
-import type { AddWorkflowStepRQ, AuctionWorkflowStep, WorkflowStepPhase } from '@repo/api';
+import type { AddWorkflowStepRQ, AuctionWorkflowStep, WorkflowStepPhase } from '@oxneer/api';
 
 /** A workflow step the admin has added but that isn't saved yet. Participation
  *  and Award are each saved whole, policies and steps together, by

@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronDown, Copy, MoreVertical, Pencil, Trash2 } from 'lucide-react';
-import type { PermissionVM, RoleVM } from '@repo/api';
+import type { PermissionVM, RoleVM } from '@oxneer/api';
 import {
   Button,
   DropdownMenu,
@@ -10,7 +10,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@repo/ui';
+} from '@oxneer/ui';
 
 /** Everything a row can do to a permission. Built once by the page. */
 export interface PermissionRowHandlers {

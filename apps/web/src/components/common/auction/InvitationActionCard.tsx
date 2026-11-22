@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { participantsApi } from '@repo/api';
-import type { AuctionVM } from '@repo/api';
+import { participantsApi } from '@oxneer/api';
+import type { AuctionVM } from '@oxneer/api';
 import { useAuthStore } from '@/store/authStore';
 import { parseApiError } from '@/lib/api-errors';
 import {
@@ -15,15 +15,14 @@ import {
   FileText,
   ArrowRight,
 } from 'lucide-react';
-import { Button, Input, Label, Textarea, cn } from '@repo/ui';
+import { Button, Input, Label, Textarea, cn } from '@oxneer/ui';
 
 const COMMENTS_MIN = 5;
 const COMMENTS_MAX = 255;
 
 /** What the email link carries. Accept needs a sign-in; decline doesn't. */
 export type InvitationLink =
-  | { action: 'accept'; code: string }
-  | { action: 'decline'; emailId: string; code: string };
+  { action: 'accept'; code: string } | { action: 'decline'; emailId: string; code: string };
 
 interface InvitationActionCardProps {
   auctionId: string;

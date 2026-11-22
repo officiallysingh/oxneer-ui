@@ -1,28 +1,10 @@
-import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTs from "eslint-config-next/typescript";
+// Repo-root files only (scripts/, tooling configs). Each workspace has its own
+// eslint.config.mjs; ESLint uses the config nearest to each file.
+import { defineConfig, globalIgnores } from 'eslint/config';
+import reactLibrary from '@oxneer/config-eslint/react-library';
 
-const eslintConfig = defineConfig([
-  ...nextVitals,
-  ...nextTs,
-  {
-    // App Router uses app/ not pages/; point rule to app dir or disable.
-    // Scoped to the web app so workspace packages can lint without resolving it.
-    files: ['apps/web/**/*.{ts,tsx}'],
-    rules: {
-      '@next/next/no-html-link-for-pages': ['error', 'apps/web/src/app'],
-    },
-  },
-  // Override default ignores of eslint-config-next.
-  globalIgnores([
-    // Default ignores of eslint-config-next:
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
-    // Agent tooling / hook scripts (CommonJS, run directly by node)
-    ".claude/**",
-  ]),
+export default defineConfig([
+  ...reactLibrary,
+  // Agent tooling / hook scripts (CommonJS, run directly by node)
+  globalIgnores(['.claude/**']),
 ]);
-
-export default eslintConfig;

@@ -1,10 +1,10 @@
 'use client';
 
 import { ArrowRight } from 'lucide-react';
-import { Button, Input, Label } from '@repo/ui';
+import { Button, Input, Label } from '@oxneer/ui';
 import { TagInput } from '@/components/common/admin/TagInput';
 import { GroupedSubcategorySelect } from '@/components/common/admin/GroupedSubcategorySelect';
-import type { CategoryVM } from '@repo/api';
+import type { CategoryVM } from '@oxneer/api';
 
 export interface ListingDetails {
   name: string;

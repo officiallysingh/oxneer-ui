@@ -1,4 +1,4 @@
-import type { UserDetailVM } from '@repo/api';
+import type { UserDetailVM } from '@oxneer/api';
 
 export interface HealthCheck {
   label: string;

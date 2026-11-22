@@ -13,8 +13,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
   Button,
-} from '@repo/ui';
-import { auctionsApi, type AuctionWorkflowStep } from '@repo/api';
+} from '@oxneer/ui';
+import { auctionsApi, type AuctionWorkflowStep } from '@oxneer/api';
 import { parseApiError } from '@/lib/api-errors';
 import { useAuctionWizard } from '../../../_context';
 import type { WorkflowDrafts } from '../../../_hooks/useWorkflow';

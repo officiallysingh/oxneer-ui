@@ -1,4 +1,4 @@
-import { usersApi } from '@repo/api';
+import { usersApi } from '@oxneer/api';
 import { downloadCsv } from '@/lib/csv';
 import { fullName, getUserStatus } from './user-display';
 import { toApiFilter, type UsersFilters } from './users-filters';

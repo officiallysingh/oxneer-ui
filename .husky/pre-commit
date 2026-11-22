@@ -1,2 +1,3 @@
 #!/bin/sh
-npx lint-staged
+# Keep each eslint/prettier call under the Windows command-line limit (~8191 chars).
+npx lint-staged --max-arg-length 4000

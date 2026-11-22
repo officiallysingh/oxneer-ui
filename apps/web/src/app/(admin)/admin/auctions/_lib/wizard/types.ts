@@ -1,4 +1,4 @@
-import type { ListingSummaryVM } from '@repo/api';
+import type { ListingSummaryVM } from '@oxneer/api';
 
 export type AuctionMechanism = 'OPEN' | 'CLOCK' | 'SEALED';
 export type OfferVisibilityChoice = 'FULL' | 'RANK' | 'NOTHING';

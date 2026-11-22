@@ -2,8 +2,8 @@
 
 import type { ColumnDef } from '@tanstack/react-table';
 import { Pencil } from 'lucide-react';
-import type { UserDetailVM } from '@repo/api';
-import { Button, Checkbox } from '@repo/ui';
+import type { UserDetailVM } from '@oxneer/api';
+import { Button, Checkbox } from '@oxneer/ui';
 import Tip from '@/components/common/admin/Tip';
 import { UserAccessTags } from './UserAccessTags';
 import { UserActionsMenu, type UserRowHandlers } from './UserActionsMenu';

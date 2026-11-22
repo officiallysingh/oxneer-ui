@@ -1,4 +1,4 @@
-import { usersApi, type LoginResponse, type UserInfo } from '@repo/api';
+import { usersApi, type LoginResponse, type UserInfo } from '@oxneer/api';
 import type { AuthUser } from '@/store/authStore';
 
 const ADMIN_PERMISSIONS = new Set(['superadmin', 'ROLE_SUPERADMIN', 'platform.superadmin']);

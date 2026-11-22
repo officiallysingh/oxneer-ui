@@ -1,5 +1,5 @@
 import { Check, Clock, Loader2, Send } from 'lucide-react';
-import { Button, cn } from '@repo/ui';
+import { Button, cn } from '@oxneer/ui';
 import { Pill } from '@/components/common/admin/Pill';
 import type {
   ParticipantStepView,

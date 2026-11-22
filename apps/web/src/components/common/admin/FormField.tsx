@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { AlertCircle, HelpCircle } from 'lucide-react';
-import { cn, Input, Label, Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui';
+import { cn, Input, Label, Tooltip, TooltipContent, TooltipTrigger } from '@oxneer/ui';
 import { ChangedDot } from './ChangedDot';
 
 interface FormFieldProps {

@@ -1,7 +1,7 @@
 'use client';
 
-import type { PermissionVM } from '@repo/api';
-import { Checkbox, cn } from '@repo/ui';
+import type { PermissionVM } from '@oxneer/api';
+import { Checkbox, cn } from '@oxneer/ui';
 import { ChangedDot } from '@/components/common/admin/ChangedDot';
 import {
   ACTION_LABELS,

@@ -85,7 +85,7 @@ Admin body text is `text-sm`. Don't use `text-base` for table cells or form help
 
 ## 6. Components (use these, don't recreate them)
 
-### Primitives (`@repo/ui`)
+### Primitives (`@oxneer/ui`)
 
 Button (`default` = gold primary, `outline`, `secondary`, `ghost`, `destructive`, `link`; sizes `sm`/`default`/`lg`/`icon`), Input, Textarea, Select, Checkbox, Switch, RadioGroup, Tabs, Dialog, AlertDialog, Sheet, Drawer, Popover, DropdownMenu, Command, Tooltip, Badge, Avatar, Skeleton, Table, Pagination, Calendar/DatePicker, Sidebar, Sonner `toast`.
 

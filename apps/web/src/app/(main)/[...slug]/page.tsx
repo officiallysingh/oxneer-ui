@@ -2,15 +2,15 @@
 
 import { use, useState, useEffect, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { auctionsApi } from '@repo/api';
-import type { AuctionVM } from '@repo/api';
+import { auctionsApi } from '@oxneer/api';
+import type { AuctionVM } from '@oxneer/api';
 import {
   InvitationActionCard,
   type InvitationLink,
 } from '@/components/common/auction/InvitationActionCard';
 import { useAuthStore, useAuthHydrated } from '@/store/authStore';
 import { Loader2, AlertCircle } from 'lucide-react';
-import { Button } from '@repo/ui';
+import { Button } from '@oxneer/ui';
 
 type DecodedPath =
   | { type: 'auction'; auctionId: string }

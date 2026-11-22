@@ -1,4 +1,4 @@
-import { Skeleton } from '@repo/ui';
+import { Skeleton } from '@oxneer/ui';
 
 /** Loading placeholder shaped like the wizard: header, step rail and a step body. */
 export function WizardSkeleton() {

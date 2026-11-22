@@ -1,4 +1,4 @@
-import type { UserCreationReq, UserDetailVM, UserUpdateReq } from '@repo/api';
+import type { UserCreationReq, UserDetailVM, UserUpdateReq } from '@oxneer/api';
 import { MOBILE_ERROR, MOBILE_PATTERN, USERNAME_ERROR, USERNAME_PATTERN } from '@/lib/validation';
 
 export type UserFormMode = 'create' | 'edit';

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { auctionsApi, type RoundingModeOption } from '@repo/api';
+import { auctionsApi, type RoundingModeOption } from '@oxneer/api';
 import type { SelectOption } from '../_components/AuctionShared';
 
 /** Rounding modes from /model/monetary-rounding-modes for `currency`, whose

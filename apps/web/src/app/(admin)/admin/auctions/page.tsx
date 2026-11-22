@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { auctionsApi, getApiErrorMessage, masterApi, AuctionVM, CategoryVM } from '@repo/api';
+import { auctionsApi, getApiErrorMessage, masterApi, AuctionVM, CategoryVM } from '@oxneer/api';
 import { Plus, RefreshCw } from 'lucide-react';
-import { Button } from '@repo/ui';
+import { Button } from '@oxneer/ui';
 import { DataTable } from '@/components/common/data-table';
 import PageHeader from '@/components/common/admin/PageHeader';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';

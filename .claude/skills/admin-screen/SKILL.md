@@ -49,8 +49,8 @@ Add the route to `apps/web/src/components/admin/nav-config.ts`.
 ## 3. Rules
 
 - Write for the human reader. Use descriptive names, small single-purpose functions and components, early returns instead of deep nesting, and no clever one-liners. Comment only the non-obvious _why_.
-- DRY. Before writing a helper, hook or component, search this feature, `components/common` and `@repo/ui`. Logic repeated inside a feature moves to its `_lib`/`_hooks`; logic repeated across features moves to `components/common` or a package. Never copy-paste and tweak.
-- Primitives come from `@repo/ui`. Admin building blocks come from `@/components/common/admin/*`. Check that folder before writing any new component.
+- DRY. Before writing a helper, hook or component, search this feature, `components/common` and `@oxneer/ui`. Logic repeated inside a feature moves to its `_lib`/`_hooks`; logic repeated across features moves to `components/common` or a package. Never copy-paste and tweak.
+- Primitives come from `@oxneer/ui`. Admin building blocks come from `@/components/common/admin/*`. Check that folder before writing any new component.
 - Use semantic color tokens only (`text-muted-foreground`, `bg-success/10`, …). No `blue-500` or hex.
 - Use `cn()` for conditional classes.
 - Give icon-only buttons `aria-label` and wrap them in `<Tip>`.

@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { AuctionWorkflowStep } from '@repo/api';
-import { Button } from '@repo/ui';
+import { AuctionWorkflowStep } from '@oxneer/api';
+import { Button } from '@oxneer/ui';
 import { Loader2, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
 
 interface TnCFormStepProps {

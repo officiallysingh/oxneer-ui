@@ -18,8 +18,8 @@ import {
   InputOTP,
   InputOTPGroup,
   InputOTPSlot,
-} from '@repo/ui';
-import { authApi, usersApi } from '@repo/api';
+} from '@oxneer/ui';
+import { authApi, usersApi } from '@oxneer/api';
 import { useAuthStore } from '@/store/authStore';
 import { authUserFromLoginResponse, establishAuthSession } from '@/lib/auth-session';
 import { parseApiError } from '@/lib/api-errors';

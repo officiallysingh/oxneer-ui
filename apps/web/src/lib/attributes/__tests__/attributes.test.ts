@@ -1,4 +1,4 @@
-import type { PropertyDef } from '@repo/api';
+import type { PropertyDef } from '@oxneer/api';
 import { inactiveReason, resolveAttrs } from '../protocol';
 import {
   coerceValue,

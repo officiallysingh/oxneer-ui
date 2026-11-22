@@ -2,8 +2,8 @@
 
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import { AlertTriangle, ChevronDown, Info, Landmark, Loader2, Upload, X } from 'lucide-react';
-import { Button, RichTextEditor, Switch, cn } from '@repo/ui';
-import { auctionsApi, type AuctionWorkflowStep } from '@repo/api';
+import { Button, RichTextEditor, Switch, cn } from '@oxneer/ui';
+import { auctionsApi, type AuctionWorkflowStep } from '@oxneer/api';
 import { parseApiError } from '@/lib/api-errors';
 import { formatDateTime } from '../../../_lib/wizard/summary';
 import { WORKFLOW_TYPE_LABEL } from '../../../_lib/wizard/workflow';

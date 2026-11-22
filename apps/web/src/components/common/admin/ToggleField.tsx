@@ -1,7 +1,7 @@
 'use client';
 
 import { useId } from 'react';
-import { Switch } from '@repo/ui';
+import { Switch } from '@oxneer/ui';
 import { SettingRow } from './SettingRow';
 
 interface ToggleFieldProps {

@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react';
 import React from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { masterApi } from '@repo/api';
+import { masterApi } from '@oxneer/api';
 import { Loader2, ArrowLeft } from 'lucide-react';
-import { Button, Input, Label } from '@repo/ui';
+import { Button, Input, Label } from '@oxneer/ui';
 import Link from 'next/link';
 import PageHeader from '@/components/common/admin/PageHeader';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';

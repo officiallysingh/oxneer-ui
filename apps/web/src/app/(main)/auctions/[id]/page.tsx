@@ -8,7 +8,7 @@ import {
   type AuctionVM,
   type AuctionWorkflowStep,
   type ParticipantVM,
-} from '@repo/api';
+} from '@oxneer/api';
 import { useAuthStore } from '@/store/authStore';
 import { resolveStr, formatLabel, formatDateTime } from '@/components/common/admin/format';
 import {
@@ -28,7 +28,7 @@ import {
   CheckCircle2,
   ClipboardList,
 } from 'lucide-react';
-import { Button, Badge, Dialog, DialogContent, DialogHeader, DialogTitle, toast } from '@repo/ui';
+import { Button, Badge, Dialog, DialogContent, DialogHeader, DialogTitle, toast } from '@oxneer/ui';
 import { WorkflowWizard } from '../_components/WorkflowWizard';
 import {
   PublicAuctionOverview,

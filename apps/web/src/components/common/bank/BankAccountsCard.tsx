@@ -13,7 +13,7 @@ import {
   Trash2,
   Upload,
 } from 'lucide-react';
-import type { BankDetailVM } from '@repo/api';
+import type { BankDetailVM } from '@oxneer/api';
 import {
   Button,
   DropdownMenu,
@@ -21,7 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@repo/ui';
+} from '@oxneer/ui';
 import { BankAccountDialog } from './BankAccountDialog';
 import { BankAccountSummary } from './BankAccountSummary';
 import { hasCheque, maskAccountNo } from './bank-utils';

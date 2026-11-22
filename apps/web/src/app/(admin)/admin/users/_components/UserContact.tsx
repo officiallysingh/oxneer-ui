@@ -1,4 +1,4 @@
-import type { UserDetailVM } from '@repo/api';
+import type { UserDetailVM } from '@oxneer/api';
 import { VerificationMark } from './VerificationMark';
 
 /** Email + mobile, each with its verification mark. */

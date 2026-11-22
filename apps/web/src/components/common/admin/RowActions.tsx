@@ -1,7 +1,7 @@
 'use client';
 
 import { Loader2, Pencil, Trash2 } from 'lucide-react';
-import { Button } from '@repo/ui';
+import { Button } from '@oxneer/ui';
 import Tip from './Tip';
 
 interface RowActionsProps {

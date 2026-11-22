@@ -1,6 +1,6 @@
 'use client';
 
-import { type AuctionWorkflowStep, type ParticipantVM } from '@repo/api';
+import { type AuctionWorkflowStep, type ParticipantVM } from '@oxneer/api';
 import { CheckCircle2, ChevronRight } from 'lucide-react';
 import { resolveStr, formatLabel } from '@/components/common/admin/format';
 

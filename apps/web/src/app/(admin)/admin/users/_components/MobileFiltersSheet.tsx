@@ -10,7 +10,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from '@repo/ui';
+} from '@oxneer/ui';
 import { CountBadge } from '@/components/common/admin/FacetFilter';
 import {
   SearchableCheckList,

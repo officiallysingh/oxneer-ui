@@ -1,4 +1,4 @@
-import type { PermissionVM } from '@repo/api';
+import type { PermissionVM } from '@oxneer/api';
 import {
   ACTION_LABELS,
   actionOf,
@@ -17,8 +17,7 @@ export type ActionChoice = PermissionAction | 'other';
 
 /** What the editor sheet is doing: creating (optionally for a resource) or editing. */
 export type PermissionEditorTarget =
-  | { mode: 'create'; resourceKey?: string }
-  | { mode: 'edit'; permission: PermissionVM };
+  { mode: 'create'; resourceKey?: string } | { mode: 'edit'; permission: PermissionVM };
 
 export interface NewPermissionValues {
   /** Existing resource prefix, or the typed prefix when `newResource`. */
@@ -35,11 +34,7 @@ export interface NewPermissionValues {
 }
 
 export type NewPermissionField =
-  | 'resourceKey'
-  | 'resourceLabel'
-  | 'action'
-  | 'customAction'
-  | 'label';
+  'resourceKey' | 'resourceLabel' | 'action' | 'customAction' | 'label';
 export type NewPermissionErrors = Partial<Record<NewPermissionField, string>>;
 
 export function emptyNewPermission(resourceKey = ''): NewPermissionValues {

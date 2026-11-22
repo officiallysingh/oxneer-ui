@@ -7,8 +7,8 @@ import {
   type RoleVM,
   type UserDetailVM,
   type UserUpdateReq,
-} from '@repo/api';
-import { toast } from '@repo/ui';
+} from '@oxneer/api';
+import { toast } from '@oxneer/ui';
 import { plural } from '../_lib/user-display';
 
 interface UserActionsOptions {

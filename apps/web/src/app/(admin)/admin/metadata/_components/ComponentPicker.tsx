@@ -10,8 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@repo/ui';
-import { metadataApi, type ComponentVM, type PropertyDef } from '@repo/api';
+} from '@oxneer/ui';
+import { metadataApi, type ComponentVM, type PropertyDef } from '@oxneer/api';
 import { normalizeProperties } from './types';
 
 interface ComponentPickerProps {

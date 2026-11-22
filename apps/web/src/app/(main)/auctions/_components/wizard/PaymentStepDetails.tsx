@@ -1,7 +1,7 @@
 'use client';
 
-import { AuctionWorkflowStep } from '@repo/api';
-import { Button } from '@repo/ui';
+import { AuctionWorkflowStep } from '@oxneer/api';
+import { Button } from '@oxneer/ui';
 import { CreditCard, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import { resolveStr, formatLabel } from '@/components/common/admin/format';
 

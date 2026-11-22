@@ -1,10 +1,10 @@
 # Oxneer
 
-Auction platform. `packages/store` holds zustand stores; the app also has `apps/web/src/store`.
+Auction platform. Zustand stores live in `apps/web/src/store`.
 
 ## Commands (run from repo root)
 
-- `npm run e2e -w web` runs Playwright (`apps/web/e2e`)
+- `npm run e2e -w @oxneer/web` runs Playwright (`apps/web/e2e`)
 - `npx jest <path>` from `apps/web` runs one test file
 - `node .claude/hooks/check-ui-rules.js <file-or-dir>` audits `.tsx` files against the mechanical UI rules
 - Format with prettier. A hook formats files as Claude edits them, and lint-staged runs eslint and prettier on commit.
@@ -14,18 +14,18 @@ Run `npm run typecheck` and `npm run lint` before you call UI work done.
 ## UI rules (read DESIGN.md before building or changing any screen)
 
 - **Design system:** `DESIGN.md` is the source of truth for color, type, spacing, components and page patterns.
-- **Primitives:** import from `@repo/ui` (`Button`, `Dialog`, `Sheet`, `Select`, `toast`, `cn`, …). Never create a one-off button, input, dialog or card in `apps/web`. If a primitive is missing, add it to `packages/ui/src/components` and export it from `packages/ui/src/index.ts`.
+- **Primitives:** import from `@oxneer/ui` (`Button`, `Dialog`, `Sheet`, `Select`, `toast`, `cn`, …). Never create a one-off button, input, dialog or card in `apps/web`. If a primitive is missing, add it to `packages/ui/src/components` and export it from `packages/ui/src/index.ts`.
 - **Admin building blocks:** reuse `apps/web/src/components/common/admin/*` (`PageHeader`, `SectionCard`, `DetailRow`, `Pill`, `ListState`, `ErrorAlert`, `ConfirmDialog`, `TypeToConfirmDialog`, `FormField`, `FormSection`, `StickyActionBar`, `FacetFilter`, `SearchInput`, `Tip`, `SaveButton`, …) and `components/common/data-table` (`DataTable`).
 - **Colors:** use semantic token classes only (`bg-background`, `text-muted-foreground`, `bg-primary`, `text-success`, `bg-warning/15`, …). No raw palette classes (`bg-blue-500`, `text-gray-400`) and no hex values in TSX.
 - **Icons:** `lucide-react` only, and don't add new `react-icons` usages.
 - **Theme:** the app ships dark by default (`<html className="dark">`). Every screen must work in both dark and light.
-- **Tailwind:** v3 in `apps/web` (write v3 syntax, even though the root and `packages/ui` declare v4), a JS config with the `@repo/ui` preset and `@tailwind` directives. Extend tokens in `packages/ui/tailwind.config.ts` and `packages/ui/src/globals.css`, not in feature code.
-- **Class merging:** use `cn()` from `@repo/ui`, not template-string concatenation, for conditional classes.
+- **Tailwind:** v3 in `apps/web` (write v3 syntax, even though `packages/ui` declares v4), a JS config with the `@oxneer/ui` preset and `@tailwind` directives. Extend tokens in `packages/ui/tailwind.config.ts` and `packages/ui/src/globals.css`, not in feature code.
+- **Class merging:** use `cn()` from `@oxneer/ui`, not template-string concatenation, for conditional classes.
 
 ## Code conventions
 
 - **Write for the human reader.** Use descriptive names, small single-purpose functions and components, early returns instead of deep nesting, and no clever one-liners. Add a short comment only where the _why_ isn't obvious from the code, for example a legacy mapping or a backend quirk.
-- **DRY.** Before writing a helper, hook or component, search the feature, `components/common` and `@repo/ui` for an existing one. If the same logic shows up a second time, extract it: within one feature into its `_lib`/`_hooks`, across features into `components/common` or a package. Don't copy-paste and then tweak.
+- **DRY.** Before writing a helper, hook or component, search the feature, `components/common` and `@oxneer/ui` for an existing one. If the same logic shows up a second time, extract it: within one feature into its `_lib`/`_hooks`, across features into `components/common` or a package. Don't copy-paste and then tweak.
 - **Pages stay thin.** A `page.tsx` reads route params, calls hooks, picks the loading/error/content state and composes components. Data fetching, state machines and transformations don't live in pages or in presentational components.
 
 ## Feature folder convention (admin)

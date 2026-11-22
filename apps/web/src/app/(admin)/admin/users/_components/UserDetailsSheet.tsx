@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { ExternalLink, KeyRound, Pencil } from 'lucide-react';
-import type { UserDetailVM } from '@repo/api';
+import type { UserDetailVM } from '@oxneer/api';
 import {
   Button,
   Sheet,
@@ -16,7 +16,7 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-} from '@repo/ui';
+} from '@oxneer/ui';
 import { fullName } from '../_lib/user-display';
 import type { UserRowHandlers } from './UserActionsMenu';
 import { UserBankAccounts } from './UserBankAccounts';

@@ -2,7 +2,7 @@
 
 import { useId, useState } from 'react';
 import { Check, Lock, X } from 'lucide-react';
-import { Card, Checkbox, Label } from '@repo/ui';
+import { Card, Checkbox, Label } from '@oxneer/ui';
 import { Pill } from '@/components/common/admin/Pill';
 import type { EndTrack, ExampleBid, RuleCard } from '../_lib/rules';
 import { PhraseText } from './PhraseText';

@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { Check, Info, type LucideIcon } from 'lucide-react';
-import { cn } from '@repo/ui';
+import { cn } from '@oxneer/ui';
 
 export const inputClass =
   'w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-60';

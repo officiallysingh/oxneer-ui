@@ -16,8 +16,8 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react';
-import { cn } from '@repo/ui';
-import type { AuctionWorkflowStep } from '@repo/api';
+import { cn } from '@oxneer/ui';
+import type { AuctionWorkflowStep } from '@oxneer/api';
 import { paymentStepData, resolveStr } from '../../../_components/PolicyShared';
 import type { WizardState } from '../../../_lib/wizard/types';
 import {

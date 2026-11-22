@@ -10,7 +10,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@repo/ui';
+} from '@oxneer/ui';
 import { UserAvatar } from '@/components/common/admin/UserAvatar';
 
 export interface UserInfoLike {

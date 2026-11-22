@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { metadataApi, ManagedTypeVM } from '@repo/api';
+import { metadataApi, ManagedTypeVM } from '@oxneer/api';
 import { Loader2, Trash2, RefreshCw, Plus, Pencil, Eye } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
-import { Button } from '@repo/ui';
+import { Button } from '@oxneer/ui';
 import { DataTable } from '@/components/common/data-table';
 import PageHeader from '@/components/common/admin/PageHeader';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';

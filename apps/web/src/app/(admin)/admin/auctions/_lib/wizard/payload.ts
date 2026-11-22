@@ -9,7 +9,7 @@ import type {
   ReservePricePolicyRQ,
   ReservePriceVisibility,
   WorkflowStepPhase,
-} from '@repo/api';
+} from '@oxneer/api';
 import { resolveStr } from '@/components/common/admin/format';
 import { POLICY_DEFAULTS, paymentStepData } from '../../_components/PolicyShared';
 import type {

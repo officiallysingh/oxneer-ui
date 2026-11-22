@@ -1,7 +1,7 @@
 'use client';
 
 import { HelpCircle } from 'lucide-react';
-import { Label, Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui';
+import { Label, Tooltip, TooltipContent, TooltipTrigger } from '@oxneer/ui';
 
 interface LabelWithTipProps {
   htmlFor: string;

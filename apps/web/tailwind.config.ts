@@ -1,6 +1,6 @@
 import type { Config } from 'tailwindcss';
 import tailwindcssAnimate from 'tailwindcss-animate';
-import uiConfig from '@repo/ui/tailwind.config';
+import uiConfig from '@oxneer/ui/tailwind.config';
 
 const config: Config = {
   darkMode: ['class'],

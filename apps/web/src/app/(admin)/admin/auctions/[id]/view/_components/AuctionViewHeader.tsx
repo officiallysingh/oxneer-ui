@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, Clock, Copy, MoreHorizontal, Pencil, Ban, Trash2 } from 'lucide-react';
-import type { AuctionVM } from '@repo/api';
+import type { AuctionVM } from '@oxneer/api';
 import {
   Button,
   DropdownMenu,
@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@repo/ui';
+} from '@oxneer/ui';
 import { Pill } from '@/components/common/admin/Pill';
 import Tip from '@/components/common/admin/Tip';
 import { formatDateTime } from '../../../_lib/wizard/summary';

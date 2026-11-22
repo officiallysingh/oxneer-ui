@@ -1,5 +1,5 @@
 import { SearchX, Users } from 'lucide-react';
-import { Button, Skeleton } from '@repo/ui';
+import { Button, Skeleton } from '@oxneer/ui';
 
 const SKELETON_WIDTHS = [
   ['58%', '34%'],

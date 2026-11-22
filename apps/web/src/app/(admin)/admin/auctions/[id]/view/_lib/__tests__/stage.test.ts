@@ -1,5 +1,5 @@
 /** @jest-environment node */
-import type { AuctionVM } from '@repo/api';
+import type { AuctionVM } from '@oxneer/api';
 import type { ParticipantView } from '../../../../_components/wizard/invite/invite';
 import { peopleCounts, personStatus } from '../people';
 import { auctionStage, countdownFor, formatRemaining, progressSteps } from '../stage';

@@ -6,7 +6,7 @@ import { TimelineNode } from './types';
 import { humanizeIsoDuration } from '../../_components/PolicyShared';
 import { formatDate, formatClock } from '@/components/common/admin/format';
 import { cn } from '@/lib/utils';
-import { AuctionVM } from '@repo/api';
+import { AuctionVM } from '@oxneer/api';
 
 interface WorkflowStage {
   id: string;

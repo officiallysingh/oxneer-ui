@@ -1,7 +1,7 @@
 'use client';
 
-import { AuctionVM, ParticipantVM } from '@repo/api';
-import { Button } from '@repo/ui';
+import { AuctionVM, ParticipantVM } from '@oxneer/api';
+import { Button } from '@oxneer/ui';
 import { Gavel, CheckCircle2, Clock, GitFork, Loader2 } from 'lucide-react';
 import { formatDateTime } from '@/components/common/admin/format';
 

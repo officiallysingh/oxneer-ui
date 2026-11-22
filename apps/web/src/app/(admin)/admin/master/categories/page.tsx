@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { masterApi, CategoryVM, SubCategoryVM } from '@repo/api';
+import { masterApi, CategoryVM, SubCategoryVM } from '@oxneer/api';
 import {
   Loader2,
   Trash2,
@@ -14,7 +14,7 @@ import {
   ChevronUp,
   Tag,
 } from 'lucide-react';
-import { Button } from '@repo/ui';
+import { Button } from '@oxneer/ui';
 import { PhraseSearchBar } from '@/components/common/admin/PhraseSearchBar';
 import { CategoryIcon } from '@/components/common/CategoryIcon';
 import PageHeader from '@/components/common/admin/PageHeader';

@@ -1,4 +1,4 @@
-import type { PropertyDef, PropertyType } from '@repo/api';
+import type { PropertyDef, PropertyType } from '@oxneer/api';
 
 /** Pure helpers shared by the attribute form renderer and the listing value renderer. */
 

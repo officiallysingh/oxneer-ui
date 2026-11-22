@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { ChevronDown, ExternalLink, Menu, User } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import { DropdownMenuItem } from '@repo/ui';
+import { DropdownMenuItem } from '@oxneer/ui';
 import { resolveTitle } from './nav-config';
 import { SidebarToggle } from './SidebarToggle';
 import { UserMenu, type UserInfoLike } from './UserMenu';

@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { Copy, KeyRound, Pencil } from 'lucide-react';
-import type { UserDetailVM } from '@repo/api';
-import { Button } from '@repo/ui';
+import type { UserDetailVM } from '@oxneer/api';
+import { Button } from '@oxneer/ui';
 import { copyText } from '@/lib/clipboard';
 import { UserActionsMenu, type UserRowHandlers } from '../UserActionsMenu';
 import { UserIdentity } from '../UserIdentity';

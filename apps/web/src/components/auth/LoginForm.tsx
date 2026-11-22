@@ -14,8 +14,8 @@ import {
   Phone,
   CheckCircle2,
 } from 'lucide-react';
-import { Button, Input, Label, Separator } from '@repo/ui';
-import { authApi, clearSessionError, readSessionError } from '@repo/api';
+import { Button, Input, Label, Separator } from '@oxneer/ui';
+import { authApi, clearSessionError, readSessionError } from '@oxneer/api';
 import { useAuthStore } from '@/store/authStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { authUserFromLoginResponse, establishAuthSession } from '@/lib/auth-session';

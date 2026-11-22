@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { cn } from '@repo/ui';
+import { cn } from '@oxneer/ui';
 import { formatMoney } from '../../../_lib/wizard/summary';
 
 export type ExampleRow = {

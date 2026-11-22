@@ -1,6 +1,6 @@
 'use client';
 
-import type { BankDetailVM } from '@repo/api';
+import type { BankDetailVM } from '@oxneer/api';
 import { FileCheck2, Landmark, Loader2 } from 'lucide-react';
 import { BankAccountSummary, hasCheque, useBankAccounts } from '@/components/common/bank';
 

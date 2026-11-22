@@ -1,6 +1,6 @@
 'use client';
 
-import { Tabs, TabsContent } from '@repo/ui';
+import { Tabs, TabsContent } from '@oxneer/ui';
 import type { AuctionViewController, AuctionViewData } from '../_hooks/useAuctionView';
 import { useAuctionViewActions } from '../_hooks/useAuctionViewActions';
 import { useAuctionViewModel } from '../_hooks/useAuctionViewModel';

@@ -12,10 +12,17 @@
       "cache": false,
       "persistent": true
     },
-    "lint": {},
-    "typecheck": {},
+    "transit": {
+      "dependsOn": ["^transit"]
+    },
+    "lint": {
+      "dependsOn": ["transit"]
+    },
+    "typecheck": {
+      "dependsOn": ["transit"]
+    },
     "test": {
-      "outputs": ["coverage/**"]
+      "dependsOn": ["transit"]
     }
   }
 }

@@ -10,10 +10,11 @@ import { authApi, getApiErrorMessage } from '@oxneer/api';
 import { ThemeToggle } from '@/components/common/Header/ThemeToggle';
 import { UserAvatar } from '@/components/common/admin/UserAvatar';
 import { UserMenu } from '@/components/admin/UserMenu';
+import { BrandLogo } from '@/components/common/BrandLogo';
 
 const navLinks = [
   { label: 'Auctions', href: '/#auctions' },
-  { label: 'How It Works', href: '/#how-it-works' },
+  { label: 'How it works', href: '/#how-it-works' },
 ];
 
 const AuctionNavbar = () => {
@@ -41,8 +42,7 @@ const AuctionNavbar = () => {
       <div className="container mx-auto flex h-16 items-center justify-between px-6">
         {/* Logo */}
         <Link href="/" className="flex items-center hover:opacity-90 transition-opacity">
-          <img src="/oxneer_logo_light.svg" alt="Oxneer" className="h-8 w-auto dark:hidden" />
-          <img src="/oxneer_logo_dark.svg" alt="Oxneer" className="h-8 w-auto hidden dark:block" />
+          <BrandLogo />
         </Link>
 
         {/* Desktop nav links */}
@@ -115,12 +115,12 @@ const AuctionNavbar = () => {
           ) : (
             <>
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/login">Sign In</Link>
+                <Link href="/login">Sign in</Link>
               </Button>
               <Button variant="gold" size="sm" className="gap-1.5" asChild>
                 <Link href="/signup">
                   <User className="h-4 w-4" />
-                  Get Started
+                  Get started
                 </Link>
               </Button>
             </>
@@ -196,12 +196,12 @@ const AuctionNavbar = () => {
               <>
                 <Button variant="ghost" size="sm" asChild className="w-full">
                   <Link href="/login" onClick={() => setMobileOpen(false)}>
-                    Sign In
+                    Sign in
                   </Link>
                 </Button>
                 <Button variant="gold" size="sm" asChild className="w-full">
                   <Link href="/signup" onClick={() => setMobileOpen(false)}>
-                    Get Started
+                    Get started
                   </Link>
                 </Button>
               </>

@@ -98,6 +98,59 @@ export function currencySymbol(code: string): string {
   }
 }
 
+/** Full money amount with the currency symbol, grouped Indian-style:
+ *  `formatMoney(8500000)` → "₹85,00,000". Falls back to "INR 85,00,000" for
+ *  codes Intl doesn't know, and "—" for non-numeric input. */
+export function formatMoney(value: string | number, currency = 'INR'): string {
+  const amount = typeof value === 'number' ? value : parseFloat(value);
+  if (Number.isNaN(amount)) return '—';
+  try {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: currency || 'INR',
+      maximumFractionDigits: 2,
+      minimumFractionDigits: 0,
+    }).format(amount);
+  } catch {
+    return `${currency} ${amount.toLocaleString('en-IN')}`;
+  }
+}
+
+/** Short money amount for cards and tight spaces, in lakh/crore for INR:
+ *  `formatCompactMoney(92000000)` → "₹9.2Cr", `formatCompactMoney(8500000)` → "₹85L". */
+export function formatCompactMoney(value: string | number, currency = 'INR'): string {
+  const amount = typeof value === 'number' ? value : parseFloat(value);
+  if (Number.isNaN(amount)) return '—';
+  try {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: currency || 'INR',
+      notation: 'compact',
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    return formatMoney(amount, currency);
+  }
+}
+
+const SECOND_MS = 1_000;
+const MINUTE_MS = 60 * SECOND_MS;
+const HOUR_MS = 60 * MINUTE_MS;
+const DAY_MS = 24 * HOUR_MS;
+
+/** Remaining time at the precision people care about: "4d 20h", "3h 12m",
+ *  and seconds only in the last hour ("12m 05s"). Returns "" once elapsed. */
+export function formatTimeLeft(ms: number): string {
+  if (!(ms > 0)) return '';
+  const days = Math.floor(ms / DAY_MS);
+  const hours = Math.floor((ms % DAY_MS) / HOUR_MS);
+  const minutes = Math.floor((ms % HOUR_MS) / MINUTE_MS);
+  const seconds = Math.floor((ms % MINUTE_MS) / SECOND_MS);
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m ${String(seconds).padStart(2, '0')}s`;
+}
+
 /** Compact time-only variant — used for "last evaluated 12:34:56" style timestamps. */
 export function formatTime(iso?: string | null): string {
   if (!iso) return '';

@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { ChevronDown, ChevronRight, LogOut } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@oxneer/ui';
 import { UserAvatar } from '@/components/common/admin/UserAvatar';
+import { BrandLogo } from '@/components/common/BrandLogo';
 import { navEntries, groupHasActive } from './nav-config';
 import type { UserInfoLike } from './UserMenu';
 
@@ -115,18 +116,7 @@ export function AdminSidebar({
                 className="h-9 w-9 rounded-lg object-contain shrink-0"
               />
             ) : (
-              <>
-                <img
-                  src="/oxneer_logo_light.svg"
-                  alt="Oxneer"
-                  className="h-8 w-auto shrink-0 dark:hidden"
-                />
-                <img
-                  src="/oxneer_logo_dark.svg"
-                  alt="Oxneer"
-                  className="h-8 w-auto shrink-0 hidden dark:block"
-                />
-              </>
+              <BrandLogo />
             )}
           </Link>
         </div>

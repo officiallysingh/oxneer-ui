@@ -1,19 +1,7 @@
 import type { PriceWindow, ScheduleState, WizardState } from './types';
 
-export function formatMoney(value: string | number, currency = 'INR'): string {
-  const amount = typeof value === 'number' ? value : parseFloat(value);
-  if (Number.isNaN(amount)) return '—';
-  try {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: currency || 'INR',
-      maximumFractionDigits: 2,
-      minimumFractionDigits: 0,
-    }).format(amount);
-  } catch {
-    return `${currency} ${amount.toLocaleString('en-IN')}`;
-  }
-}
+// Moved to the shared admin format helpers; re-exported for the wizard's existing imports.
+export { formatMoney } from '@/components/common/admin/format';
 
 export function formatDateTime(value: string): string {
   if (!value) return 'Not set';

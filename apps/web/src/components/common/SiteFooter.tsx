@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { BrandLogo } from '@/components/common/BrandLogo';
 
 const footerColumns: { title: string; links: { label: string; href: string }[] }[] = [
   {
@@ -18,9 +19,7 @@ const footerColumns: { title: string; links: { label: string; href: string }[] }
   },
   {
     title: 'Support',
-    links: [
-      { label: 'Help & contact', href: 'mailto:support@oxneer.com' },
-    ],
+    links: [{ label: 'Help & contact', href: 'mailto:support@oxneer.com' }],
   },
 ];
 
@@ -31,12 +30,7 @@ const SiteFooter = () => {
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <div className="flex items-center mb-4">
-              <img src="/oxneer_logo_light.svg" alt="Oxneer" className="h-7 w-auto dark:hidden" />
-              <img
-                src="/oxneer_logo_dark.svg"
-                alt="Oxneer"
-                className="h-7 w-auto hidden dark:block"
-              />
+              <BrandLogo className="h-7" />
             </div>
             <p className="font-body text-sm text-muted-foreground leading-relaxed">
               Auction management and participation — from listing and workflows to live bidding.

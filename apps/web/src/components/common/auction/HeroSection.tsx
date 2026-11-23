@@ -44,12 +44,12 @@ const HeroSection = () => {
             <div className="mt-8 flex flex-wrap gap-4">
               <Button variant="gold" size="lg" className="gap-2 text-base" asChild>
                 <a href="#auctions">
-                  Explore Auctions
+                  Explore auctions
                   <ArrowRight className="h-5 w-5" />
                 </a>
               </Button>
               <Button variant="gold-outline" size="lg" className="text-base" asChild>
-                <a href="#how-it-works">How It Works</a>
+                <a href="#how-it-works">How it works</a>
               </Button>
             </div>
           </motion.div>

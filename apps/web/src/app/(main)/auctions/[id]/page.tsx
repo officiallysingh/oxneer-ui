@@ -10,7 +10,13 @@ import {
   type ParticipantVM,
 } from '@oxneer/api';
 import { useAuthStore } from '@/store/authStore';
-import { resolveStr, formatLabel, formatDateTime } from '@/components/common/admin/format';
+import {
+  resolveStr,
+  formatLabel,
+  formatDateTime,
+  formatMoney,
+} from '@/components/common/admin/format';
+import { StatusBadge } from '@/components/common/admin/AuctionStatusBadge';
 import {
   Loader2,
   AlertCircle,
@@ -58,15 +64,6 @@ function auctionIsJoinable(status?: unknown): boolean {
   const s = resolveStr(status);
   return s === 'PUBLISHED' || s === 'LIVE' || s === 'SCHEDULED';
 }
-
-const STATUS_COLORS: Record<string, string> = {
-  LIVE: 'bg-success/10 text-success border-success/30',
-  PUBLISHED: 'bg-info/10 text-info border-info/30',
-  SCHEDULED: 'bg-warning/10 text-warning border-warning/30',
-  DRAFT: 'bg-muted text-muted-foreground border-border',
-  CANCELLED: 'bg-destructive/10 text-destructive border-destructive/30',
-  COMPLETED: 'bg-violet-500/10 text-violet-600 border-violet-500/30',
-};
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -184,7 +181,7 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
           <div className="w-14 h-14 rounded-full bg-destructive/15 flex items-center justify-center mx-auto mb-4">
             <AlertCircle className="h-7 w-7 text-destructive" />
           </div>
-          <h1 className="text-xl font-semibold text-foreground mb-2">Auction Unavailable</h1>
+          <h1 className="text-xl font-semibold text-foreground mb-2">Auction unavailable</h1>
           <p className="text-muted-foreground mb-6 text-sm">
             {error ?? 'This auction could not be loaded.'}
           </p>
@@ -204,7 +201,6 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
   const DirectionIcon = resolveDirectionIcon(auction.direction);
   const joinable = auctionIsJoinable(auction.status);
   const currency = resolveStr(auction.regionalSettings?.currency);
-  const statusColor = STATUS_COLORS[status] ?? 'bg-muted text-muted-foreground border-border';
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
@@ -224,14 +220,7 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
         <div className="rounded-2xl border border-border bg-card p-6 md:p-8 shadow-xs space-y-6">
           {/* Status + badges */}
           <div className="flex flex-wrap items-center gap-2">
-            <span
-              className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border ${statusColor}`}
-            >
-              {status === 'LIVE' && (
-                <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-              )}
-              {formatLabel(auction.status)}
-            </span>
+            <StatusBadge value={auction.status} size="sm" />
             {accessibility && (
               <Badge variant="outline" className="text-xs gap-1">
                 <AccessibilityIcon className="h-3 w-3" />
@@ -306,10 +295,10 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
-                    Opening Price
+                    Opening price
                   </p>
-                  <p className="text-sm font-semibold text-foreground mt-0.5">
-                    {currency} {auction.unit.openingPrice.toLocaleString()}
+                  <p className="text-sm font-semibold tabular-nums text-foreground mt-0.5">
+                    {formatMoney(auction.unit.openingPrice, currency)}
                   </p>
                 </div>
               </div>
@@ -390,7 +379,7 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
                         className="gap-2 border-primary/40 text-primary hover:bg-primary/5 rounded-xl"
                       >
                         <ClipboardList className="h-4 w-4" />
-                        Complete Registration Steps
+                        Complete registration steps
                       </Button>
                     )}
                   </>
@@ -411,7 +400,7 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
                 ) : (
                   <>
                     <Gavel className="h-4 w-4" />
-                    {isLoggedIn ? 'Join Auction' : 'Sign in to join'}
+                    {isLoggedIn ? 'Join auction' : 'Sign in to join'}
                   </>
                 )}
               </Button>
@@ -447,7 +436,7 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
                 <div className="p-2 rounded-lg bg-primary/10 shrink-0">
                   <Tag className="h-5 w-5 text-primary" />
                 </div>
-                <h2 className="text-base font-semibold text-foreground">Auction Item</h2>
+                <h2 className="text-base font-semibold text-foreground">Auction item</h2>
               </div>
               <div className="space-y-3 text-sm">
                 <PublicDetailRow label="Unit type">
@@ -455,13 +444,15 @@ export default function PublicAuctionViewPage({ params }: { params: Promise<{ id
                 </PublicDetailRow>
                 {auction.unit.openingPrice != null && (
                   <PublicDetailRow label="Opening price">
-                    {currency} {auction.unit.openingPrice.toLocaleString()}
+                    <span className="tabular-nums">
+                      {formatMoney(auction.unit.openingPrice, currency)}
+                    </span>
                   </PublicDetailRow>
                 )}
                 {auction.unit.standingPrice != null && (
                   <PublicDetailRow label="Current price">
-                    <span className="text-primary">
-                      {currency} {auction.unit.standingPrice.toLocaleString()}
+                    <span className="tabular-nums text-primary">
+                      {formatMoney(auction.unit.standingPrice, currency)}
                     </span>
                   </PublicDetailRow>
                 )}

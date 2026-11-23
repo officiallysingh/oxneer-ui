@@ -23,7 +23,7 @@ export function PaymentStepDetails({ step, onSubmit, submitting, error }: Paymen
           <CreditCard className="h-5 w-5" />
         </div>
         <div>
-          <h3 className="font-bold text-foreground text-sm">{step.name || 'Payment Details'}</h3>
+          <h3 className="font-bold text-foreground text-sm">{step.name || 'Payment details'}</h3>
           <p className="text-xs text-muted-foreground mt-0.5">
             {step.description ||
               'Complete the payment below. After payment is processed, this step will be marked as completed.'}
@@ -34,7 +34,7 @@ export function PaymentStepDetails({ step, onSubmit, submitting, error }: Paymen
       <div className="rounded-2xl border border-border bg-card p-5 space-y-3 shadow-xs">
         {mode && (
           <div className="flex items-center justify-between text-xs sm:text-sm">
-            <span className="text-muted-foreground font-medium">Payment Mode</span>
+            <span className="text-muted-foreground font-medium">Payment mode</span>
             <span className="font-bold text-foreground bg-muted/50 px-2.5 py-1 rounded-lg">
               {formatLabel(mode)}
             </span>

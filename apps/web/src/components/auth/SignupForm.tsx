@@ -255,7 +255,7 @@ export function SignupForm() {
           <form onSubmit={handleSendMobileOtp} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="signup-mobile" className={mobileError ? 'text-destructive' : ''}>
-                Mobile Number
+                Mobile number
               </Label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -395,7 +395,7 @@ export function SignupForm() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="firstName">First Name</Label>
+                <Label htmlFor="firstName">First name</Label>
                 <Input
                   id="firstName"
                   type="text"
@@ -406,7 +406,7 @@ export function SignupForm() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="lastName">Last Name</Label>
+                <Label htmlFor="lastName">Last name</Label>
                 <Input
                   id="lastName"
                   type="text"
@@ -501,7 +501,7 @@ export function SignupForm() {
                 </>
               ) : (
                 <>
-                  Create Account <ArrowRight className="ml-2 h-4 w-4" />
+                  Create account <ArrowRight className="ml-2 h-4 w-4" />
                 </>
               )}
             </Button>
@@ -529,7 +529,7 @@ export function SignupForm() {
         <form onSubmit={handleSendEmailOtp} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="signup-email" className={emailError ? 'text-destructive' : ''}>
-              Email Address
+              Email address
             </Label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

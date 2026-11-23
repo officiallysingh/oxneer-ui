@@ -102,7 +102,7 @@ export function InvitationActionCard({ auctionId, auction, link }: InvitationAct
             )}
           </div>
           <h2 className="text-xl font-semibold text-foreground">
-            {action === 'accept' ? 'Invitation Accepted!' : 'Invitation Declined'}
+            {action === 'accept' ? 'Invitation accepted' : 'Invitation declined'}
           </h2>
           <p className="text-muted-foreground max-w-sm">
             {action === 'accept'
@@ -186,7 +186,7 @@ export function InvitationActionCard({ auctionId, auction, link }: InvitationAct
             )}
           </div>
           <h2 className="text-base font-semibold text-foreground">
-            {action === 'accept' ? 'Accept Invitation' : 'Decline Invitation'}
+            {action === 'accept' ? 'Accept invitation' : 'Decline invitation'}
           </h2>
         </div>
 
@@ -276,7 +276,7 @@ export function InvitationActionCard({ auctionId, auction, link }: InvitationAct
                 </>
               ) : (
                 <>
-                  {action === 'accept' ? 'Accept Invitation' : 'Decline Invitation'}
+                  {action === 'accept' ? 'Accept invitation' : 'Decline invitation'}
                   <ArrowRight className="h-4 w-4" aria-hidden />
                 </>
               )}

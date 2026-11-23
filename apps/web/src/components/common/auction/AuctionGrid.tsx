@@ -1,497 +1,251 @@
 'use client';
 
-import { useCallback, useEffect, useId, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { useMemo, useState } from 'react';
+import { ChevronLeft, ChevronRight, Gavel, Search, SearchX, X } from 'lucide-react';
+import { Button, DatePicker, Input } from '@oxneer/ui';
+import ErrorAlert from '@/components/common/admin/ErrorAlert';
+import { FacetFilter } from '@/components/common/admin/FacetFilter';
+import { ListEmptyState } from '@/components/common/admin/ListEmptyState';
 import {
-  auctionsApi,
-  masterApi,
-  type AuctionVM,
-  type PublicAuctionsFilter,
-  type CategoryVM,
-} from '@oxneer/api';
-import {
-  formatCompactMoney,
-  formatDateTime,
-  formatLabel,
-  formatMoney,
-  formatTimeLeft,
-  resolveStr,
-} from '@/components/common/admin/format';
-import { StatusBadge } from '@/components/common/admin/AuctionStatusBadge';
-import {
-  Loader2,
-  Search,
-  X,
-  Calendar,
-  Clock,
-  TrendingUp,
-  TrendingDown,
-  Gavel,
-  ChevronLeft,
-  ChevronRight,
-  Globe,
-  Lock,
-} from 'lucide-react';
-import { Button, Input, Badge } from '@oxneer/ui';
-import Select from 'react-select';
-import type { MultiValue } from 'react-select';
-import {
-  GroupedSubcategorySelect,
-  makeReactSelectStyles,
-} from '@/components/common/admin/GroupedSubcategorySelect';
-
-interface SelectOption {
-  label: string;
-  value: string;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const reactSelectStyles = makeReactSelectStyles<true>() as any;
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-const DAY_MS = 86_400_000;
-
-function CountdownOrSchedule({ startIso, endIso }: { startIso?: string; endIso?: string }) {
-  const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  if (!startIso) return <span className="text-muted-foreground text-xs">Not scheduled</span>;
-
-  const startMs = new Date(startIso).getTime();
-  const endMs = endIso ? new Date(endIso).getTime() : null;
-
-  if (now < startMs) {
-    // Beyond a day out, a date reads better than a countdown.
-    if (startMs - now >= DAY_MS) {
-      return <span className="text-muted-foreground text-xs">{formatDateTime(startIso)}</span>;
-    }
-    return (
-      <span className="text-info font-medium text-xs tabular-nums">
-        Starts in {formatTimeLeft(startMs - now)}
-      </span>
-    );
-  }
-
-  if (endMs && now < endMs) {
-    return (
-      <span className="text-success font-medium text-xs tabular-nums">
-        Ends in {formatTimeLeft(endMs - now)}
-      </span>
-    );
-  }
-
-  if (endMs && now >= endMs) {
-    return <span className="text-muted-foreground text-xs">Ended</span>;
-  }
-
-  return <span className="text-muted-foreground text-xs">{formatDateTime(startIso)}</span>;
-}
-
-// ── Auction card for the public grid ─────────────────────────────────────────
-
-function PublicAuctionCard({ auction, index }: { auction: AuctionVM; index: number }) {
-  const router = useRouter();
-  const status = resolveStr(auction.status);
-  const direction = resolveStr(auction.direction);
-  const accessibility = resolveStr(auction.accessibility);
-  const currency = resolveStr(auction.regionalSettings?.currency) || 'INR';
-  const DirectionIcon = direction === 'REVERSE' ? TrendingDown : TrendingUp;
-  const AccessIcon = accessibility === 'PUBLIC' ? Globe : Lock;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.4, delay: index * 0.07 }}
-      role="link"
-      tabIndex={0}
-      aria-label={`View details for ${auction.title}`}
-      className="group relative overflow-hidden rounded-xl border border-border bg-card shadow-xs transition-all duration-300 hover:border-primary/40 hover:shadow-md cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-      onClick={() => router.push(`/auctions/${auction.id}`)}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          router.push(`/auctions/${auction.id}`);
-        }
-      }}
-    >
-      {/* Status bar */}
-      <div className="px-4 py-3 border-b border-border/50 flex items-center justify-between gap-2">
-        <StatusBadge value={auction.status} size="sm" />
-        <div className="flex items-center gap-1.5 text-muted-foreground">
-          <AccessIcon className="h-3 w-3" />
-          <DirectionIcon className="h-3 w-3" />
-        </div>
-      </div>
-
-      {/* Body */}
-      <div className="p-4 space-y-3">
-        <div className="flex items-start gap-3">
-          <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-            <Gavel className="h-4 w-4 text-primary" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h3 className="font-semibold text-foreground text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors">
-              {auction.title}
-            </h3>
-            {auction.description && (
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                {auction.description}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Schedule */}
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          {status === 'LIVE' ? (
-            <Clock className="h-3 w-3 shrink-0" />
-          ) : (
-            <Calendar className="h-3 w-3 shrink-0" />
-          )}
-          <CountdownOrSchedule
-            startIso={auction.schedule?.startTime}
-            endIso={auction.schedule?.endTime}
-          />
-        </div>
-
-        {/* Price + format */}
-        <div className="flex items-end justify-between border-t border-border/50 pt-3">
-          <div>
-            {auction.unit?.openingPrice != null ? (
-              <>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                  Opening
-                </p>
-                <p
-                  className="text-base font-bold tabular-nums text-primary"
-                  title={formatMoney(auction.unit.openingPrice, currency)}
-                >
-                  {formatCompactMoney(auction.unit.openingPrice, currency)}
-                </p>
-              </>
-            ) : (
-              <p className="text-xs text-muted-foreground">—</p>
-            )}
-          </div>
-          {auction.format && (
-            <Badge variant="secondary" className="text-[10px]">
-              {formatLabel(auction.format)}
-            </Badge>
-          )}
-        </div>
-      </div>
-
-      {/* Keep the primary action visible on touch devices as well as hover. */}
-      <div className="px-4 pb-4">
-        <Button
-          size="sm"
-          variant="outline"
-          className="w-full gap-1.5 border-primary/40 text-primary hover:border-primary hover:bg-primary hover:text-primary-foreground"
-          onClick={(e) => {
-            e.stopPropagation();
-            router.push(`/auctions/${auction.id}`);
-          }}
-        >
-          <Gavel className="h-3.5 w-3.5" />
-          View &amp; join
-        </Button>
-      </div>
-    </motion.div>
-  );
-}
-
-// ── Main grid ─────────────────────────────────────────────────────────────────
+  categoryOptions as toCategoryOptions,
+  pruneSubCategories,
+  subCategoryOptions as toSubCategoryOptions,
+} from '@/components/common/category-options';
+import { useCategories } from '@/hooks/useCategories';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { usePublicAuctions } from '@/hooks/usePublicAuctions';
+import { PublicAuctionCard, PublicAuctionCardSkeleton } from './PublicAuctionCard';
 
 const PAGE_SIZE = 12;
+/** The API accepts search phrases of up to 100 characters. */
+const MAX_SEARCH_LENGTH = 100;
 
-const AuctionGrid = () => {
-  const [auctions, setAuctions] = useState<AuctionVM[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(0);
-  const [hasNext, setHasNext] = useState(false);
-  const [totalRecords, setTotalRecords] = useState(0);
+interface GridFilters {
+  search: string;
+  categories: string[];
+  subCategories: string[];
+  /** "yyyy-MM-dd"; '' when unset. */
+  fromDate: string;
+  tillDate: string;
+}
 
-  // Search state
-  const [phrase, setPhrase] = useState('');
-  const [pendingPhrase, setPendingPhrase] = useState('');
-  const [fromDate, setFromDate] = useState('');
-  const [tillDate, setTillDate] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState<SelectOption[]>([]);
-  const [selectedSubCategories, setSelectedSubCategories] = useState<SelectOption[]>([]);
-  const [categories, setCategories] = useState<CategoryVM[]>([]);
-  const catInstanceId = useId();
-  const subInstanceId = useId();
+const NO_FILTERS: GridFilters = {
+  search: '',
+  categories: [],
+  subCategories: [],
+  fromDate: '',
+  tillDate: '',
+};
 
-  // Fetch categories on mount
-  useEffect(() => {
-    masterApi
-      .getCategories(true)
-      .then((cats) => setCategories(cats))
-      .catch(() => {});
-  }, []);
-
-  const categoryOptions: SelectOption[] = categories.map((c) => ({
-    label: c.name,
-    value: c.id,
-  }));
-
-  const fetchAuctions = useCallback(
-    async (opts: PublicAuctionsFilter & { pageOverride?: number } = {}) => {
-      setLoading(true);
-      try {
-        const result = await auctionsApi.getPublicAuctions({
-          phrases: opts.phrases,
-          categories: opts.categories,
-          subCategories: opts.subCategories,
-          fromTime: opts.fromTime,
-          tillTime: opts.tillTime,
-          page: opts.pageOverride ?? page,
-        });
-        setAuctions(result.content ?? []);
-        setHasNext(result.page?.hasNext ?? false);
-        setTotalRecords(result.page?.totalRecords ?? 0);
-      } catch {
-        // Non-fatal — show empty state
-        setAuctions([]);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [page],
+function hasFilters(filters: GridFilters): boolean {
+  return (
+    !!filters.search.trim() ||
+    filters.categories.length > 0 ||
+    filters.subCategories.length > 0 ||
+    !!filters.fromDate ||
+    !!filters.tillDate
   );
+}
 
-  // Initial load
-  useEffect(() => {
-    fetchAuctions({ pageOverride: 0 });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+/** Start and end of the chosen days, as instants. */
+function dayStartIso(date: string) {
+  return date ? new Date(`${date}T00:00:00`).toISOString() : undefined;
+}
+function dayEndIso(date: string) {
+  return date ? new Date(`${date}T23:59:59`).toISOString() : undefined;
+}
 
-  const handleSearch = () => {
-    const newPhrase = pendingPhrase.trim();
-    setPhrase(newPhrase);
-    setPage(0);
-    fetchAuctions({
-      phrases: newPhrase ? [newPhrase] : undefined,
-      categories: selectedCategories.map((o) => o.value),
-      subCategories: selectedSubCategories.map((o) => o.value),
-      fromTime: fromDate ? new Date(fromDate).toISOString() : undefined,
-      tillTime: tillDate ? new Date(`${tillDate}T23:59:59`).toISOString() : undefined,
-      pageOverride: 0,
+/** The browse section of the home page: filters that apply as you type, then the grid. */
+export default function AuctionGrid() {
+  const categories = useCategories();
+  const [filters, setFilters] = useState<GridFilters>(NO_FILTERS);
+  const search = useDebouncedValue(filters.search.trim());
+
+  const query = useMemo(
+    () => ({
+      phrases: search ? [search] : undefined,
+      categories: filters.categories,
+      subCategories: filters.subCategories,
+      fromTime: dayStartIso(filters.fromDate),
+      tillTime: dayEndIso(filters.tillDate),
+      size: PAGE_SIZE,
+    }),
+    [search, filters.categories, filters.subCategories, filters.fromDate, filters.tillDate],
+  );
+  const list = usePublicAuctions(query);
+
+  const update = (patch: Partial<GridFilters>) => setFilters((prev) => ({ ...prev, ...patch }));
+  const setCategories = (ids: string[]) =>
+    update({
+      categories: ids,
+      subCategories: pruneSubCategories(categories, ids, filters.subCategories),
     });
-  };
-
-  const handleReset = () => {
-    setPendingPhrase('');
-    setPhrase('');
-    setFromDate('');
-    setTillDate('');
-    setSelectedCategories([]);
-    setSelectedSubCategories([]);
-    setPage(0);
-    fetchAuctions({ pageOverride: 0 });
-  };
-
-  const handlePageChange = (delta: number) => {
-    const next = page + delta;
-    if (next < 0) return;
-    setPage(next);
-    fetchAuctions({
-      phrases: phrase ? [phrase] : undefined,
-      categories: selectedCategories.map((o) => o.value),
-      subCategories: selectedSubCategories.map((o) => o.value),
-      fromTime: fromDate ? new Date(fromDate).toISOString() : undefined,
-      tillTime: tillDate ? new Date(`${tillDate}T23:59:59`).toISOString() : undefined,
-      pageOverride: next,
-    });
-  };
+  const clearFilters = () => setFilters(NO_FILTERS);
+  const filtered = hasFilters(filters);
 
   return (
-    <section id="auctions" className="py-20">
+    <section id="auctions" className="scroll-mt-20 py-20">
       <div className="container mx-auto px-6">
-        {/* Heading */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center"
-        >
-          <h2 className="font-display text-3xl font-bold text-foreground md:text-4xl">
-            Featured <span className="text-gradient-gold">auctions</span>
-          </h2>
-          <p className="mx-auto mt-3 max-w-md font-body text-muted-foreground">
-            Browse live and upcoming auctions open for participation.
-          </p>
-        </motion.div>
-
-        {/* Search / filter */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mx-auto mt-10  rounded-2xl border border-border bg-card/60 p-4 shadow-xs backdrop-blur-sm"
-        >
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="min-w-[200px] flex-1 space-y-1.5">
-              <label className="font-body text-xs uppercase tracking-wider text-muted-foreground">
-                Search
-              </label>
-              <Input
-                value={pendingPhrase}
-                onChange={(e) => setPendingPhrase(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                placeholder="Search auctions..."
-              />
-            </div>
-
-            <div className="min-w-[150px] space-y-1.5">
-              <label className="font-body text-xs uppercase tracking-wider text-muted-foreground">
-                From
-              </label>
-              <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
-            </div>
-
-            <div className="min-w-[150px] space-y-1.5">
-              <label className="font-body text-xs uppercase tracking-wider text-muted-foreground">
-                Till
-              </label>
-              <Input type="date" value={tillDate} onChange={(e) => setTillDate(e.target.value)} />
-            </div>
-
-            <div className="min-w-[200px] space-y-1.5">
-              <label className="font-body text-xs uppercase tracking-wider text-muted-foreground">
-                Categories
-              </label>
-              <Select<SelectOption, true>
-                isMulti
-                instanceId={catInstanceId}
-                options={categoryOptions}
-                value={selectedCategories}
-                onChange={(vals: MultiValue<SelectOption>) => {
-                  setSelectedCategories([...vals]);
-                  // Clear subcategories that no longer belong to selected cats
-                  const catIds = new Set(vals.map((v) => v.value));
-                  setSelectedSubCategories((prev) =>
-                    prev.filter((s) => {
-                      const ownerCat = categories.find((c) =>
-                        c.subCategories?.some((sc) => sc.id === s.value),
-                      );
-                      return ownerCat && catIds.has(ownerCat.id);
-                    }),
-                  );
-                }}
-                placeholder="All categories"
-                styles={reactSelectStyles}
-              />
-            </div>
-
-            <div className="min-w-[200px] space-y-1.5">
-              <label className="font-body text-xs uppercase tracking-wider text-muted-foreground">
-                Sub-categories
-              </label>
-              <GroupedSubcategorySelect
-                isMulti
-                instanceId={subInstanceId}
-                categories={
-                  selectedCategories.length > 0
-                    ? categories.filter((c) => selectedCategories.some((s) => s.value === c.id))
-                    : categories
-                }
-                value={selectedSubCategories.map((o) => o.value)}
-                onChange={(ids) => {
-                  const allSubs = categories.flatMap((c) => c.subCategories ?? []);
-                  setSelectedSubCategories(
-                    ids
-                      .map((id) => allSubs.find((s) => s.id === id))
-                      .filter(Boolean)
-                      .map((s) => ({ label: s!.name, value: s!.id })),
-                  );
-                }}
-                placeholder="All sub-categories"
-              />
-            </div>
-
-            <div className="flex gap-2 pb-0.5">
-              <Button variant="gold" size="sm" onClick={handleSearch} className="gap-1.5">
-                <Search className="h-3.5 w-3.5" />
-                Search
-              </Button>
-              <Button variant="ghost" size="sm" onClick={handleReset} className="gap-1.5">
-                <X className="h-3.5 w-3.5" />
-                Reset
-              </Button>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Grid */}
-        {loading ? (
-          <div className="mt-16 flex justify-center">
-            <div className="flex flex-col items-center gap-3 text-muted-foreground">
-              <Loader2 className="h-8 w-8 animate-spin" />
-              <p className="text-sm">Loading auctions...</p>
-            </div>
-          </div>
-        ) : auctions.length === 0 ? (
-          <div className="mt-16 text-center">
-            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-              <Gavel className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <p className="font-body text-foreground text-sm font-medium">No auctions found</p>
-            <p className="font-body text-muted-foreground text-sm mt-1 max-w-sm mx-auto">
-              No public auctions match your filters right now. Reset filters or check back later.
+        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h2 className="font-display text-3xl font-semibold tracking-tight text-foreground text-balance md:text-4xl">
+              Browse auctions
+            </h2>
+            <p className="mt-2 max-w-xl text-muted-foreground">
+              Live and upcoming auctions you can take part in.
             </p>
-            <Button variant="outline" size="sm" onClick={handleReset} className="mt-4 gap-1.5">
-              <X className="h-3.5 w-3.5" />
-              Reset filters
-            </Button>
           </div>
-        ) : (
-          <>
-            <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {auctions.map((auction, i) => (
-                <PublicAuctionCard key={auction.id} auction={auction} index={i} />
-              ))}
-            </div>
+          {!list.isLoading && !list.error && (
+            <p className="text-sm tabular-nums text-muted-foreground" aria-live="polite">
+              {list.totalRecords === 1 ? '1 auction' : `${list.totalRecords} auctions`}
+            </p>
+          )}
+        </div>
 
-            {/* Pagination */}
-            {totalRecords > PAGE_SIZE && (
-              <div className="mt-10 flex items-center justify-center gap-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(-1)}
-                  disabled={page === 0 || loading}
-                  className="gap-1.5"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Prev
-                </Button>
-                <span className="text-sm text-muted-foreground">Page {page + 1}</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(1)}
-                  disabled={!hasNext || loading}
-                  className="gap-1.5"
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-          </>
+        <div className="mt-8 flex flex-wrap items-center gap-2">
+          <div className="relative min-w-0 flex-[1_1_260px]">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden
+            />
+            <Input
+              type="search"
+              value={filters.search}
+              onChange={(e) => update({ search: e.target.value })}
+              maxLength={MAX_SEARCH_LENGTH}
+              placeholder="Search by title, reference or item"
+              aria-label="Search auctions"
+              className="h-10 pl-9"
+            />
+          </div>
+          <FacetFilter
+            label="Categories"
+            options={toCategoryOptions(categories)}
+            value={filters.categories}
+            onChange={setCategories}
+            emptyMessage="No categories found"
+          />
+          <FacetFilter
+            label="Sub-categories"
+            options={toSubCategoryOptions(categories, filters.categories)}
+            value={filters.subCategories}
+            onChange={(subCategories) => update({ subCategories })}
+            emptyMessage="No sub-categories found"
+          />
+          <div className="flex items-center gap-2">
+            <DatePicker
+              value={filters.fromDate}
+              onChange={(fromDate) => update({ fromDate })}
+              placeholder="Starts from"
+              className="w-[150px]"
+            />
+            <DatePicker
+              value={filters.tillDate}
+              onChange={(tillDate) => update({ tillDate })}
+              placeholder="Starts by"
+              className="w-[150px]"
+            />
+          </div>
+          {filtered && (
+            <Button variant="ghost" onClick={clearFilters}>
+              <X />
+              Clear
+            </Button>
+          )}
+        </div>
+
+        <div className="mt-8">
+          <GridBody list={list} filtered={filtered} onClearFilters={clearFilters} />
+        </div>
+
+        {list.totalPages > 1 && (
+          <nav aria-label="Auction pages" className="mt-10 flex items-center justify-center gap-3">
+            <Button
+              variant="outline"
+              onClick={() => list.goToPage(list.page - 1)}
+              disabled={list.page === 0 || list.isLoading}
+            >
+              <ChevronLeft />
+              Previous
+            </Button>
+            <span className="text-sm tabular-nums text-muted-foreground">
+              Page {list.page + 1} of {list.totalPages}
+            </span>
+            <Button
+              variant="outline"
+              onClick={() => list.goToPage(list.page + 1)}
+              disabled={list.page + 1 >= list.totalPages || list.isLoading}
+            >
+              Next
+              <ChevronRight />
+            </Button>
+          </nav>
         )}
       </div>
     </section>
   );
-};
+}
 
-export default AuctionGrid;
+function GridBody({
+  list,
+  filtered,
+  onClearFilters,
+}: {
+  list: ReturnType<typeof usePublicAuctions>;
+  filtered: boolean;
+  onClearFilters: () => void;
+}) {
+  if (list.isLoading) {
+    return (
+      <div
+        aria-busy="true"
+        aria-label="Loading auctions"
+        className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+      >
+        {Array.from({ length: 6 }, (_, i) => (
+          <PublicAuctionCardSkeleton key={i} />
+        ))}
+      </div>
+    );
+  }
+
+  if (list.error) {
+    return (
+      <div className="space-y-3">
+        <ErrorAlert message={list.error} />
+        <Button variant="outline" onClick={list.retry}>
+          Try again
+        </Button>
+      </div>
+    );
+  }
+
+  if (list.auctions.length === 0) {
+    return filtered ? (
+      <ListEmptyState
+        icon={SearchX}
+        title="No auctions match your search"
+        hint="Try fewer words, another category or a wider date range."
+        action={
+          <Button variant="outline" onClick={onClearFilters}>
+            Clear filters
+          </Button>
+        }
+      />
+    ) : (
+      <ListEmptyState
+        icon={Gavel}
+        title="No auctions are open right now"
+        hint="New auctions appear here as soon as they’re published."
+      />
+    );
+  }
+
+  return (
+    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {list.auctions.map((auction) => (
+        <PublicAuctionCard key={auction.id} auction={auction} />
+      ))}
+    </div>
+  );
+}

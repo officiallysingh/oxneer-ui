@@ -1,486 +1,146 @@
 'use client';
 
-import { use, useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import {
-  auctionsApi,
-  participantsApi,
-  type AuctionVM,
-  type AuctionWorkflowStep,
-  type ParticipantVM,
-} from '@oxneer/api';
-import { useAuthStore } from '@/store/authStore';
-import {
-  resolveStr,
-  formatLabel,
-  formatDateTime,
-  formatMoney,
-} from '@/components/common/admin/format';
-import { StatusBadge } from '@/components/common/admin/AuctionStatusBadge';
-import {
-  Loader2,
-  AlertCircle,
-  Calendar,
-  Clock,
-  ArrowLeft,
-  Gavel,
-  Globe,
-  Lock,
-  TrendingUp,
-  TrendingDown,
-  IndianRupee,
-  Users,
-  Tag,
-  CheckCircle2,
-  ClipboardList,
-} from 'lucide-react';
-import { Button, Badge, Dialog, DialogContent, DialogHeader, DialogTitle, toast } from '@oxneer/ui';
+import { use, useState } from 'react';
+import Link from 'next/link';
+import { AlertCircle, ArrowLeft, Lock } from 'lucide-react';
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Skeleton } from '@oxneer/ui';
+import { resolveStr } from '@/components/common/admin/format';
 import { WorkflowWizard } from '../_components/WorkflowWizard';
-import {
-  PublicAuctionOverview,
-  PublicWorkflow,
-  PublicDetailRow,
-} from './_components/PublicAuctionSections';
+import { AuctionActionPanel } from './_components/AuctionActionPanel';
+import { AuctionFacts } from './_components/AuctionFacts';
+import { PublicWorkflow } from './_components/PublicAuctionSections';
 import { WorkflowStatusCard } from './_components/WorkflowStatusCard';
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function resolveAccessibilityIcon(value?: unknown) {
-  return resolveStr(value) === 'PUBLIC' ? Globe : Lock;
-}
-
-function resolveDirectionIcon(value?: unknown) {
-  return resolveStr(value) === 'REVERSE' ? TrendingDown : TrendingUp;
-}
-
-function formatSchedule(startIso?: string, endIso?: string): string {
-  if (!startIso) return 'Not yet scheduled';
-  const start = formatDateTime(startIso);
-  if (!endIso) return `Starts ${start}`;
-  return `${start} — ${formatDateTime(endIso)}`;
-}
-
-function auctionIsJoinable(status?: unknown): boolean {
-  const s = resolveStr(status);
-  return s === 'PUBLISHED' || s === 'LIVE' || s === 'SCHEDULED';
-}
-
-// ── Page ──────────────────────────────────────────────────────────────────────
+import { usePublicAuction } from './_hooks/usePublicAuction';
 
 export default function PublicAuctionViewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const router = useRouter();
-  const { user } = useAuthStore();
-  const isLoggedIn = !!user?.authenticated;
+  const state = usePublicAuction(id);
+  const [stepsOpen, setStepsOpen] = useState(false);
 
-  const [auction, setAuction] = useState<AuctionVM | null>(null);
-  const [workflow, setWorkflow] = useState<AuctionWorkflowStep[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  if (state.loading) return <AuctionPageSkeleton />;
+  if (state.error || !state.auction) return <AuctionUnavailable message={state.error} />;
 
-  // Participant / join state
-  const [participant, setParticipant] = useState<ParticipantVM | null>(null);
-  const [joining, setJoining] = useState(false);
-  const [justJoined, setJustJoined] = useState(false);
-  const [wizardOpen, setWizardOpen] = useState(false);
+  const { auction, participant } = state;
+  const workflow = auction.workflow ?? [];
+  const categories = [...(auction.categories ?? []), ...(auction.subCategories ?? [])]
+    .map((c) => c.name)
+    .join(' · ');
+  const isPrivate = resolveStr(auction.accessibility) === 'PRIVATE';
 
-  // ── Load auction + participant ───────────────────────────────────────────────
-  const loadData = useCallback(async () => {
-    try {
-      // The public detail carries the workflow; /auctions/{id}/workflow is admin-only.
-      const [auctionData, selfParticipant] = await Promise.all([
-        auctionsApi.getPublicAuctionById(id),
-        isLoggedIn
-          ? participantsApi.getSelfParticipant(id).catch(() => null)
-          : Promise.resolve(null),
-      ]);
-      setAuction(auctionData);
-      setParticipant(selfParticipant);
-      setWorkflow(auctionData.workflow ?? []);
-    } catch (err) {
-      const status = (err as { response?: { status?: number } })?.response?.status;
-      if (status === 404) {
-        setError('Auction not found. It may have been removed or the link is invalid.');
-      } else if (status !== 401 && status !== 403) {
-        setError('Failed to load auction details. Please try again later.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [id, isLoggedIn]);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  // ── Join auction ─────────────────────────────────────────────────────────────
-  const handleJoin = async () => {
-    if (!isLoggedIn) {
-      router.push(`/login?callbackUrl=/auctions/${id}`);
-      return;
-    }
-    setJoining(true);
-    try {
-      await participantsApi.createSelfParticipant(id);
-      const selfP = await participantsApi.getSelfParticipant(id).catch(() => null);
-      setParticipant(selfP);
-      setJustJoined(true);
-      toast?.success?.('You have joined this auction.');
-    } catch (err) {
-      const status = (err as { response?: { status?: number } })?.response?.status;
-      if (status === 409) {
-        const selfP = await participantsApi.getSelfParticipant(id).catch(() => null);
-        setParticipant(selfP);
-        toast?.success?.('You are already registered for this auction.');
-      } else {
-        toast?.error?.('Failed to join auction. Please try again.');
-      }
-    } finally {
-      setJoining(false);
-    }
+  const closeSteps = async () => {
+    setStepsOpen(false);
+    await state.refreshParticipant();
   };
 
-  // ── Workflow helpers ─────────────────────────────────────────────────────────
-  const isParticipant = !!participant;
-
-  const workflowHasSteps =
-    participant?.workflowStatus !== undefined
-      ? Object.keys(participant.workflowStatus).length > 0
-      : false;
-
-  const workflowAllDone =
-    isParticipant &&
-    workflowHasSteps &&
-    Object.values(participant!.workflowStatus!).every((s) => {
-      const t = resolveStr(s.type);
-      return t === 'COMPLETED' || t === 'DONE' || t === 'APPROVED';
-    });
-
-  const handleWizardClose = async () => {
-    setWizardOpen(false);
-    const selfP = await participantsApi.getSelfParticipant(id).catch(() => null);
-    setParticipant(selfP);
-  };
-
-  // ── Guards ───────────────────────────────────────────────────────────────────
-  if (loading) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3 text-muted-foreground">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm">Loading auction details…</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !auction) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center px-4">
-        <div className="rounded-2xl border border-border bg-card p-8 text-center max-w-md shadow-xs">
-          <div className="w-14 h-14 rounded-full bg-destructive/15 flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="h-7 w-7 text-destructive" />
-          </div>
-          <h1 className="text-xl font-semibold text-foreground mb-2">Auction unavailable</h1>
-          <p className="text-muted-foreground mb-6 text-sm">
-            {error ?? 'This auction could not be loaded.'}
-          </p>
-          <Button onClick={() => router.push('/')} className="rounded-xl">
-            Go to Homepage
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Derived values ───────────────────────────────────────────────────────────
-  const status = resolveStr(auction.status);
-  const accessibility = resolveStr(auction.accessibility);
-  const direction = resolveStr(auction.direction);
-  const AccessibilityIcon = resolveAccessibilityIcon(auction.accessibility);
-  const DirectionIcon = resolveDirectionIcon(auction.direction);
-  const joinable = auctionIsJoinable(auction.status);
-  const currency = resolveStr(auction.regionalSettings?.currency);
-
-  // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <>
-      <div className="container mx-auto px-4 py-10 space-y-8">
-        {/* Back navigation */}
-        <button
-          type="button"
-          onClick={() => router.push('/')}
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+      <div className="container mx-auto px-4 py-8 md:px-6 md:py-10">
+        <Link
+          href="/#auctions"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Back to auctions
-        </button>
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          All auctions
+        </Link>
 
-        {/* ── Header card ─────────────────────────────────────────────────────── */}
-        <div className="rounded-2xl border border-border bg-card p-6 md:p-8 shadow-xs space-y-6">
-          {/* Status + badges */}
-          <div className="flex flex-wrap items-center gap-2">
-            <StatusBadge value={auction.status} size="sm" />
-            {accessibility && (
-              <Badge variant="outline" className="text-xs gap-1">
-                <AccessibilityIcon className="h-3 w-3" />
-                {formatLabel(accessibility)}
-              </Badge>
-            )}
-            {auction.referenceId && (
-              <Badge variant="outline" className="font-mono text-xs">
-                {auction.referenceId}
-              </Badge>
-            )}
-            {isParticipant && (
-              <Badge variant="outline" className="text-xs gap-1 border-success/40 text-success">
-                <CheckCircle2 className="h-3 w-3" />
-                Registered
-              </Badge>
-            )}
-          </div>
-
-          {/* Title + description */}
-          <div className="flex items-start gap-3">
-            <div className="p-2.5 rounded-xl bg-primary/10 shrink-0">
-              <Gavel className="h-6 w-6 text-primary" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground leading-tight">
+        <div className="mt-6 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-12">
+          <div className="min-w-0 space-y-10">
+            <header>
+              <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                {categories && <span>{categories}</span>}
+                {auction.referenceId && <span className="tabular-nums">{auction.referenceId}</span>}
+                {isPrivate && (
+                  <span className="inline-flex items-center gap-1">
+                    <Lock className="h-3.5 w-3.5" aria-hidden />
+                    Invite only
+                  </span>
+                )}
+              </p>
+              <h1 className="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight text-foreground text-balance md:text-4xl">
                 {auction.title}
               </h1>
               {auction.description && (
-                <p className="mt-2 text-muted-foreground leading-relaxed">{auction.description}</p>
+                <p className="mt-4 max-w-[68ch] leading-relaxed text-muted-foreground">
+                  {auction.description}
+                </p>
               )}
-            </div>
-          </div>
+            </header>
 
-          {/* Key details grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-2 border-t border-border/60">
-            <div className="flex items-start gap-3">
-              <div className="p-2 rounded-lg bg-muted shrink-0">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
-                  Schedule
-                </p>
-                <p className="text-sm font-semibold text-foreground mt-0.5">
-                  {formatSchedule(auction.schedule?.startTime, auction.schedule?.endTime)}
-                </p>
-              </div>
+            {/* On narrow screens the decision panel comes straight after the title. */}
+            <div className="lg:hidden">
+              <AuctionActionPanel state={state} onOpenSteps={() => setStepsOpen(true)} />
             </div>
 
-            {direction && (
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-muted shrink-0">
-                  <DirectionIcon className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
-                    Direction
-                  </p>
-                  <p className="text-sm font-semibold text-foreground mt-0.5">
-                    {formatLabel(direction)}{' '}
-                    {direction === 'FORWARD' ? 'auction' : '(reverse) auction'}
-                  </p>
-                </div>
-              </div>
+            {participant?.workflowStatus && state.hasSteps && (
+              <WorkflowStatusCard
+                workflow={workflow}
+                workflowStatus={participant.workflowStatus}
+                onOpenWizard={() => setStepsOpen(true)}
+                allDone={state.allStepsDone}
+              />
             )}
 
-            {auction.unit?.openingPrice != null && (
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-muted shrink-0">
-                  <IndianRupee className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
-                    Opening price
-                  </p>
-                  <p className="text-sm font-semibold tabular-nums text-foreground mt-0.5">
-                    {formatMoney(auction.unit.openingPrice, currency)}
-                  </p>
-                </div>
-              </div>
-            )}
+            <AuctionFacts auction={auction} />
 
-            {auction.format && (
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-muted shrink-0">
-                  <Tag className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
-                    Format
-                  </p>
-                  <p className="text-sm font-semibold text-foreground mt-0.5">
-                    {formatLabel(auction.format)}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {auction.participantVisibility && (
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-muted shrink-0">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
-                    Participants
-                  </p>
-                  <p className="text-sm font-semibold text-foreground mt-0.5">
-                    {formatLabel(auction.participantVisibility)}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {auction.schedule?.endTime && (
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-muted shrink-0">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
-                    Closes
-                  </p>
-                  <p className="text-sm font-semibold text-foreground mt-0.5">
-                    {formatDateTime(auction.schedule.endTime)}
-                  </p>
-                </div>
-              </div>
-            )}
+            {workflow.length > 0 && <PublicWorkflow workflow={workflow} auction={auction} />}
           </div>
 
-          {/* ── CTA area ──────────────────────────────────────────────────────── */}
-          <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-border/60">
-            {isParticipant ? (
-              <div className="flex flex-wrap items-center gap-3 w-full">
-                <div className="flex items-center gap-2 text-success font-medium text-sm">
-                  <CheckCircle2 className="h-5 w-5" />
-                  {justJoined
-                    ? "You've joined this auction"
-                    : 'You are registered for this auction'}
-                </div>
-
-                {joinable && (
-                  <>
-                    {workflowAllDone ? (
-                      <div className="flex items-center gap-1.5 text-sm text-success bg-success/10 px-3 py-1.5 rounded-lg border border-success/20">
-                        <CheckCircle2 className="h-4 w-4" />
-                        All registration steps completed
-                      </div>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setWizardOpen(true)}
-                        className="gap-2 border-primary/40 text-primary hover:bg-primary/5 rounded-xl"
-                      >
-                        <ClipboardList className="h-4 w-4" />
-                        Complete registration steps
-                      </Button>
-                    )}
-                  </>
-                )}
-              </div>
-            ) : joinable ? (
-              <Button
-                size="lg"
-                onClick={handleJoin}
-                disabled={joining}
-                className="gap-2 min-w-[160px] rounded-xl"
-              >
-                {joining ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Joining…
-                  </>
-                ) : (
-                  <>
-                    <Gavel className="h-4 w-4" />
-                    {isLoggedIn ? 'Join auction' : 'Sign in to join'}
-                  </>
-                )}
-              </Button>
-            ) : (
-              <p className="text-sm text-muted-foreground italic">
-                {status === 'COMPLETED'
-                  ? 'This auction has ended.'
-                  : status === 'CANCELLED'
-                    ? 'This auction has been cancelled.'
-                    : 'Registration is not yet open.'}
-              </p>
-            )}
+          <div className="hidden lg:block">
+            <AuctionActionPanel state={state} onOpenSteps={() => setStepsOpen(true)} />
           </div>
         </div>
-
-        {/* ── Workflow status summary (registered participants with steps) ──── */}
-        {isParticipant &&
-          participant?.workflowStatus &&
-          Object.keys(participant.workflowStatus).length > 0 && (
-            <WorkflowStatusCard
-              workflow={workflow}
-              workflowStatus={participant.workflowStatus}
-              onOpenWizard={() => setWizardOpen(true)}
-              allDone={workflowAllDone}
-            />
-          )}
-
-        {/* ── Auction item + detail cards ─────────────────────────────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-          {auction.unit && (
-            <div className="h-full rounded-2xl border border-border bg-card p-6 shadow-xs space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-                  <Tag className="h-5 w-5 text-primary" />
-                </div>
-                <h2 className="text-base font-semibold text-foreground">Auction item</h2>
-              </div>
-              <div className="space-y-3 text-sm">
-                <PublicDetailRow label="Unit type">
-                  {formatLabel(auction.unit.type) || '—'}
-                </PublicDetailRow>
-                {auction.unit.openingPrice != null && (
-                  <PublicDetailRow label="Opening price">
-                    <span className="tabular-nums">
-                      {formatMoney(auction.unit.openingPrice, currency)}
-                    </span>
-                  </PublicDetailRow>
-                )}
-                {auction.unit.standingPrice != null && (
-                  <PublicDetailRow label="Current price">
-                    <span className="tabular-nums text-primary">
-                      {formatMoney(auction.unit.standingPrice, currency)}
-                    </span>
-                  </PublicDetailRow>
-                )}
-              </div>
-            </div>
-          )}
-
-          <PublicAuctionOverview auction={auction} />
-        </div>
-
-        {/* ── Workflow stages timeline ─────────────────────────────────────────── */}
-        {workflow.length > 0 && <PublicWorkflow workflow={workflow} auction={auction} />}
       </div>
 
-      {/* ── Workflow Wizard Dialog ──────────────────────────────────────────── */}
-      <Dialog open={wizardOpen} onOpenChange={(o) => !o && handleWizardClose()}>
-        <DialogContent className="max-w-3xl p-0 overflow-hidden max-h-[90vh] flex flex-col">
-          <DialogHeader className="px-6 py-4 border-b border-border shrink-0">
-            <DialogTitle className="flex items-center gap-2 text-base">
-              <ClipboardList className="h-5 w-5 text-primary" />
-              Complete Registration
-            </DialogTitle>
+      <Dialog open={stepsOpen} onOpenChange={(open) => !open && closeSteps()}>
+        <DialogContent className="flex max-h-[90vh] max-w-3xl flex-col overflow-hidden p-0">
+          <DialogHeader className="shrink-0 border-b border-border px-6 py-4">
+            <DialogTitle className="text-base">Complete registration</DialogTitle>
           </DialogHeader>
-          <div className="flex-1 min-h-0 overflow-auto">
-            <WorkflowWizard auctionId={id} workflow={workflow} onClose={handleWizardClose} />
+          <div className="min-h-0 flex-1 overflow-auto">
+            <WorkflowWizard auctionId={id} workflow={workflow} onClose={closeSteps} />
           </div>
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function AuctionPageSkeleton() {
+  return (
+    <div
+      aria-busy="true"
+      aria-label="Loading auction"
+      className="container mx-auto px-4 py-8 md:px-6 md:py-10"
+    >
+      <Skeleton className="h-4 w-24" />
+      <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-12">
+        <div className="space-y-4">
+          <Skeleton className="h-4 w-48" />
+          <Skeleton className="h-9 w-4/5" />
+          <Skeleton className="h-4 w-full max-w-[60ch]" />
+          <Skeleton className="h-4 w-3/4 max-w-[60ch]" />
+        </div>
+        <Skeleton className="h-72 w-full rounded-xl" />
+      </div>
+    </div>
+  );
+}
+
+function AuctionUnavailable({ message }: { message: string | null }) {
+  return (
+    <div className="flex min-h-[60vh] items-center justify-center px-4">
+      <div className="max-w-md text-center">
+        <span className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-destructive/10 text-destructive">
+          <AlertCircle className="h-6 w-6" aria-hidden />
+        </span>
+        <h1 className="font-display text-xl font-semibold text-foreground">Auction unavailable</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {message ?? 'This auction could not be loaded.'}
+        </p>
+        <Button asChild variant="outline" className="mt-6">
+          <Link href="/#auctions">Browse auctions</Link>
+        </Button>
+      </div>
+    </div>
   );
 }

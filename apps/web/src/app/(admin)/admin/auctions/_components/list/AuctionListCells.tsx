@@ -17,7 +17,7 @@ import {
   auctionTitle,
   openingPrice,
 } from '../../_lib/auction-display';
-import { useNow } from '../../_hooks/useNow';
+import { useNow } from '@/hooks/useNow';
 
 /** Title, reference id and auction type. */
 export function AuctionIdentity({ auction }: { auction: AuctionVM }) {

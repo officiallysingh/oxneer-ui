@@ -1,114 +1,143 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, Gavel } from 'lucide-react';
-import { Button } from '@oxneer/ui';
+import { ArrowRight } from 'lucide-react';
+import type { AuctionVM } from '@oxneer/api';
+import { Button, cn, Skeleton } from '@oxneer/ui';
+import { formatCompactMoney, resolveStr } from '@/components/common/admin/format';
+import { useNow } from '@/hooks/useNow';
+import { usePublicAuctions } from '@/hooks/usePublicAuctions';
+import { auctionTiming, type AuctionPhase } from './auction-timing';
 
-const HeroSection = () => {
+const PREVIEW_COUNT = 4;
+
+const TIMING_TONE: Record<AuctionPhase, string> = {
+  live: 'text-success',
+  upcoming: 'text-info',
+  ended: 'text-muted-foreground',
+  unscheduled: 'text-muted-foreground',
+};
+
+export default function HeroSection() {
   return (
-    <section className="relative flex min-h-[85vh] items-center overflow-hidden pt-16">
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -right-40 -top-40 h-[600px] w-[600px] rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute -bottom-20 -left-20 h-[400px] w-[400px] rounded-full bg-primary/3 blur-3xl" />
-      </div>
-
-      <div className="container relative mx-auto px-6">
-        <div className="grid items-center gap-12 lg:grid-cols-2">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: 'easeOut' }}
-          >
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5">
-              <Gavel className="h-4 w-4 text-primary" />
-              <span className="font-body text-xs font-medium tracking-wider text-primary uppercase">
-                Auction platform
-              </span>
-            </div>
-
-            <h1 className="font-display text-5xl font-bold leading-tight tracking-tight text-foreground md:text-7xl">
-              Run &amp;
-              <br />
-              <span className="text-gradient-gold">Join</span>
-              <br />
-              Live Auctions
-            </h1>
-
-            <p className="mt-6 max-w-md font-body text-lg leading-relaxed text-muted-foreground">
-              Discover published auctions, complete participation workflows, and bid with a clear
-              end-to-end process built for teams and participants.
-            </p>
-
-            <div className="mt-8 flex flex-wrap gap-4">
-              <Button variant="gold" size="lg" className="gap-2 text-base" asChild>
-                <a href="#auctions">
-                  Explore auctions
-                  <ArrowRight className="h-5 w-5" />
-                </a>
-              </Button>
-              <Button variant="gold-outline" size="lg" className="text-base" asChild>
-                <a href="#how-it-works">How it works</a>
-              </Button>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="relative hidden lg:block"
-          >
-            <FeaturedAuctionCard />
-          </motion.div>
+    <section className="relative border-b border-border pt-16">
+      <div className="container mx-auto grid grid-cols-[minmax(0,1fr)] items-center gap-12 px-6 py-16 md:py-24 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-16">
+        <div className="motion-safe:animate-fade-in">
+          <h1 className="font-display text-5xl font-semibold leading-[1.05] tracking-[-0.03em] text-foreground text-balance md:text-6xl xl:text-7xl">
+            Run and join live auctions
+          </h1>
+          <p className="mt-6 max-w-[34rem] text-lg leading-relaxed text-muted-foreground">
+            Discover published auctions, complete participation workflows, and bid with a clear
+            end-to-end process built for teams and participants.
+          </p>
+          <div className="mt-10 flex flex-wrap gap-3">
+            <Button variant="gold" size="lg" className="text-base" asChild>
+              <a href="#auctions">
+                Explore auctions
+                <ArrowRight />
+              </a>
+            </Button>
+            <Button variant="outline" size="lg" className="text-base" asChild>
+              <a href="#how-it-works">How it works</a>
+            </Button>
+          </div>
         </div>
+
+        <LatestAuctionsPanel />
       </div>
     </section>
   );
-};
+}
 
-const FeaturedAuctionCard = () => {
+/** The newest auctions open to the visitor, straight from the public API. */
+function LatestAuctionsPanel() {
+  const list = usePublicAuctions({ size: PREVIEW_COUNT });
+
   return (
-    <div className="relative rounded-2xl border border-border bg-gradient-card p-1 shadow-card">
-      <div className="overflow-hidden rounded-xl">
-        <Image
-          src="https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600&h=500&fit=crop"
-          alt="Auction participation illustration"
-          width={600}
-          height={500}
-          // Above the fold and the page's LCP element: load it right away.
-          loading="eager"
-          className="h-[420px] w-full object-cover"
-        />
+    <aside
+      aria-labelledby="latest-auctions"
+      className="rounded-xl border border-border bg-card shadow-card"
+    >
+      <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4">
+        <h2 id="latest-auctions" className="font-display text-base font-semibold text-foreground">
+          Latest auctions
+        </h2>
+        {!list.isLoading && list.totalRecords > 0 && (
+          <a
+            href="#auctions"
+            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+          >
+            See all {list.totalRecords}
+          </a>
+        )}
       </div>
-      <div className="p-6">
-        <div className="flex items-center justify-between">
-          <span className="rounded-full bg-success/10 px-3 py-1 font-body text-xs font-medium text-success">
-            ● Open now
-          </span>
-          <span className="font-body text-sm text-muted-foreground">Browse live listings</span>
-        </div>
-        <h3 className="mt-3 font-display text-xl font-semibold text-foreground">
-          Find your next auction
-        </h3>
-        <p className="mt-1 font-body text-sm text-muted-foreground">
-          Filter by category, schedule, and status below
-        </p>
-        <div className="mt-4 flex items-end justify-between border-t border-border pt-4">
-          <div>
-            <p className="font-body text-xs text-muted-foreground uppercase tracking-wider">
-              Get started
-            </p>
-            <p className="font-display text-lg font-bold text-primary">Join &amp; participate</p>
-          </div>
-          <Button variant="gold" size="sm" asChild>
-            <Link href="#auctions">View auctions</Link>
-          </Button>
-        </div>
-      </div>
-    </div>
+      <PanelBody list={list} />
+    </aside>
   );
-};
+}
 
-export default HeroSection;
+function PanelBody({ list }: { list: ReturnType<typeof usePublicAuctions> }) {
+  if (list.isLoading) {
+    return (
+      <ul aria-busy="true" aria-label="Loading auctions" className="divide-y divide-border">
+        {Array.from({ length: PREVIEW_COUNT }, (_, i) => (
+          <li key={i} className="flex items-center justify-between gap-4 px-5 py-4">
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-3.5 w-3/4" />
+              <Skeleton className="h-3 w-1/3" />
+            </div>
+            <Skeleton className="h-5 w-16" />
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  if (list.error || list.auctions.length === 0) {
+    return (
+      <p className="px-5 py-10 text-center text-sm text-muted-foreground">
+        {list.error
+          ? 'Auctions couldn’t be loaded just now.'
+          : 'No auctions are open right now. New ones appear here as soon as they’re published.'}
+      </p>
+    );
+  }
+
+  return (
+    <ul className="divide-y divide-border">
+      {list.auctions.map((auction) => (
+        <li key={auction.id}>
+          <PreviewRow auction={auction} />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function PreviewRow({ auction }: { auction: AuctionVM }) {
+  const now = useNow(1_000);
+  const timing = auctionTiming(auction, now.getTime());
+  const price = auction.unit?.openingPrice;
+  const currency = resolveStr(auction.regionalSettings?.currency) || 'INR';
+
+  return (
+    <Link
+      href={`/auctions/${auction.id}`}
+      className="group flex items-center justify-between gap-4 px-5 py-4 transition-colors duration-150 hover:bg-muted/40 focus-visible:bg-muted/40 focus-visible:outline-hidden"
+    >
+      <div className="min-w-0">
+        <p className="truncate text-sm font-medium text-foreground group-hover:text-primary">
+          {auction.title}
+        </p>
+        <p className={cn('mt-0.5 text-xs tabular-nums', TIMING_TONE[timing.phase])}>
+          {timing.label}
+        </p>
+      </div>
+      {price != null && (
+        <span className="shrink-0 font-display text-base font-semibold tabular-nums text-foreground">
+          {formatCompactMoney(price, currency)}
+        </span>
+      )}
+    </Link>
+  );
+}

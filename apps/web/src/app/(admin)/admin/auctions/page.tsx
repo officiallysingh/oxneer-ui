@@ -21,7 +21,7 @@ import { AuctionsEmptyState, AuctionsListSkeleton } from './_components/list/Auc
 import { AuctionsStatusTabs } from './_components/list/AuctionsStatusTabs';
 import { buildAuctionListColumns } from './_components/list/auctionListColumns';
 import { useAuctionActions } from './_hooks/useAuctionActions';
-import { useAuctionCategories } from './_hooks/useAuctionCategories';
+import { useCategories } from '@/hooks/useCategories';
 import { useAuctionsFilters } from './_hooks/useAuctionsFilters';
 import { PAGE_SIZE_OPTIONS, useAuctionsList } from './_hooks/useAuctionsList';
 import { useAuctionStatusCounts } from './_hooks/useAuctionStatusCounts';
@@ -40,7 +40,7 @@ export default function AuctionsPage() {
   const { filters, updateFilters, resetFilters } = useAuctionsFilters();
   const list = useAuctionsList(filters);
   const { counts, reload: reloadCounts } = useAuctionStatusCounts();
-  const categories = useAuctionCategories();
+  const categories = useCategories();
   const [pending, setPending] = useState<PendingAction>(null);
 
   const actions = useAuctionActions({

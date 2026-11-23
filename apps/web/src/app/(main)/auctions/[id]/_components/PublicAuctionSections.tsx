@@ -1,8 +1,7 @@
 'use client';
 
-import { type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { type AuctionVM, type AuctionWorkflowStep } from '@oxneer/api';
-import { GitFork, DollarSign, Settings2 } from 'lucide-react';
 import { resolveStr, formatLabel } from '@/components/common/admin/format';
 import { WorkflowStagesTimeline } from '@/app/(admin)/admin/auctions/_components/timeline/WorkflowStagesTimeline';
 import type { TimelineNode } from '@/app/(admin)/admin/auctions/_components/timeline/types';
@@ -14,66 +13,6 @@ import {
   TnCStepDetails,
   FormStepDetails,
 } from '@/app/(admin)/admin/auctions/_components/WorkflowStepDetails';
-
-// ── Detail row primitive ──────────────────────────────────────────────────────
-
-export function PublicDetailRow({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="flex items-center justify-between gap-4 border-b border-border/50 pb-2 last:border-0 last:pb-0">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium text-foreground text-right">{children}</span>
-    </div>
-  );
-}
-
-// ── Monetary + Protocol settings cards ───────────────────────────────────────
-
-export function PublicAuctionOverview({ auction }: { auction: AuctionVM }) {
-  return (
-    <>
-      <div className="h-full rounded-2xl border border-border bg-card p-6 shadow-xs space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-            <DollarSign className="h-5 w-5 text-primary" />
-          </div>
-          <h2 className="text-base font-semibold text-foreground">Monetary options</h2>
-        </div>
-        <div className="space-y-3 text-sm">
-          <PublicDetailRow label="Currency unit">
-            {resolveStr(auction.regionalSettings?.currency) || '—'}
-          </PublicDetailRow>
-          <PublicDetailRow label="Time zone">
-            {resolveStr(auction.regionalSettings?.timeZone) || '—'}
-          </PublicDetailRow>
-          <PublicDetailRow label="Rounding mode">
-            {formatLabel(auction.regionalSettings?.roundingMode)}
-          </PublicDetailRow>
-        </div>
-      </div>
-
-      <div className="h-full rounded-2xl border border-border bg-card p-6 shadow-xs space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-            <Settings2 className="h-5 w-5 text-primary" />
-          </div>
-          <h2 className="text-base font-semibold text-foreground">Auction settings</h2>
-        </div>
-        <div className="space-y-3 text-sm">
-          <PublicDetailRow label="Accessibility">
-            {formatLabel(auction.accessibility)}
-          </PublicDetailRow>
-          <PublicDetailRow label="Direction">{formatLabel(auction.direction)}</PublicDetailRow>
-          <PublicDetailRow label="Participant visibility">
-            {formatLabel(auction.participantVisibility)}
-          </PublicDetailRow>
-          <PublicDetailRow label="Offer visibility">
-            {formatLabel(auction.offerVisibility)}
-          </PublicDetailRow>
-        </div>
-      </div>
-    </>
-  );
-}
 
 // ── Workflow timeline section ─────────────────────────────────────────────────
 
@@ -137,17 +76,14 @@ export function PublicWorkflow({
   );
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-6 shadow-xs space-y-5">
-      <div className="flex items-start gap-3">
-        <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-          <GitFork className="h-5 w-5 text-primary" />
-        </div>
-        <div>
-          <h2 className="text-base font-semibold text-foreground">Participation workflow</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Follow these steps to complete your registration for the auction.
-          </p>
-        </div>
+    <section aria-labelledby="participation-steps" className="space-y-5">
+      <div>
+        <h2 id="participation-steps" className="font-display text-xl font-semibold text-foreground">
+          Participation steps
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          What you complete before the auction starts, and after it closes.
+        </p>
       </div>
 
       <WorkflowStagesTimeline

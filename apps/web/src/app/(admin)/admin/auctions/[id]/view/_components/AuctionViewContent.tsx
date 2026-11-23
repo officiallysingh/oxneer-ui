@@ -4,7 +4,7 @@ import { Tabs, TabsContent } from '@oxneer/ui';
 import type { AuctionViewController, AuctionViewData } from '../_hooks/useAuctionView';
 import { useAuctionViewActions } from '../_hooks/useAuctionViewActions';
 import { useAuctionViewModel } from '../_hooks/useAuctionViewModel';
-import { useNow } from '../_hooks/useNow';
+import { useNow } from '../../../_hooks/useNow';
 import { useViewTab } from '../_hooks/useViewTab';
 import { formatDateTime } from '../../../_lib/wizard/summary';
 import { AuctionViewDialogs } from './AuctionViewDialogs';

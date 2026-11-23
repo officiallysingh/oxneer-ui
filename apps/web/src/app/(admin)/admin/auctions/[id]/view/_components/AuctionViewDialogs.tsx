@@ -1,6 +1,7 @@
 'use client';
 
-import { TypeToConfirmDialog } from '@/components/common/admin/TypeToConfirmDialog';
+import { CancelAuctionDialog } from '../../../_components/CancelAuctionDialog';
+import { DeleteAuctionDialog } from '../../../_components/DeleteAuctionDialog';
 import type { AuctionViewActions } from '../_hooks/useAuctionViewActions';
 
 interface AuctionViewDialogsProps {
@@ -14,21 +15,15 @@ export function AuctionViewDialogs({ title, actions }: AuctionViewDialogsProps) 
   const name = title || 'Untitled auction';
   return (
     <>
-      <TypeToConfirmDialog
+      <CancelAuctionDialog
         open={actions.pending === 'cancel'}
-        title={`Cancel auction “${name}”?`}
-        description="Nobody will be able to bid, and everyone taking part is told it is cancelled. This can’t be undone."
-        confirmText={name}
-        confirmLabel="Cancel auction"
+        name={name}
         onCancel={actions.closeDialog}
         onConfirm={actions.cancelAuction}
       />
-      <TypeToConfirmDialog
+      <DeleteAuctionDialog
         open={actions.pending === 'delete'}
-        title={`Delete auction “${name}”?`}
-        description="This permanently removes the auction, its rules, its steps and its participants."
-        confirmText={name}
-        confirmLabel="Delete auction"
+        name={name}
         onCancel={actions.closeDialog}
         onConfirm={actions.deleteAuction}
       />

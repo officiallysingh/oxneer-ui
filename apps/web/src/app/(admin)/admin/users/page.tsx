@@ -8,6 +8,7 @@ import type { UserDetailVM } from '@oxneer/api';
 import { Button, toast } from '@oxneer/ui';
 import { DataTable } from '@/components/common/data-table';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';
+import { ListMobileFooter } from '@/components/common/admin/ListMobileFooter';
 import PageHeader from '@/components/common/admin/PageHeader';
 import Tip from '@/components/common/admin/Tip';
 import { ActiveFilterChips } from './_components/ActiveFilterChips';
@@ -18,7 +19,6 @@ import { buildUserColumns } from './_components/userColumns';
 import { UserDetailsSheet } from './_components/UserDetailsSheet';
 import { UsersBulkBar } from './_components/UsersBulkBar';
 import { UsersFilterBar } from './_components/UsersFilterBar';
-import { UsersMobileFooter } from './_components/UsersMobileFooter';
 import { UsersEmptyState, UsersListSkeleton } from './_components/UsersListStates';
 import { UsersStatusTabs } from './_components/UsersStatusTabs';
 import { useAccessCatalog } from '@/hooks/admin';
@@ -183,8 +183,13 @@ export default function UsersPage() {
         loadingState={<UsersListSkeleton />}
         emptyState={<UsersEmptyState filtered={filtered} onClearFilters={resetFilters} />}
         mobileFooter={
-          <UsersMobileFooter
-            onAddUser={addUser}
+          <ListMobileFooter
+            action={
+              <Button className="h-11" onClick={addUser}>
+                <UserPlus />
+                Add user
+              </Button>
+            }
             pageIndex={list.pageIndex}
             pageCount={list.totalPages}
             pageSize={list.pageSize}

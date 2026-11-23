@@ -22,7 +22,7 @@ export function AuthIllustration() {
                 <Lock className="w-5 h-5 text-primary-foreground" />
               </div>
               <div>
-                <p className="text-primary-foreground font-medium text-sm">Secure Access</p>
+                <p className="text-primary-foreground font-medium text-sm">Secure access</p>
                 <p className="text-primary-foreground/70 text-xs">End-to-end encryption</p>
               </div>
             </div>
@@ -32,7 +32,7 @@ export function AuthIllustration() {
                 <Zap className="w-5 h-5 text-primary-foreground" />
               </div>
               <div>
-                <p className="text-primary-foreground font-medium text-sm">Lightning Fast</p>
+                <p className="text-primary-foreground font-medium text-sm">Lightning fast</p>
                 <p className="text-primary-foreground/70 text-xs">Instant authentication</p>
               </div>
             </div>
@@ -42,7 +42,7 @@ export function AuthIllustration() {
                 <Users className="w-5 h-5 text-primary-foreground" />
               </div>
               <div>
-                <p className="text-primary-foreground font-medium text-sm">Team Ready</p>
+                <p className="text-primary-foreground font-medium text-sm">Team ready</p>
                 <p className="text-primary-foreground/70 text-xs">Collaborate seamlessly</p>
               </div>
             </div>

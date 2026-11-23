@@ -1,5 +1,5 @@
-import Image from 'next/image';
 import Link from 'next/link';
+import { BrandLogo } from '@/components/common/BrandLogo';
 import { AuthForm } from '@/components/auth/AuthForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@oxneer/ui';
 import { AuthIllustration } from '@/components/auth/AuthIllustration';
@@ -30,30 +30,16 @@ export default function LoginPage() {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-background">
         <div className="w-full max-w-md">
           <div className="text-center mb-8 lg:hidden">
-            <Link href="/" className="inline-flex items-center gap-2 mb-6">
-              <Image
-                src="/Oxneer - Logo.png"
-                alt=""
-                width={40}
-                height={40}
-                className="h-10 w-10 rounded-lg object-contain"
-              />
-              <span className="text-xl font-bold text-foreground">Oxneer</span>
+            <Link href="/" className="inline-flex items-center mb-6">
+              <BrandLogo className="h-9" />
             </Link>
           </div>
 
           <Card className="border-0 shadow-xl">
             <CardHeader className="space-y-1 text-center pb-4">
               <div className="hidden lg:flex justify-center mb-4">
-                <Link href="/" className="inline-flex items-center gap-2">
-                  <Image
-                    src="/Oxneer - Logo.png"
-                    alt=""
-                    width={40}
-                    height={40}
-                    className="h-10 w-10 rounded-lg object-contain"
-                  />
-                  <span className="text-xl font-bold text-foreground">Oxneer</span>
+                <Link href="/" className="inline-flex items-center">
+                  <BrandLogo className="h-9" />
                 </Link>
               </div>
               <CardTitle className="text-2xl font-bold">Sign in to your account</CardTitle>

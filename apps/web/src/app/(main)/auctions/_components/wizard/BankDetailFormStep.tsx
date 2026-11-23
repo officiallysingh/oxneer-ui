@@ -37,7 +37,7 @@ export function BankDetailFormStep({ step, onSubmit, submitting, error }: BankDe
           <Landmark className="h-5 w-5" />
         </div>
         <div>
-          <h3 className="font-bold text-foreground text-sm">{step.name || 'Bank Details'}</h3>
+          <h3 className="font-bold text-foreground text-sm">{step.name || 'Bank details'}</h3>
           <p className="text-xs text-muted-foreground mt-0.5">
             {step.description ||
               'Select a saved bank account to receive refunds and payouts related to this auction.'}

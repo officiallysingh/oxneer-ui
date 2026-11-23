@@ -10,8 +10,15 @@ import {
   type PublicAuctionsFilter,
   type CategoryVM,
 } from '@oxneer/api';
-import { resolveStr, formatLabel } from '@/components/common/admin/format';
-import { formatDateTime } from '@/components/common/admin/format';
+import {
+  formatCompactMoney,
+  formatDateTime,
+  formatLabel,
+  formatMoney,
+  formatTimeLeft,
+  resolveStr,
+} from '@/components/common/admin/format';
+import { StatusBadge } from '@/components/common/admin/AuctionStatusBadge';
 import {
   Loader2,
   Search,
@@ -44,17 +51,7 @@ const reactSelectStyles = makeReactSelectStyles<true>() as any;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function auctionStatusColor(status?: unknown): string {
-  const s = resolveStr(status);
-  const map: Record<string, string> = {
-    LIVE: 'bg-success/10 text-success border-success/30',
-    PUBLISHED: 'bg-info/10 text-info border-info/30',
-    SCHEDULED: 'bg-warning/10 text-warning border-warning/30',
-    COMPLETED: 'bg-violet-500/10 text-violet-600 border-violet-500/30',
-    CANCELLED: 'bg-destructive/10 text-destructive border-destructive/30',
-  };
-  return map[s] ?? 'bg-muted text-muted-foreground border-border';
-}
+const DAY_MS = 86_400_000;
 
 function CountdownOrSchedule({ startIso, endIso }: { startIso?: string; endIso?: string }) {
   const [now, setNow] = useState(() => Date.now());
@@ -70,28 +67,21 @@ function CountdownOrSchedule({ startIso, endIso }: { startIso?: string; endIso?:
   const endMs = endIso ? new Date(endIso).getTime() : null;
 
   if (now < startMs) {
-    const diff = startMs - now;
-    const h = Math.floor(diff / 3_600_000);
-    const m = Math.floor((diff % 3_600_000) / 60_000);
-    const s = Math.floor((diff % 60_000) / 1_000);
-    if (diff < 86_400_000) {
-      return (
-        <span className="text-warning font-medium text-xs tabular-nums">
-          Starts in {h}h {m}m {s}s
-        </span>
-      );
+    // Beyond a day out, a date reads better than a countdown.
+    if (startMs - now >= DAY_MS) {
+      return <span className="text-muted-foreground text-xs">{formatDateTime(startIso)}</span>;
     }
-    return <span className="text-muted-foreground text-xs">{formatDateTime(startIso)}</span>;
+    return (
+      <span className="text-info font-medium text-xs tabular-nums">
+        Starts in {formatTimeLeft(startMs - now)}
+      </span>
+    );
   }
 
   if (endMs && now < endMs) {
-    const diff = endMs - now;
-    const h = Math.floor(diff / 3_600_000);
-    const m = Math.floor((diff % 3_600_000) / 60_000);
-    const s = Math.floor((diff % 60_000) / 1_000);
     return (
       <span className="text-success font-medium text-xs tabular-nums">
-        Ends in {h}h {m}m {s}s
+        Ends in {formatTimeLeft(endMs - now)}
       </span>
     );
   }
@@ -110,8 +100,7 @@ function PublicAuctionCard({ auction, index }: { auction: AuctionVM; index: numb
   const status = resolveStr(auction.status);
   const direction = resolveStr(auction.direction);
   const accessibility = resolveStr(auction.accessibility);
-  const currency = resolveStr(auction.regionalSettings?.currency);
-  const statusColor = auctionStatusColor(auction.status);
+  const currency = resolveStr(auction.regionalSettings?.currency) || 'INR';
   const DirectionIcon = direction === 'REVERSE' ? TrendingDown : TrendingUp;
   const AccessIcon = accessibility === 'PUBLIC' ? Globe : Lock;
 
@@ -135,14 +124,7 @@ function PublicAuctionCard({ auction, index }: { auction: AuctionVM; index: numb
     >
       {/* Status bar */}
       <div className="px-4 py-3 border-b border-border/50 flex items-center justify-between gap-2">
-        <span
-          className={`inline-flex items-center gap-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${statusColor}`}
-        >
-          {status === 'LIVE' && (
-            <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-          )}
-          {formatLabel(auction.status)}
-        </span>
+        <StatusBadge value={auction.status} size="sm" />
         <div className="flex items-center gap-1.5 text-muted-foreground">
           <AccessIcon className="h-3 w-3" />
           <DirectionIcon className="h-3 w-3" />
@@ -188,8 +170,11 @@ function PublicAuctionCard({ auction, index }: { auction: AuctionVM; index: numb
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
                   Opening
                 </p>
-                <p className="text-base font-bold text-primary">
-                  {currency} {auction.unit.openingPrice.toLocaleString()}
+                <p
+                  className="text-base font-bold tabular-nums text-primary"
+                  title={formatMoney(auction.unit.openingPrice, currency)}
+                >
+                  {formatCompactMoney(auction.unit.openingPrice, currency)}
                 </p>
               </>
             ) : (
@@ -216,7 +201,7 @@ function PublicAuctionCard({ auction, index }: { auction: AuctionVM; index: numb
           }}
         >
           <Gavel className="h-3.5 w-3.5" />
-          View &amp; Join
+          View &amp; join
         </Button>
       </div>
     </motion.div>
@@ -339,7 +324,7 @@ const AuctionGrid = () => {
           className="text-center"
         >
           <h2 className="font-display text-3xl font-bold text-foreground md:text-4xl">
-            Featured <span className="text-gradient-gold">Auctions</span>
+            Featured <span className="text-gradient-gold">auctions</span>
           </h2>
           <p className="mx-auto mt-3 max-w-md font-body text-muted-foreground">
             Browse live and upcoming auctions open for participation.

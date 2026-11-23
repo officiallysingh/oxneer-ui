@@ -396,7 +396,7 @@ export default function ProfilePage() {
               <User className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-foreground">Personal Information</p>
+              <p className="text-sm font-semibold text-foreground">Personal information</p>
               <p className="text-xs text-muted-foreground">Update your name, email and mobile</p>
             </div>
           </div>

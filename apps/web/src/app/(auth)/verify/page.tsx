@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Mail, Phone, ArrowRight, Loader2, CheckCircle2, Gavel } from 'lucide-react';
+import { Mail, Phone, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
 import {
   Button,
   Card,
@@ -17,6 +17,7 @@ import {
 import { authApi } from '@oxneer/api';
 import { useAuthStore, useAuthHydrated } from '@/store/authStore';
 import { motion, AnimatePresence } from 'framer-motion';
+import { BrandLogo } from '@/components/common/BrandLogo';
 
 const OTP_RESEND_COOLDOWN = 30;
 
@@ -173,11 +174,8 @@ export default function VerifyPage() {
           <div className="absolute -bottom-20 -left-20 h-80 w-80 rounded-full bg-primary/5 blur-3xl" />
         </div>
         <div className="relative z-10 text-center max-w-sm">
-          <div className="flex items-center justify-center gap-2 mb-10">
-            <Gavel className="h-7 w-7 text-primary" />
-            <span className="font-display text-2xl font-bold text-foreground">
-              HAM<span className="text-gradient-gold">MER</span>
-            </span>
+          <div className="flex items-center justify-center mb-10">
+            <BrandLogo className="h-10" />
           </div>
           <h2 className="font-display text-3xl font-bold text-foreground mb-4">
             Secure your account
@@ -237,11 +235,8 @@ export default function VerifyPage() {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
         <div className="w-full max-w-md">
           {/* Mobile logo */}
-          <div className="flex items-center justify-center gap-2 mb-8 lg:hidden">
-            <Gavel className="h-6 w-6 text-primary" />
-            <span className="font-display text-xl font-bold text-foreground">
-              HAM<span className="text-gradient-gold">MER</span>
-            </span>
+          <div className="flex items-center justify-center mb-8 lg:hidden">
+            <BrandLogo className="h-9" />
           </div>
 
           <AnimatePresence mode="wait">

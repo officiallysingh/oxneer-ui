@@ -21,6 +21,7 @@ import {
 import { authApi, getApiErrorMessage } from '@oxneer/api';
 import { useAuthStore, useAuthHydrated } from '@/store/authStore';
 import { AuthIllustration } from '@/components/auth/AuthIllustration';
+import { BrandLogo } from '@/components/common/BrandLogo';
 import { PASSWORD_PATTERN, PASSWORD_ERROR, PASSWORD_RULES } from '@/lib/validation';
 
 export default function ChangePasswordPage() {
@@ -113,11 +114,8 @@ export default function ChangePasswordPage() {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-background">
         <div className="w-full max-w-md">
           <div className="text-center mb-8 lg:hidden">
-            <Link href="/" className="inline-flex items-center gap-2 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-xl">O</span>
-              </div>
-              <span className="text-xl font-bold text-foreground">Oxneer</span>
+            <Link href="/" className="inline-flex items-center mb-6">
+              <BrandLogo className="h-9" />
             </Link>
           </div>
 

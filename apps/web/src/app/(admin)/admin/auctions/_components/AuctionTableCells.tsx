@@ -47,13 +47,8 @@ export function AccessibilityCell({ value }: { value?: unknown }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span
-          className={`inline-flex items-center gap-1.5 cursor-default rounded-full px-2 py-0.5 text-xs font-medium border ${
-            isPublic
-              ? 'bg-info/10 text-info border-info/30'
-              : 'bg-violet-500/10 text-violet-700 border-violet-500/30'
-          }`}
-        >
+        {/* Access isn't a status, so it stays neutral; the icon tells the two apart. */}
+        <span className="inline-flex cursor-default items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-xs font-medium text-muted-foreground">
           <Icon className="h-3 w-3 shrink-0" />
           {label}
         </span>

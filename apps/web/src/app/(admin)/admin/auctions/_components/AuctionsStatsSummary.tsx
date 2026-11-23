@@ -47,7 +47,7 @@ export function AuctionsStatsSummary({
       label: 'Completed',
       count: counts.completed,
       icon: CheckCircle2,
-      color: 'text-violet-600 bg-violet-500/10 border-violet-500/20',
+      color: 'text-muted-foreground bg-muted border-border',
     },
     {
       key: 'CANCELLED',

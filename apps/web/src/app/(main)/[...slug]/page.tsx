@@ -144,7 +144,7 @@ export default function InvitationSlugPage({ params }: { params: Promise<{ slug:
           <div className="w-16 h-16 rounded-full bg-destructive/15 flex items-center justify-center mx-auto mb-4">
             <AlertCircle className="h-8 w-8 text-destructive" aria-hidden />
           </div>
-          <h1 className="text-xl font-semibold text-foreground mb-2">Invalid Link</h1>
+          <h1 className="text-xl font-semibold text-foreground mb-2">Invalid link</h1>
           <p className="text-muted-foreground mb-6">
             This invitation link is invalid or has expired. Please check your email for the correct
             link.

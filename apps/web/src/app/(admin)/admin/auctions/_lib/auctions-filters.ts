@@ -1,6 +1,5 @@
-import type { AuctionsFilter, CategoryVM } from '@oxneer/api';
+import type { AuctionsFilter } from '@oxneer/api';
 import type { SegmentOption } from '@/components/common/admin/SegmentedControl';
-import type { CheckListOption } from '@/components/common/admin/SearchableCheckList';
 import { formatDateTime } from '@/components/common/admin/format';
 
 /** Search limits enforced by GET /api/v1/auctions. */
@@ -108,34 +107,11 @@ export function scheduleRangeLabel(fromTime: string, tillTime: string): string {
   return '';
 }
 
-/** Category facet options. */
-export function categoryOptions(categories: CategoryVM[]): CheckListOption[] {
-  return categories.map((c) => ({ value: c.id, label: c.name }));
-}
-
-/** Sub-category facet options, limited to the chosen categories (all when none chosen),
- *  each labelled with its category so same-named sub-categories stay distinguishable. */
-export function subCategoryOptions(
-  categories: CategoryVM[],
-  selectedCategoryIds: string[],
-): CheckListOption[] {
-  const inScope = selectedCategoryIds.length
-    ? categories.filter((c) => selectedCategoryIds.includes(c.id))
-    : categories;
-  return inScope.flatMap((c) =>
-    (c.subCategories ?? []).map((s) => ({ value: s.id, label: s.name, sublabel: c.name })),
-  );
-}
-
-/** Drops chosen sub-categories that no longer belong to the chosen categories. */
-export function pruneSubCategories(
-  categories: CategoryVM[],
-  selectedCategoryIds: string[],
-  subCategoryIds: string[],
-): string[] {
-  const allowed = new Set(subCategoryOptions(categories, selectedCategoryIds).map((o) => o.value));
-  return subCategoryIds.filter((id) => allowed.has(id));
-}
+export {
+  categoryOptions,
+  subCategoryOptions,
+  pruneSubCategories,
+} from '@/components/common/category-options';
 
 function statusTabOf(value: string | null): StatusTabId {
   return STATUS_TABS.find((t) => t.id === value)?.id ?? 'all';

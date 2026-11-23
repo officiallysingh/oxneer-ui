@@ -12,8 +12,8 @@ export default function Home() {
       <AuctionNavbar />
       <main className="flex-1">
         <HeroSection />
-        <HowItWorksSection />
         <AuctionGrid />
+        <HowItWorksSection />
       </main>
       <SiteFooter />
     </div>

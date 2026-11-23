@@ -1,5 +1,6 @@
 import { apiClient } from './client';
 import type { PropertyDef } from './metadata';
+import type { CategoryVM, SubCategoryVM } from './master';
 
 export interface AuctionSchedule {
   startTime?: string;
@@ -130,6 +131,11 @@ export interface AuctionVM {
    *  (`GET /auctions/{id}/public`); on the admin endpoints only with `X-Expand: workflow`. */
   workflow?: AuctionWorkflowStep[];
   blobs?: string[];
+  categories?: Pick<CategoryVM, 'id' | 'name'>[];
+  subCategories?: Pick<SubCategoryVM, 'id' | 'name'>[];
+  tags?: string[];
+  /** The current close: the scheduled end moved by soft-close extensions, if any. */
+  closesAt?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -157,6 +163,7 @@ export interface PublicAuctionsFilter {
   fromTime?: string;
   tillTime?: string;
   page?: number;
+  size?: number;
 }
 
 export interface PaginatedAuctions {
@@ -539,7 +546,16 @@ function parseModelOptions(entries: AuctionModelEntry[]): { value: string; label
 
 export const auctionsApi = {
   getPublicAuctions: async (filter: PublicAuctionsFilter = {}): Promise<PaginatedAuctions> => {
-    const { phrases, categories, subCategories, direction, fromTime, tillTime, page = 0 } = filter;
+    const {
+      phrases,
+      categories,
+      subCategories,
+      direction,
+      fromTime,
+      tillTime,
+      page = 0,
+      size = 16,
+    } = filter;
     const response = await apiClient.get<PaginatedAuctions>('/api/v1/auctions/public', {
       params: {
         ...(phrases?.length ? { phrases } : {}),
@@ -549,6 +565,7 @@ export const auctionsApi = {
         ...(fromTime ? { fromTime } : {}),
         ...(tillTime ? { tillTime } : {}),
         page,
+        size,
       },
     });
     const paginated = response.data;

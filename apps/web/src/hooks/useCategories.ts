@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react';
 import { masterApi, type CategoryVM } from '@oxneer/api';
 
-/** Categories with their sub-categories, for the list filters. Empty while
+/** Categories with their sub-categories, for list filters. Empty while
  *  loading or if the call fails: the filters then just offer nothing to pick. */
-export function useAuctionCategories(): CategoryVM[] {
+export function useCategories(): CategoryVM[] {
   const [categories, setCategories] = useState<CategoryVM[]>([]);
   useEffect(() => {
     let active = true;

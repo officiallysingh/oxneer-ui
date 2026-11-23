@@ -27,6 +27,8 @@ interface TypeToConfirmDialogProps {
   /** Renders the confirm text (and input) in a monospace font, for code-like names. */
   monospace?: boolean;
   confirmLabel: string;
+  /** Extra gate for the confirm button, e.g. a required reason in `children`. */
+  canConfirm?: boolean;
   onCancel: () => void;
   /** Resolves true when the action succeeded, which closes the dialog. */
   onConfirm: () => Promise<boolean>;
@@ -41,13 +43,14 @@ export function TypeToConfirmDialog({
   confirmText,
   monospace,
   confirmLabel,
+  canConfirm = true,
   onCancel,
   onConfirm,
 }: TypeToConfirmDialogProps) {
   const inputId = useId();
   const [typed, setTyped] = useState('');
   const [busy, setBusy] = useState(false);
-  const matches = typed.trim() === confirmText;
+  const matches = typed.trim() === confirmText && canConfirm;
 
   const close = () => {
     setTyped('');

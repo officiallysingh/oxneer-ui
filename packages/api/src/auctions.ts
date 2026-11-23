@@ -460,11 +460,7 @@ export type AuctionPoliciesRQ = PolicyItemRQ[];
 
 /** The setup screens that hold data, in screen order. */
 export type SetupStepKey =
-  | 'BASICS_AND_UNIT'
-  | 'OFFER_RULES'
-  | 'SCHEDULE_AND_CLOSING'
-  | 'PARTICIPATION'
-  | 'AWARD';
+  'BASICS_AND_UNIT' | 'OFFER_RULES' | 'SCHEDULE_AND_CLOSING' | 'PARTICIPATION' | 'AWARD';
 
 export interface SetupFinding {
   /** Stable code, e.g. "setup.award.winner.payment.required". */
@@ -691,8 +687,9 @@ export const auctionsApi = {
     await apiClient.put(`/api/v1/auctions/${id}/publish`);
   },
 
-  cancelAuction: async (id: string): Promise<void> => {
-    await apiClient.put(`/api/v1/auctions/${id}/cancel`);
+  /** Cancels a published auction. The API keeps `reason` (5–255 characters) with it. */
+  cancelAuction: async (id: string, reason: string): Promise<void> => {
+    await apiClient.put(`/api/v1/auctions/${id}/cancel`, { reason });
   },
 
   getAuctionWorkflow: async (id: string): Promise<AuctionWorkflowStep[]> => {

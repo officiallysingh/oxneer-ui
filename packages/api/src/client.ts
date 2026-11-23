@@ -107,6 +107,10 @@ export const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
   withCredentials: true,
+  // Arrays as repeated keys (`statuses=A&statuses=B`), which Spring binds to a
+  // `List` param. Axios' default `statuses[]=A` is ignored by Spring, so every
+  // multi-value filter (phrases, statuses, categories, roles) was silently dropped.
+  paramsSerializer: { indexes: null },
   // Spring Security uses XSRF-TOKEN cookie and X-XSRF-TOKEN header by default
   xsrfCookieName: 'XSRF-TOKEN',
   xsrfHeaderName: 'X-XSRF-TOKEN',

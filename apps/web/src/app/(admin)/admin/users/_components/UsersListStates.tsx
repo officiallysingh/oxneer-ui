@@ -1,5 +1,6 @@
 import { SearchX, Users } from 'lucide-react';
 import { Button, Skeleton } from '@oxneer/ui';
+import { ListEmptyState } from '@/components/common/admin/ListEmptyState';
 
 const SKELETON_WIDTHS = [
   ['58%', '34%'],
@@ -35,25 +36,21 @@ export function UsersEmptyState({
   filtered: boolean;
   onClearFilters: () => void;
 }) {
-  const Icon = filtered ? SearchX : Users;
+  if (filtered) {
+    return (
+      <ListEmptyState
+        icon={SearchX}
+        title="No users match these filters"
+        hint="Try removing a search term or filter, or check the spelling."
+        action={
+          <Button variant="outline" onClick={onClearFilters}>
+            Clear all filters
+          </Button>
+        }
+      />
+    );
+  }
   return (
-    <div className="flex flex-col items-center justify-center gap-2.5 px-6 py-14 text-center">
-      <span className="grid h-12 w-12 place-items-center rounded-full bg-muted text-muted-foreground">
-        <Icon className="h-5 w-5" aria-hidden />
-      </span>
-      <h3 className="font-display text-[17px] font-semibold text-foreground">
-        {filtered ? 'No users match these filters' : 'No users yet'}
-      </h3>
-      <p className="max-w-[280px] text-[13px] text-muted-foreground">
-        {filtered
-          ? 'Try removing a search term or filter, or check the spelling.'
-          : 'Users you add will appear here.'}
-      </p>
-      {filtered && (
-        <Button variant="outline" className="mt-1.5" onClick={onClearFilters}>
-          Clear all filters
-        </Button>
-      )}
-    </div>
+    <ListEmptyState icon={Users} title="No users yet" hint="Users you add will appear here." />
   );
 }

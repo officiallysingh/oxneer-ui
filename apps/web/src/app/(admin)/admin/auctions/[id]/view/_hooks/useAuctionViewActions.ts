@@ -28,9 +28,9 @@ export function useAuctionViewActions(auctionId: string, onChanged: () => void) 
     }
   };
 
-  const cancelAuction = async (): Promise<boolean> => {
+  const cancelAuction = async (reason: string): Promise<boolean> => {
     try {
-      await auctionsApi.cancelAuction(auctionId);
+      await auctionsApi.cancelAuction(auctionId, reason);
       toast.success('Cancelled the auction');
       setPending(null);
       onChanged();

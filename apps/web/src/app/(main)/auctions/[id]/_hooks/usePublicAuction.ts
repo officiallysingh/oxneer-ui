@@ -4,10 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { auctionsApi, participantsApi, type AuctionVM, type ParticipantVM } from '@oxneer/api';
 import { toast } from '@oxneer/ui';
-import { resolveStr } from '@/components/common/admin/format';
+import { isStatusDone } from '@/components/common/workflow-steps';
 import { useAuthStore } from '@/store/authStore';
-
-const DONE_STEP_TYPES = new Set(['COMPLETED', 'DONE', 'APPROVED']);
 
 function httpStatus(err: unknown): number | undefined {
   return (err as { response?: { status?: number } })?.response?.status;
@@ -83,7 +81,7 @@ export function usePublicAuction(id: string) {
 
   const steps = Object.values(participant?.workflowStatus ?? {});
   const hasSteps = steps.length > 0;
-  const allStepsDone = hasSteps && steps.every((s) => DONE_STEP_TYPES.has(resolveStr(s.type)));
+  const allStepsDone = hasSteps && steps.every(isStatusDone);
 
   return {
     auction,

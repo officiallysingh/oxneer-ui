@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 
+import { cn } from '@oxneer/ui';
 type TagVariant = 'primary' | 'muted' | 'info' | 'outline';
 
 interface Tag {
@@ -115,7 +116,11 @@ export function TagList({ tags, max = 2, variant = 'primary' }: TagListProps) {
 function TagChip({ tag, fallback }: { tag: Tag; fallback: TagVariant }) {
   return (
     <span
-      className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${tag.mono ? 'font-mono' : ''} ${TAG_CLASSES[tag.variant ?? fallback]}`}
+      className={cn(
+        'inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium',
+        tag.mono ? 'font-mono' : '',
+        TAG_CLASSES[tag.variant ?? fallback],
+      )}
     >
       {tag.label}
     </span>

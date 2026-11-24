@@ -1,15 +1,9 @@
 import type { AuctionWorkflowStep, PolicyHeadRQ } from '@oxneer/api';
-import { fmtLabel, paymentStepData, resolveStr } from '../../_components/PolicyShared';
+import { paymentStepData, resolveStr } from '../../_components/PolicyShared';
 import { formatMoney, offsetLabelParts } from './summary';
 
-/** Human labels for the workflow step types the simple-auction wizard exposes. */
-export const WORKFLOW_TYPE_LABEL: Record<string, string> = {
-  TNC_FORM_STEP: 'Terms and conditions',
-  PARTICIPATION_FORM_STEP: 'Participation form',
-  BANK_DETAIL_FORM_STEP: 'Bank details',
-  PAYMENT_STEP: 'Payment',
-  FORM_STEP: 'Custom form',
-};
+// Step labels are shared with the participant side, so they live in components/common.
+export { WORKFLOW_TYPE_LABEL, stepTitle } from '@/components/common/workflow-steps';
 
 export const WORKFLOW_TYPE_DESCRIPTION: Record<string, string> = {
   TNC_FORM_STEP: 'Agreement to take part in the auction. Participants tick to accept.',
@@ -21,12 +15,6 @@ export const WORKFLOW_TYPE_DESCRIPTION: Record<string, string> = {
 
 export function isPostStep(step: AuctionWorkflowStep): boolean {
   return (resolveStr(step.phase) || resolveStr(step.policy?.phase)) === 'POST_AUCTION';
-}
-
-export function stepTitle(step: AuctionWorkflowStep): string {
-  if (step.name) return step.name;
-  const type = resolveStr(step.type);
-  return WORKFLOW_TYPE_LABEL[type] ?? fmtLabel(type) ?? 'Step';
 }
 
 export function deadlineFor(step: AuctionWorkflowStep, start: string): string {

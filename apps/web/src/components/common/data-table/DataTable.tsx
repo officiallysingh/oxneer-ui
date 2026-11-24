@@ -16,7 +16,7 @@ import {
   OnChangeFn,
 } from '@tanstack/react-table';
 import { ChevronDown, ChevronUp, ChevronsUpDown, Loader2, Search } from 'lucide-react';
-import { Button } from '@oxneer/ui';
+import { Button, cn } from '@oxneer/ui';
 import { Input } from '@oxneer/ui';
 import { SearchInput } from '@/components/common/admin/SearchInput';
 import { PaginationBar } from '@/components/common/admin/PaginationBar';
@@ -294,7 +294,10 @@ export function DataTable<TData>({
 
       {/* Table */}
       <div
-        className={`rounded-lg border bg-card overflow-hidden ${renderMobileCard ? 'hidden md:block' : ''}`}
+        className={cn(
+          'rounded-lg border bg-card overflow-hidden',
+          renderMobileCard ? 'hidden md:block' : '',
+        )}
       >
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -320,9 +323,10 @@ export function DataTable<TData>({
                         <button
                           type="button"
                           onClick={header.column.getToggleSortingHandler()}
-                          className={`flex select-none items-center gap-1 uppercase tracking-wide hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring rounded-sm ${
-                            header.column.getIsSorted() ? 'text-foreground' : ''
-                          }`}
+                          className={cn(
+                            'flex select-none items-center gap-1 uppercase tracking-wide hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring rounded-sm',
+                            header.column.getIsSorted() ? 'text-foreground' : '',
+                          )}
                         >
                           {flexRender(header.column.columnDef.header, header.getContext())}
                           {header.column.getIsSorted() === 'asc' ? (
@@ -391,11 +395,12 @@ export function DataTable<TData>({
                           }
                         : undefined
                     }
-                    className={`hover:bg-muted/30 transition-colors data-[state=selected]:bg-primary/[0.06] ${
+                    className={cn(
+                      'hover:bg-muted/30 transition-colors data-[state=selected]:bg-primary/[0.06]',
                       onRowClick
                         ? 'cursor-pointer focus-visible:outline-hidden focus-visible:bg-muted/40'
-                        : ''
-                    }`}
+                        : '',
+                    )}
                   >
                     {row.getVisibleCells().map((cell) => (
                       <td key={cell.id} className="px-4 py-3">

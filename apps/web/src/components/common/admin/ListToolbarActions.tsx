@@ -1,7 +1,7 @@
 'use client';
 
 import { Plus, RefreshCw, type LucideIcon } from 'lucide-react';
-import { Button } from '@oxneer/ui';
+import { Button, cn } from '@oxneer/ui';
 
 interface ListToolbarActionsProps {
   onAdd: () => void;
@@ -28,7 +28,7 @@ export function ListToolbarActions({
         {addLabel}
       </Button>
       <Button variant="outline" size="sm" onClick={onRefresh} disabled={refreshing}>
-        <RefreshCw className={`h-4 w-4 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
+        <RefreshCw className={cn('h-4 w-4 mr-1', refreshing ? 'animate-spin' : '')} />
         Refresh
       </Button>
     </div>

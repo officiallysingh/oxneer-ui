@@ -21,33 +21,33 @@ export const STEP_TYPE_META: Record<
 > = {
   PAYMENT_STEP: {
     Icon: CreditCard,
-    dot: 'bg-rose-500',
-    text: 'text-rose-600 dark:text-rose-400',
-    border: 'border-rose-500',
+    dot: 'bg-primary',
+    text: 'text-primary',
+    border: 'border-primary',
   },
   BANK_DETAIL_FORM_STEP: {
     Icon: Landmark,
-    dot: 'bg-emerald-500',
-    text: 'text-emerald-600 dark:text-emerald-400',
-    border: 'border-emerald-500',
+    dot: 'bg-success',
+    text: 'text-success',
+    border: 'border-success',
   },
   TNC_FORM_STEP: {
     Icon: ShieldCheck,
-    dot: 'bg-amber-500',
-    text: 'text-amber-600 dark:text-amber-400',
-    border: 'border-amber-500',
+    dot: 'bg-warning',
+    text: 'text-warning',
+    border: 'border-warning',
   },
   PARTICIPATION_FORM_STEP: {
     Icon: UserCheck,
-    dot: 'bg-violet-500',
-    text: 'text-violet-600 dark:text-violet-400',
-    border: 'border-violet-500',
+    dot: 'bg-info',
+    text: 'text-info',
+    border: 'border-info',
   },
   FORM_STEP: {
     Icon: FileText,
-    dot: 'bg-blue-500',
-    text: 'text-blue-600 dark:text-blue-400',
-    border: 'border-blue-500',
+    dot: 'bg-foreground',
+    text: 'text-foreground',
+    border: 'border-foreground',
   },
 };
 

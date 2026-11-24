@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { AuctionWorkflowStep } from '@oxneer/api';
-import { Button } from '@oxneer/ui';
+import { Button, cn } from '@oxneer/ui';
 import { Loader2, Landmark, Plus, ArrowRight, AlertCircle } from 'lucide-react';
 import { BankAccountDialog, BankAccountSummary, useBankAccounts } from '@/components/common/bank';
 
@@ -63,11 +63,12 @@ export function BankDetailFormStep({ step, onSubmit, submitting, error }: BankDe
               <label
                 key={d.id}
                 htmlFor={radioId}
-                className={`flex items-center gap-3 rounded-2xl border p-4 cursor-pointer transition-all ${
+                className={cn(
+                  'flex items-center gap-3 rounded-2xl border p-4 cursor-pointer transition-all',
                   checked
                     ? 'border-primary bg-primary/5 shadow-xs ring-1 ring-primary/20'
-                    : 'border-border/70 bg-card hover:border-border'
-                }`}
+                    : 'border-border/70 bg-card hover:border-border',
+                )}
               >
                 <input
                   id={radioId}

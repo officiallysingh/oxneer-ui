@@ -12,6 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   Button,
+  cn,
 } from '@oxneer/ui';
 import { accountLabel } from './bank-utils';
 
@@ -68,7 +69,10 @@ export function RemoveBankAccountDialog({
               return (
                 <label
                   key={o.id}
-                  className={`flex cursor-pointer items-center gap-2.5 rounded-md border-[1.5px] p-3 ${checked ? 'border-primary bg-primary/[0.06]' : 'border-border'}`}
+                  className={cn(
+                    'flex cursor-pointer items-center gap-2.5 rounded-md border-[1.5px] p-3',
+                    checked ? 'border-primary bg-primary/[0.06]' : 'border-border',
+                  )}
                 >
                   <input
                     type="radio"

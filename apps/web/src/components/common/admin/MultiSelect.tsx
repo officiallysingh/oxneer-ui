@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useId } from 'react';
 import { X, ChevronDown } from 'lucide-react';
 import { SearchableCheckList, type CheckListOption } from './SearchableCheckList';
 
+import { cn } from '@oxneer/ui';
 export type MultiSelectOption = CheckListOption;
 
 interface MultiSelectProps {
@@ -83,7 +84,10 @@ export function MultiSelect({
             setOpen(false);
           }
         }}
-        className={`min-h-10 w-full rounded-md border px-3 py-1.5 flex items-center gap-1.5 flex-wrap cursor-pointer transition-colors bg-background focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring ${borderClass}`}
+        className={cn(
+          'min-h-10 w-full rounded-md border px-3 py-1.5 flex items-center gap-1.5 flex-wrap cursor-pointer transition-colors bg-background focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring',
+          borderClass,
+        )}
       >
         {selected.length === 0 ? (
           <span className="text-sm text-muted-foreground flex-1">{placeholder}</span>
@@ -106,7 +110,10 @@ export function MultiSelect({
           ))
         )}
         <ChevronDown
-          className={`h-4 w-4 text-muted-foreground ml-auto shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
+          className={cn(
+            'h-4 w-4 text-muted-foreground ml-auto shrink-0 transition-transform',
+            open ? 'rotate-180' : '',
+          )}
         />
       </div>
 

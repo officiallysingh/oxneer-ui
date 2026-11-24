@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { ChangedDot } from './ChangedDot';
 
+import { cn } from '@oxneer/ui';
 interface SettingRowProps {
   label: string;
   description?: ReactNode;
@@ -25,7 +26,10 @@ export function SettingRow({
       <div className="min-w-0 flex-1">
         <p
           id={labelId}
-          className={`text-sm font-medium ${disabled ? 'text-muted-foreground' : 'text-foreground'}`}
+          className={cn(
+            'text-sm font-medium',
+            disabled ? 'text-muted-foreground' : 'text-foreground',
+          )}
         >
           {label}
           {changed && <ChangedDot />}

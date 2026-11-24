@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { type AuctionWorkflowStep, type PropertyDef } from '@oxneer/api';
-import { Button, Label } from '@oxneer/ui';
+import { Button, Label, cn } from '@oxneer/ui';
 import { Loader2, ArrowRight, AlertCircle } from 'lucide-react';
 import { resolveStr, formatLabel } from '@/components/common/admin/format';
 import { buildPathWiseState } from '@/lib/pathWiseState';
@@ -235,7 +235,10 @@ export function SingleField({ prop, value, onChange }: SingleFieldProps) {
           attrs['html:step'] ??
           (dt.includes('DECIMAL') || dt === 'FLOAT' || dt === 'DOUBLE' ? 'any' : '1')
         }
-        className={`${inputBase} [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none`}
+        className={cn(
+          inputBase,
+          '[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none',
+        )}
         aria-required={isReq}
       />
     );
@@ -295,7 +298,7 @@ export function SingleField({ prop, value, onChange }: SingleFieldProps) {
         onChange={(e) => onChange(e.target.value)}
         placeholder={attrs['html:placeholder'] ?? `Enter ${prop.label.toLowerCase()}…`}
         rows={Number(attrs['ui:rows'] ?? 3)}
-        className={`${inputBase} resize-none`}
+        className={cn(inputBase, 'resize-none')}
         aria-required={isReq}
       />
     );

@@ -1,13 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { usersApi, authApi } from '@oxneer/api';
 import { useAuthStore, useAuthHydrated } from '@/store/authStore';
-import { Loader2, User, Lock, CheckCircle2, Eye, EyeOff, HelpCircle } from 'lucide-react';
+import {
+  AlertCircle,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  HelpCircle,
+  Loader2,
+  Lock,
+  User,
+} from 'lucide-react';
 import {
   Button,
+  cn,
   Input,
+  Skeleton,
   Label,
   Tooltip,
   TooltipContent,
@@ -22,6 +33,9 @@ import { parseApiError } from '@/lib/api-errors';
 import { PASSWORD_PATTERN, PASSWORD_RULES, PASSWORD_ERROR } from '@/lib/validation';
 import { AvatarUpload } from '@/components/common/admin/AvatarUpload';
 import { BankAccountsCard } from '@/components/common/bank';
+import { useSelfInfo } from './_hooks/useSelfInfo';
+
+const INVALID_INPUT = 'border-destructive focus-visible:ring-destructive';
 
 // ── Field wrapper ─────────────────────────────────────────────────────────────
 
@@ -39,15 +53,16 @@ function Field({
   return (
     <div className="space-y-1.5">
       <div className="flex items-center gap-1.5">
-        <Label className={error ? 'text-destructive' : ''}>{label}</Label>
+        <Label className={cn(error && 'text-destructive')}>{label}</Label>
         {tip && (
           <Tooltip>
             <TooltipTrigger asChild>
               <button
                 type="button"
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={`About ${label.toLowerCase()}`}
+                className="text-muted-foreground transition-colors hover:text-foreground"
               >
-                <HelpCircle className="h-3.5 w-3.5" />
+                <HelpCircle className="h-3.5 w-3.5" aria-hidden />
               </button>
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-xs text-xs">
@@ -90,14 +105,21 @@ function PasswordInput({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         autoComplete="new-password"
-        className={`pr-10 ${error ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+        aria-invalid={!!error}
+        className={cn('pr-10', error && INVALID_INPUT)}
       />
       <button
         type="button"
         onClick={onToggle}
+        aria-label={show ? 'Hide password' : 'Show password'}
+        aria-pressed={show}
         className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
       >
-        {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        {show ? (
+          <EyeOff className="h-4 w-4" aria-hidden />
+        ) : (
+          <Eye className="h-4 w-4" aria-hidden />
+        )}
       </button>
     </div>
   );
@@ -246,8 +268,11 @@ function ChangePasswordDialog({ open, onClose }: { open: boolean; onClose: () =>
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, userInfo, setUserInfo } = useAuthStore();
+  const { user, setUserInfo } = useAuthStore();
   const hydrated = useAuthHydrated();
+  const signedIn = hydrated && !!user?.authenticated;
+  const profile = useSelfInfo(signedIn);
+  const userInfo = profile.userInfo;
   const [pwdOpen, setPwdOpen] = useState(false);
   const [savingPic, setSavingPic] = useState(false);
   const [picError, setPicError] = useState<string | null>(null);
@@ -278,13 +303,9 @@ export default function ProfilePage() {
     }
   }, [hydrated, user, router]);
 
-  if (!hydrated || !user?.authenticated) {
-    return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 text-muted-foreground">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
-        <p className="text-sm font-medium">Loading profile...</p>
-      </div>
-    );
+  if (!signedIn || !user || (profile.loading && !userInfo)) return <ProfileSkeleton />;
+  if (profile.error && !userInfo) {
+    return <ProfileUnavailable message={profile.error} onRetry={profile.retry} />;
   }
 
   const displayName = userInfo?.firstName
@@ -408,12 +429,10 @@ export default function ProfilePage() {
                   setEmail(e.target.value);
                   clearErr('emailId');
                 }}
-                placeholder="abc@xyz.com"
+                placeholder="you@example.com"
                 type="email"
                 autoComplete="email"
-                className={
-                  fieldErrors.emailId ? 'border-destructive focus-visible:ring-destructive' : ''
-                }
+                className={cn(fieldErrors.emailId && INVALID_INPUT)}
               />
             </Field>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -424,11 +443,8 @@ export default function ProfilePage() {
                     setFirstName(e.target.value);
                     clearErr('firstName');
                   }}
-                  placeholder="John"
                   autoComplete="given-name"
-                  className={
-                    fieldErrors.firstName ? 'border-destructive focus-visible:ring-destructive' : ''
-                  }
+                  className={cn(fieldErrors.firstName && INVALID_INPUT)}
                 />
               </Field>
               <Field label="Last name" error={fieldErrors.lastName}>
@@ -438,11 +454,8 @@ export default function ProfilePage() {
                     setLastName(e.target.value);
                     clearErr('lastName');
                   }}
-                  placeholder="Doe"
                   autoComplete="family-name"
-                  className={
-                    fieldErrors.lastName ? 'border-destructive focus-visible:ring-destructive' : ''
-                  }
+                  className={cn(fieldErrors.lastName && INVALID_INPUT)}
                 />
               </Field>
             </div>
@@ -456,9 +469,7 @@ export default function ProfilePage() {
                 placeholder="+91 98765 43210"
                 autoComplete="tel"
                 type="tel"
-                className={
-                  fieldErrors.mobileNo ? 'border-destructive focus-visible:ring-destructive' : ''
-                }
+                className={cn(fieldErrors.mobileNo && INVALID_INPUT)}
               />
             </Field>
             {formError && <p className="text-sm text-destructive">{formError}</p>}
@@ -491,6 +502,48 @@ export default function ProfilePage() {
       </div>
 
       <ChangePasswordDialog open={pwdOpen} onClose={() => setPwdOpen(false)} />
+    </div>
+  );
+}
+
+function ProfileSkeleton() {
+  return (
+    <div aria-busy="true" aria-label="Loading profile" className="w-full px-4 py-10 sm:px-6">
+      <div className="mx-auto max-w-3xl space-y-8">
+        <div className="flex items-center gap-5 rounded-xl border border-border bg-card px-6 py-6">
+          <Skeleton className="h-16 w-16 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-5 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+        </div>
+        <div className="space-y-5 rounded-xl border border-border bg-card px-6 py-6">
+          <Skeleton className="h-4 w-40" />
+          <Skeleton className="h-10 w-full" />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+          <Skeleton className="h-10 w-full" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProfileUnavailable({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div className="flex min-h-[60vh] items-center justify-center px-4">
+      <div role="alert" className="max-w-md text-center">
+        <span className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-destructive/10 text-destructive">
+          <AlertCircle className="h-6 w-6" aria-hidden />
+        </span>
+        <h1 className="font-display text-xl font-semibold text-foreground">Profile unavailable</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{message}</p>
+        <Button variant="outline" className="mt-6" onClick={onRetry}>
+          Try again
+        </Button>
+      </div>
     </div>
   );
 }

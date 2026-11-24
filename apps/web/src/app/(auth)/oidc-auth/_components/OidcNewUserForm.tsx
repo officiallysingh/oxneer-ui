@@ -25,7 +25,7 @@ import { authUserFromLoginResponse, establishAuthSession } from '@/lib/auth-sess
 import { parseApiError } from '@/lib/api-errors';
 import { USERNAME_RULES, PASSWORD_PATTERN, PASSWORD_RULES, PASSWORD_ERROR } from '@/lib/validation';
 import { OidcStepIndicator } from '@/components/common/wizard/OidcStepIndicator';
-import { AuthIllustration } from '@/components/auth/AuthIllustration';
+import { AuthSidePanel } from '@/components/auth/AuthSidePanel';
 import { AvatarUpload } from '@/components/common/admin/AvatarUpload';
 
 const OTP_COOLDOWN = 30;
@@ -256,21 +256,10 @@ export function OidcNewUserForm({
 
   return (
     <div className="min-h-screen flex">
-      {/* Left panel */}
-      <div className="hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:4rem_4rem]" />
-        <div className="relative z-10 flex flex-col items-center justify-center w-full px-12">
-          <AuthIllustration />
-          <div className="text-center mt-8 max-w-md">
-            <h2 className="text-3xl font-bold text-primary-foreground mb-4">
-              Complete your profile
-            </h2>
-            <p className="text-primary-foreground/80 text-lg leading-relaxed">
-              Just a few steps to finish setting up your account.
-            </p>
-          </div>
-        </div>
-      </div>
+      <AuthSidePanel
+        title="Complete your profile"
+        description="Just a few steps to finish setting up your account."
+      />
 
       {/* Right panel */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-background">

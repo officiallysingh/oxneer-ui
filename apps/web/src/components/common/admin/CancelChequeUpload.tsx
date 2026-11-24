@@ -2,7 +2,7 @@
 
 import { useRef, useState, useCallback } from 'react';
 import { Pencil, Upload, X, FileImage } from 'lucide-react';
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Label } from '@oxneer/ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Label, cn } from '@oxneer/ui';
 
 const MAX_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
 
@@ -120,18 +120,22 @@ function ChequePickerPopup({
               if (file) handleFile(file);
             }}
             onClick={() => inputRef.current?.click()}
-            className={`border-2 border-dashed rounded-xl py-8 px-4 text-center cursor-pointer transition-all duration-200 ${
+            className={cn(
+              'border-2 border-dashed rounded-xl py-8 px-4 text-center cursor-pointer transition-all duration-200',
               dragOver
                 ? 'border-primary bg-primary/5 scale-[1.02]'
-                : 'border-border hover:border-primary/50 hover:bg-muted/30'
-            }`}
+                : 'border-border hover:border-primary/50 hover:bg-muted/30',
+            )}
           >
             <div className="flex flex-col items-center gap-2">
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${dragOver ? 'bg-primary/15' : 'bg-muted'}`}
+                className={cn(
+                  'w-10 h-10 rounded-full flex items-center justify-center transition-colors',
+                  dragOver ? 'bg-primary/15' : 'bg-muted',
+                )}
               >
                 <FileImage
-                  className={`h-5 w-5 ${dragOver ? 'text-primary' : 'text-muted-foreground'}`}
+                  className={cn('h-5 w-5', dragOver ? 'text-primary' : 'text-muted-foreground')}
                 />
               </div>
               <div>

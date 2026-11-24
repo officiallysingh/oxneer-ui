@@ -21,6 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  cn,
 } from '@oxneer/ui';
 import { BankAccountDialog } from './BankAccountDialog';
 import { BankAccountSummary } from './BankAccountSummary';
@@ -79,7 +80,10 @@ export function BankAccountsCard() {
           {bank.accounts.map((a) => (
             <li
               key={a.id}
-              className={`flex flex-wrap items-center gap-3.5 px-5 py-4 ${a.primary ? 'bg-primary/[0.04]' : ''}`}
+              className={cn(
+                'flex flex-wrap items-center gap-3.5 px-5 py-4',
+                a.primary ? 'bg-primary/[0.04]' : '',
+              )}
             >
               <BankAccountSummary account={a} />
               {hasCheque(a) ? (

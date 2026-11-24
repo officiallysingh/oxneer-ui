@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { cn } from '@oxneer/ui';
 interface UserAvatarProps {
   src?: string | null;
   firstName?: string;
@@ -26,7 +27,10 @@ export function UserAvatar({
 }: UserAvatarProps) {
   return (
     <div
-      className={`rounded-full overflow-hidden border border-border bg-muted flex items-center justify-center shrink-0 text-muted-foreground font-medium ${className}`}
+      className={cn(
+        'rounded-full overflow-hidden border border-border bg-muted flex items-center justify-center shrink-0 text-muted-foreground font-medium',
+        className,
+      )}
       style={{ width: size, height: size, fontSize: size * 0.4 }}
     >
       {src ? (

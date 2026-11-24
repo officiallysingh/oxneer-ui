@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Input } from '@oxneer/ui';
+import { Input, cn } from '@oxneer/ui';
 import { Search } from 'lucide-react';
 import { ICON_GROUPS, ICON_REGISTRY, ICON_LABEL_MAP, isIconId } from './iconRegistry';
 import { CategoryIcon } from './CategoryIcon';
@@ -390,22 +390,24 @@ export default function EmojiPicker({
         <button
           type="button"
           onClick={() => switchMode('emoji')}
-          className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+          className={cn(
+            'px-3 py-1 rounded-md text-xs font-medium transition-colors',
             mode === 'emoji'
               ? 'bg-background text-foreground shadow-xs'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
+              : 'text-muted-foreground hover:text-foreground',
+          )}
         >
           Emoji
         </button>
         <button
           type="button"
           onClick={() => switchMode('icon')}
-          className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+          className={cn(
+            'px-3 py-1 rounded-md text-xs font-medium transition-colors',
             mode === 'icon'
               ? 'bg-background text-foreground shadow-xs'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
+              : 'text-muted-foreground hover:text-foreground',
+          )}
         >
           Icons
         </button>
@@ -430,11 +432,12 @@ export default function EmojiPicker({
               key={g.label}
               type="button"
               onClick={() => setActiveGroup(g.label)}
-              className={`shrink-0 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+              className={cn(
+                'shrink-0 px-2.5 py-1 rounded-md text-xs font-medium transition-colors',
                 activeGroup === g.label
                   ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground'
-              }`}
+                  : 'bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground',
+              )}
             >
               {g.label}
             </button>
@@ -457,9 +460,10 @@ export default function EmojiPicker({
                     type="button"
                     onClick={() => onChange(entry.id)}
                     title={entry.label}
-                    className={`h-9 w-full rounded-md flex items-center justify-center transition-colors hover:bg-muted ${
-                      value === entry.id ? 'bg-primary/20 ring-1 ring-primary' : ''
-                    }`}
+                    className={cn(
+                      'h-9 w-full rounded-md flex items-center justify-center transition-colors hover:bg-muted',
+                      value === entry.id ? 'bg-primary/20 ring-1 ring-primary' : '',
+                    )}
                   >
                     <Icon size={18} />
                   </button>
@@ -475,9 +479,10 @@ export default function EmojiPicker({
                 type="button"
                 onClick={() => onChange(emoji)}
                 title={emoji}
-                className={`h-9 w-full rounded-md text-xl flex items-center justify-center transition-colors hover:bg-muted ${
-                  value === emoji ? 'bg-primary/20 ring-1 ring-primary' : ''
-                }`}
+                className={cn(
+                  'h-9 w-full rounded-md text-xl flex items-center justify-center transition-colors hover:bg-muted',
+                  value === emoji ? 'bg-primary/20 ring-1 ring-primary' : '',
+                )}
               >
                 {emoji}
               </button>

@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { Loader2, MapPin } from 'lucide-react';
-import { Label } from '@oxneer/ui';
+import { Label, cn } from '@oxneer/ui';
 import { masterApi, AreaVM } from '@oxneer/api';
 import { CoordinatesMapField } from './CoordinatesMapField';
 
@@ -149,7 +149,10 @@ export function AddressField({ value, onChange, disabled }: AddressFieldProps) {
 
   return (
     <div
-      className={`rounded-lg border border-border bg-muted/10 p-4 space-y-4 ${disabled ? 'opacity-50' : ''}`}
+      className={cn(
+        'rounded-lg border border-border bg-muted/10 p-4 space-y-4',
+        disabled ? 'opacity-50' : '',
+      )}
     >
       {/* Country */}
       <Field id="addr-country" label="Country">
@@ -176,7 +179,7 @@ export function AddressField({ value, onChange, disabled }: AddressFieldProps) {
             onChange={(e) => handlePincodeChange(e.target.value.replace(/\D/g, ''))}
             placeholder="125076"
             disabled={disabled}
-            className={`${base} pr-8`}
+            className={cn(base, 'pr-8')}
           />
           {pincodeLoading && (
             <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 animate-spin text-muted-foreground" />

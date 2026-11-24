@@ -14,7 +14,7 @@ import {
   Phone,
   CheckCircle2,
 } from 'lucide-react';
-import { Button, Input, Label, Separator } from '@oxneer/ui';
+import { Button, Input, Label, Separator, cn } from '@oxneer/ui';
 import { authApi, clearSessionError, readSessionError } from '@oxneer/api';
 import { useAuthStore } from '@/store/authStore';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -241,7 +241,12 @@ export function LoginForm() {
                     setForgotIdentifier(e.target.value);
                     if (forgotIdentifierError) setForgotIdentifierError(null);
                   }}
-                  className={`pl-9 ${forgotIdentifierError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                  className={cn(
+                    'pl-9',
+                    forgotIdentifierError
+                      ? 'border-destructive focus-visible:ring-destructive'
+                      : '',
+                  )}
                   autoComplete="username"
                   autoFocus
                 />
@@ -393,7 +398,10 @@ export function LoginForm() {
                     setPassword(e.target.value);
                     if (passwordError) setPasswordError(null);
                   }}
-                  className={`pr-10 ${passwordError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                  className={cn(
+                    'pr-10',
+                    passwordError ? 'border-destructive focus-visible:ring-destructive' : '',
+                  )}
                   autoFocus
                 />
                 <button
@@ -483,7 +491,10 @@ export function LoginForm() {
                   setLoginIdentifier(e.target.value);
                   if (identifierError) setIdentifierError(null);
                 }}
-                className={`pl-9 ${identifierError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                className={cn(
+                  'pl-9',
+                  identifierError ? 'border-destructive focus-visible:ring-destructive' : '',
+                )}
                 autoComplete="username"
                 autoFocus
               />

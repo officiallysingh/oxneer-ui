@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import { Loader2 } from 'lucide-react';
 
+import { cn } from '@oxneer/ui';
 /** A titled card with a coloured icon header and a divided body — used by the
  *  auction detail view, and reusable by any future detail page. */
 export function SectionCard({
@@ -20,7 +21,10 @@ export function SectionCard({
 }) {
   return (
     <div
-      className={`rounded-2xl border border-border bg-card shadow-xs overflow-hidden transition-all duration-200 hover:shadow-md ${className ?? ''}`}
+      className={cn(
+        'rounded-2xl border border-border bg-card shadow-xs overflow-hidden transition-all duration-200 hover:shadow-md',
+        className ?? '',
+      )}
     >
       <div className="flex items-center justify-between gap-3 px-4 py-3.5 bg-muted/30 border-b border-border">
         <div className="flex items-center gap-2.5 min-w-0">

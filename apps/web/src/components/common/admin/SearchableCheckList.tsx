@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { Check, Search } from 'lucide-react';
 
+import { cn } from '@oxneer/ui';
 export interface CheckListOption {
   value: string;
   label: string;
@@ -80,10 +81,16 @@ export function SearchableCheckList({
                 role="option"
                 aria-selected={checked}
                 onClick={() => toggle(opt.value)}
-                className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm transition-colors hover:bg-muted/50 ${checked ? 'bg-primary/5' : ''}`}
+                className={cn(
+                  'w-full flex items-center gap-3 px-3 py-2 text-left text-sm transition-colors hover:bg-muted/50',
+                  checked ? 'bg-primary/5' : '',
+                )}
               >
                 <span
-                  className={`shrink-0 h-4 w-4 rounded border flex items-center justify-center transition-colors ${checked ? 'bg-primary border-primary' : 'border-border'}`}
+                  className={cn(
+                    'shrink-0 h-4 w-4 rounded border flex items-center justify-center transition-colors',
+                    checked ? 'bg-primary border-primary' : 'border-border',
+                  )}
                 >
                   {checked && <Check className="h-3 w-3 text-primary-foreground" />}
                 </span>

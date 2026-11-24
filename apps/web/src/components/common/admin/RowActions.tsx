@@ -1,7 +1,7 @@
 'use client';
 
 import { Loader2, Pencil, Trash2 } from 'lucide-react';
-import { Button } from '@oxneer/ui';
+import { Button, cn } from '@oxneer/ui';
 import Tip from './Tip';
 
 interface RowActionsProps {
@@ -30,7 +30,10 @@ export function RowActions({
           <Button
             variant="ghost"
             size="sm"
-            className={`${btnSize} p-0 text-muted-foreground hover:text-foreground hover:bg-muted`}
+            className={cn(
+              btnSize,
+              'p-0 text-muted-foreground hover:text-foreground hover:bg-muted',
+            )}
             onClick={onEdit}
           >
             <Pencil className="h-3.5 w-3.5" />
@@ -42,7 +45,10 @@ export function RowActions({
           <Button
             variant="ghost"
             size="sm"
-            className={`${btnSize} p-0 text-destructive hover:text-destructive hover:bg-destructive/10`}
+            className={cn(
+              btnSize,
+              'p-0 text-destructive hover:text-destructive hover:bg-destructive/10',
+            )}
             onClick={onDelete}
             disabled={deleting}
           >

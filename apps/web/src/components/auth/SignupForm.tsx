@@ -11,6 +11,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  cn,
 } from '@oxneer/ui';
 import { authApi, usersApi } from '@oxneer/api';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -268,7 +269,10 @@ export function SignupForm() {
                     setMobile(e.target.value);
                     if (mobileError) setMobileError(null);
                   }}
-                  className={`pl-9 ${mobileError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                  className={cn(
+                    'pl-9',
+                    mobileError ? 'border-destructive focus-visible:ring-destructive' : '',
+                  )}
                   required
                 />
               </div>
@@ -432,7 +436,10 @@ export function SignupForm() {
                     if (passwordError) setPasswordError(null);
                   }}
                   required
-                  className={`pr-10 ${passwordError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                  className={cn(
+                    'pr-10',
+                    passwordError ? 'border-destructive focus-visible:ring-destructive' : '',
+                  )}
                 />
                 <button
                   type="button"
@@ -471,7 +478,10 @@ export function SignupForm() {
                     else setConfirmPasswordError(null);
                   }}
                   required
-                  className={`pr-10 ${confirmPasswordError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                  className={cn(
+                    'pr-10',
+                    confirmPasswordError ? 'border-destructive focus-visible:ring-destructive' : '',
+                  )}
                 />
                 <button
                   type="button"
@@ -542,7 +552,10 @@ export function SignupForm() {
                   setEmail(e.target.value);
                   if (emailError) setEmailError(null);
                 }}
-                className={`pl-9 ${emailError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                className={cn(
+                  'pl-9',
+                  emailError ? 'border-destructive focus-visible:ring-destructive' : '',
+                )}
                 required
               />
             </div>

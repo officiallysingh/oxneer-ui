@@ -13,6 +13,7 @@ import {
   DialogTitle,
   Label,
   toast,
+  cn,
 } from '@oxneer/ui';
 import { CancelChequeUpload } from '@/components/common/admin/CancelChequeUpload';
 import { FormField } from '@/components/common/admin/FormField';
@@ -197,7 +198,10 @@ export function BankAccountDialog({
                 value={values.bankId}
                 onChange={(e) => set('bankId', e.target.value)}
                 aria-invalid={!!errors.bankId}
-                className={`h-10 w-full rounded-md border bg-background px-3 text-sm outline-hidden focus:ring-2 focus:ring-ring ${errors.bankId ? 'border-destructive' : 'border-input'}`}
+                className={cn(
+                  'h-10 w-full rounded-md border bg-background px-3 text-sm outline-hidden focus:ring-2 focus:ring-ring',
+                  errors.bankId ? 'border-destructive' : 'border-input',
+                )}
               >
                 <option value="">Select a bank…</option>
                 {banks.map((b) => (

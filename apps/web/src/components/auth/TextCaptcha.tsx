@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useImperativeHandle, useCallback, type Ref } from 'react';
 import { RefreshCw } from 'lucide-react';
-import { Input, Label } from '@oxneer/ui';
+import { Input, Label, cn } from '@oxneer/ui';
 
 const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
 const CAPTCHA_LENGTH = 6;
@@ -110,7 +110,7 @@ export function TextCaptcha({ className, ref }: TextCaptchaProps) {
   }));
 
   return (
-    <div className={`space-y-5 ${className ?? ''}`}>
+    <div className={cn('space-y-5', className ?? '')}>
       {/* <Label className={error ? 'text-destructive' : ''}>
         Security check <span className="text-destructive">*</span>
       </Label> */}

@@ -13,6 +13,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  cn,
 } from '@oxneer/ui';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';
 import { LabelWithTip } from '@/components/common/admin/LabelWithTip';
@@ -136,7 +137,10 @@ export function EditStateDialog({ state, onClose, onUpdated }: EditStateDialogPr
               maxLength={2}
               autoComplete="off"
               autoFocus
-              className={`font-mono ${fieldErrors.code ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+              className={cn(
+                'font-mono',
+                fieldErrors.code ? 'border-destructive focus-visible:ring-destructive' : '',
+              )}
             />
             {fieldErrors.code && <p className="text-xs text-destructive">{fieldErrors.code}</p>}
           </div>

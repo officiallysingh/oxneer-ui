@@ -20,7 +20,7 @@ import {
 } from '@oxneer/ui';
 import { authApi, getApiErrorMessage } from '@oxneer/api';
 import { useAuthStore, useAuthHydrated } from '@/store/authStore';
-import { AuthIllustration } from '@/components/auth/AuthIllustration';
+import { AuthSidePanel } from '@/components/auth/AuthSidePanel';
 import { BrandLogo } from '@/components/common/BrandLogo';
 import { PASSWORD_PATTERN, PASSWORD_ERROR, PASSWORD_RULES } from '@/lib/validation';
 
@@ -96,20 +96,10 @@ export default function ChangePasswordPage() {
 
   return (
     <div className="min-h-screen flex">
-      <div className="hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:4rem_4rem]" />
-        <div className="relative z-10 flex flex-col items-center justify-center w-full px-12">
-          <AuthIllustration />
-          <div className="text-center mt-8 max-w-md">
-            <h2 className="text-3xl font-bold text-primary-foreground mb-4">
-              Update your password
-            </h2>
-            <p className="text-primary-foreground/80 text-lg leading-relaxed">
-              Choose a strong password to keep your account secure.
-            </p>
-          </div>
-        </div>
-      </div>
+      <AuthSidePanel
+        title="Update your password"
+        description="Choose a strong password to keep your account secure."
+      />
 
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-background">
         <div className="w-full max-w-md">

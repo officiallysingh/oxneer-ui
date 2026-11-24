@@ -2,7 +2,8 @@
 
 import type { ReactNode } from 'react';
 import { type AuctionVM, type AuctionWorkflowStep } from '@oxneer/api';
-import { resolveStr, formatLabel } from '@/components/common/admin/format';
+import { resolveStr } from '@/components/common/admin/format';
+import { stepTitle, stepTypeLabel } from '@/components/common/workflow-steps';
 import { WorkflowStagesTimeline } from '@/app/(admin)/admin/auctions/_components/timeline/WorkflowStagesTimeline';
 import type { TimelineNode } from '@/app/(admin)/admin/auctions/_components/timeline/types';
 import {
@@ -49,12 +50,12 @@ function buildPublicWorkflowNodes(workflow: AuctionWorkflowStep[]): TimelineNode
 
       return {
         id: step.id ?? `public-workflow-step-${index}`,
-        label: formatLabel(type) || 'Workflow step',
+        label: stepTypeLabel(type),
         Icon: meta.Icon,
         dotClass: meta.dot,
         labelClass: meta.text,
         borderClass: meta.border,
-        title: step.name || formatLabel(type) || `Step ${index + 1}`,
+        title: stepTitle(step),
         subs: step.description ? [step.description] : [],
         details,
       };

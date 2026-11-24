@@ -16,7 +16,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { participantsApi, type AuctionWorkflowStep, type ParticipantVM } from '@oxneer/api';
 import { Button } from '@oxneer/ui';
 import { Loader2, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
-import { resolveStr, formatLabel } from '@/components/common/admin/format';
+import { resolveStr } from '@/components/common/admin/format';
+import { isStepCompleted as stepIsCompleted, stepTitle } from '@/components/common/workflow-steps';
 import { parseApiError } from '@/lib/api-errors';
 import { TnCFormStep } from './wizard/TnCFormStep';
 import { BankDetailFormStep } from './wizard/BankDetailFormStep';
@@ -38,14 +39,6 @@ const STEP_ICON_MAP: Record<string, React.ElementType> = {
 
 function resolveStepType(step: AuctionWorkflowStep): string {
   return resolveStr(step.type);
-}
-
-function stepIsCompleted(step: AuctionWorkflowStep, participant: ParticipantVM | null): boolean {
-  if (!participant?.workflowStatus) return false;
-  const entry = participant.workflowStatus[step.id];
-  if (!entry) return false;
-  const t = resolveStr(entry.type);
-  return t === 'COMPLETED' || t === 'DONE' || t === 'APPROVED';
 }
 
 function StepIcon({ type, className }: { type: string; className?: string }) {
@@ -237,9 +230,7 @@ export function WorkflowWizard({ auctionId, workflow, onClose }: WorkflowWizardP
     <div className="flex flex-col md:flex-row gap-0 min-h-0 overflow-hidden">
       {/* Sidebar — step progress list */}
       <div className="md:w-56 shrink-0 border-b md:border-b-0 md:border-r border-border bg-muted/20 p-4">
-        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3 px-1">
-          Steps
-        </p>
+        <h3 className="sr-only">Steps</h3>
         <StepSidebar steps={steps} currentIndex={currentIndex} participant={participant} />
       </div>
 
@@ -321,9 +312,7 @@ export function WorkflowWizard({ auctionId, workflow, onClose }: WorkflowWizardP
           (currentStep.embedded?.properties?.length ?? 0) === 0 && (
             <div className="space-y-4">
               <div className="space-y-1">
-                <h3 className="font-semibold text-foreground text-sm">
-                  {currentStep.name || formatLabel(type)}
-                </h3>
+                <h3 className="font-semibold text-foreground text-sm">{stepTitle(currentStep)}</h3>
               </div>
               {stepError && (
                 <div className="flex items-start gap-2.5 rounded-xl bg-destructive/10 border border-destructive/20 p-3.5 text-xs text-destructive">

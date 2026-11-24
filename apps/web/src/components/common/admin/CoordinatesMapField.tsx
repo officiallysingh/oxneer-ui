@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Loader2, LocateFixed, MapPin, Search } from 'lucide-react';
 
+import { cn } from '@oxneer/ui';
 export interface Coordinates {
   latitude?: number;
   longitude?: number;
@@ -128,7 +129,7 @@ export function CoordinatesMapField({
   };
 
   return (
-    <div className={`space-y-2 ${disabled ? 'opacity-50 pointer-events-none' : ''}`}>
+    <div className={cn('space-y-2', disabled ? 'opacity-50 pointer-events-none' : '')}>
       {/* Search */}
       <div className="relative">
         <div className="relative">
@@ -141,7 +142,7 @@ export function CoordinatesMapField({
             onBlur={() => setTimeout(() => setShowResults(false), 150)}
             placeholder="Search for a place or address…"
             disabled={disabled}
-            className={`${inputBase} pl-8 pr-16`}
+            className={cn(inputBase, 'pl-8 pr-16')}
           />
           <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
             {searching && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}

@@ -1,7 +1,7 @@
 export { AuthForm } from './AuthForm';
 export { LoginForm } from './LoginForm';
 export { SignupForm } from './SignupForm';
-export { AuthIllustration } from './AuthIllustration';
+export { AuthSidePanel } from './AuthSidePanel';
 export { OtpBlock } from './OtpBlock';
 export { GoogleSignInButton } from './GoogleSignInButton';
 export { TextCaptcha, type TextCaptchaHandle } from './TextCaptcha';

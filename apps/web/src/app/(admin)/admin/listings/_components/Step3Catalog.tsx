@@ -40,7 +40,6 @@ export function Step3Catalog({
   onFieldChange,
   onSubmit,
   onBack,
-  onCancel,
   onSkip,
   saving,
   error,

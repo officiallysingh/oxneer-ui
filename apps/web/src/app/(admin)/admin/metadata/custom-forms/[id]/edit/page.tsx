@@ -34,7 +34,7 @@ export default function EditCustomFormPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  const handleSubmit = async (values: MetadataFormValues, original?: MetadataFormValues) => {
+  const handleSubmit = async (values: MetadataFormValues) => {
     const orig = origRef.current;
     if (!orig) return;
 

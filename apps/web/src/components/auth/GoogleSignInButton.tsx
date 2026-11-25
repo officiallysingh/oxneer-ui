@@ -1,5 +1,6 @@
 'use client';
 
+import { API_BASE } from '@oxneer/api';
 import { Button } from '@oxneer/ui';
 
 interface GoogleSignInButtonProps {
@@ -8,7 +9,7 @@ interface GoogleSignInButtonProps {
 
 export function GoogleSignInButton({ disabled }: GoogleSignInButtonProps) {
   const handleGoogleSignIn = () => {
-    window.location.href = 'http://localhost:8090/oauth2/authorization/google';
+    window.location.assign(`${API_BASE}/oauth2/authorization/google`);
   };
 
   return (

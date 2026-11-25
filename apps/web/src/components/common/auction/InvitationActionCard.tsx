@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { participantsApi } from '@oxneer/api';
 import type { AuctionVM } from '@oxneer/api';
 import { useAuthStore } from '@/store/authStore';
@@ -109,8 +110,8 @@ export function InvitationActionCard({ auctionId, auction, link }: InvitationAct
               ? 'You have successfully accepted the auction invitation. You will receive further details about the auction.'
               : 'You have declined the auction invitation. The organizer has been notified.'}
           </p>
-          <Button variant="outline" onClick={() => (window.location.href = '/')} className="mt-2">
-            Go to Homepage
+          <Button asChild variant="outline" className="mt-2">
+            <Link href="/">Go to homepage</Link>
           </Button>
         </div>
       </div>

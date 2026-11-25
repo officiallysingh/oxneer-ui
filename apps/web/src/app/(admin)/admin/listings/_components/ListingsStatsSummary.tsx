@@ -1,6 +1,6 @@
 'use client';
 
-import { Building2, FileCheck, FileEdit, CheckCircle, Clock } from 'lucide-react';
+import { Building2, FileEdit, CheckCircle, Clock } from 'lucide-react';
 
 interface ListingsStatsSummaryProps {
   counts: {

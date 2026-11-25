@@ -16,7 +16,7 @@ import {
   OnChangeFn,
 } from '@tanstack/react-table';
 import { ChevronDown, ChevronUp, ChevronsUpDown, Loader2, Search } from 'lucide-react';
-import { Button, cn } from '@oxneer/ui';
+import { cn } from '@oxneer/ui';
 import { Input } from '@oxneer/ui';
 import { SearchInput } from '@/components/common/admin/SearchInput';
 import { PaginationBar } from '@/components/common/admin/PaginationBar';
@@ -129,9 +129,6 @@ export function DataTable<TData>({
     return searchParams.get('search') || '';
   });
 
-  // local input state for server-side search
-  const [localSearch, setLocalSearch] = useState(searchValue);
-  const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const [localPagination, setLocalPagination] = useState(() => {
     if (!enableUrlState) return { pageIndex: 0, pageSize };
     const page = parseInt(searchParams.get('page') || '1') - 1; // URL is 1-based

@@ -97,11 +97,6 @@ export default function EditListingPage() {
     return false;
   };
 
-  const handleContinue = (e: React.FormEvent) => {
-    e.preventDefault();
-    setStep(2);
-  };
-
   useEffect(() => {
     Promise.all([listingsApi.getListingById(id), masterApi.getCategories(true)])
       .then(([listing, cats]) => {

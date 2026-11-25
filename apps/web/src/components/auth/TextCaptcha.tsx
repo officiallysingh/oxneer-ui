@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useImperativeHandle, useCallback, type Ref } from 'react';
 import { RefreshCw } from 'lucide-react';
-import { Input, Label, cn } from '@oxneer/ui';
+import { Input, cn } from '@oxneer/ui';
 
 const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
 const CAPTCHA_LENGTH = 6;

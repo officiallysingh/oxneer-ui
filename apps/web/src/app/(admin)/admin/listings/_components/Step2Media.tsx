@@ -17,7 +17,7 @@ import {
   ChevronUp,
   Plus,
 } from 'lucide-react';
-import { Button } from '@oxneer/ui';
+import { Button, toast } from '@oxneer/ui';
 import { blobsApi, BlobVM, BlobProperties } from '@oxneer/api';
 import type { BlobPropertyPatch } from '@oxneer/api';
 
@@ -581,7 +581,6 @@ export function Step2Media({
   onSave,
   onNext,
   onBack,
-  onCancel,
 }: Step2Props) {
   const [existingBlobs, setExistingBlobs] = useState<BlobVM[]>([]);
   const [originalBlobs, setOriginalBlobs] = useState<BlobVM[]>([]);
@@ -671,7 +670,7 @@ export function Step2Media({
       validFiles.push(file);
     });
 
-    if (errors.length) alert(errors.join('\n'));
+    errors.forEach((message) => toast.error(message));
     if (!validFiles.length) return;
 
     const newUploads: UploadedFile[] = validFiles.map((file) => ({

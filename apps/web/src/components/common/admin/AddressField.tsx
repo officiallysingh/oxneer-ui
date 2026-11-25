@@ -119,7 +119,7 @@ export function AddressField({ value, onChange, disabled }: AddressFieldProps) {
               city: '',
             });
           }
-        } catch (err) {
+        } catch {
           setPincodeError('Failed to look up pincode. Please fill in manually.');
         } finally {
           setPincodeLoading(false);

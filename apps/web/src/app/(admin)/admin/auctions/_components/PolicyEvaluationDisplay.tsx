@@ -11,7 +11,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { auctionsApi, type PolicyEvaluation, type PolicyEvaluationMap } from '@oxneer/api';
-import { Badge, Button } from '@oxneer/ui';
+import { Badge, Button, cn } from '@oxneer/ui';
 import Tip from '@/components/common/admin/Tip';
 import ConfirmDialog from '@/components/common/admin/ConfirmDialog';
 import { fmtLabel, resolveStr } from './PolicyShared';
@@ -404,7 +404,10 @@ export function EvaluationCard({
           <span className="font-semibold text-foreground text-sm">{name}</span>
           {statusType && (
             <span
-              className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${className}`}
+              className={cn(
+                'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold',
+                className,
+              )}
             >
               <Icon className="h-3 w-3" />
               {fmtLabel(statusType)}
@@ -422,7 +425,10 @@ export function EvaluationCard({
         <div className="flex flex-wrap items-center gap-1.5">
           {statusType && (
             <span
-              className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${className}`}
+              className={cn(
+                'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold',
+                className,
+              )}
             >
               <Icon className="h-3 w-3" />
               {fmtLabel(statusType)}
@@ -468,7 +474,10 @@ export function EvaluationCard({
           <span className="text-muted-foreground/70">
             {resultLabel}:{' '}
             <span
-              className={`font-semibold text-foreground ${isNumeric(resultStr) ? 'text-base' : ''}`}
+              className={cn(
+                'font-semibold text-foreground',
+                isNumeric(resultStr) ? 'text-base' : '',
+              )}
             >
               {isNumeric(resultStr) ? (
                 <>
@@ -544,7 +553,10 @@ export function EvaluationCard({
                 <div className="flex justify-between items-center pt-0.5 border-t border-border/30">
                   <span className="text-[10px] text-muted-foreground">Refundable</span>
                   <span
-                    className={`text-[10px] font-medium ${d.rendered.refundable === 'Yes' ? 'text-success' : 'text-destructive'}`}
+                    className={cn(
+                      'text-[10px] font-medium',
+                      d.rendered.refundable === 'Yes' ? 'text-success' : 'text-destructive',
+                    )}
                   >
                     {d.rendered.refundable}
                   </span>

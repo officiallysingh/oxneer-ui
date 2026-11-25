@@ -1,7 +1,7 @@
 'use client';
 
 import type { UserDetailVM } from '@oxneer/api';
-import { Checkbox } from '@oxneer/ui';
+import { Checkbox, cn } from '@oxneer/ui';
 import { UserAccessTags } from './UserAccessTags';
 import { UserActionsMenu, type UserRowHandlers } from './UserActionsMenu';
 import { UserContact } from './UserContact';
@@ -19,7 +19,10 @@ interface UserCardProps {
 export function UserCard({ user, handlers, selected, onSelectedChange }: UserCardProps) {
   return (
     <article
-      className={`flex flex-col gap-2.5 rounded-lg border bg-card p-3.5 ${selected ? 'border-primary/50 bg-primary/[0.04]' : 'border-border'}`}
+      className={cn(
+        'flex flex-col gap-2.5 rounded-lg border bg-card p-3.5',
+        selected ? 'border-primary/50 bg-primary/[0.04]' : 'border-border',
+      )}
     >
       <div className="flex items-center gap-2.5">
         <Checkbox

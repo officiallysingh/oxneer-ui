@@ -353,7 +353,7 @@ export function Step3Schedule({
                     min={1}
                     value={form.extensionLimit}
                     onChange={(e) => onChange({ extensionLimit: e.target.value })}
-                    className={`${inputClass} h-9 w-20`}
+                    className={cn(inputClass, 'h-9 w-20')}
                     aria-label="Most extensions"
                   />
                   <span className="text-xs text-muted-foreground">times</span>

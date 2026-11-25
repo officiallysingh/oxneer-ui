@@ -4,7 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore, useAuthHydrated } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
-import { Sheet, SheetContent, SheetTitle, toast } from '@oxneer/ui';
+import { Sheet, SheetContent, SheetTitle, toast, cn } from '@oxneer/ui';
 import { authApi, getApiErrorMessage } from '@oxneer/api';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { AdminTopbar } from '@/components/admin/AdminTopbar';
@@ -47,9 +47,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="h-screen flex overflow-hidden bg-background">
       {/* Desktop sidebar */}
       <aside
-        className={`hidden md:flex flex-col h-full border-r border-border bg-card shrink-0 transition-[width] duration-200 ease-out ${
-          sidebarCollapsed ? 'w-16' : 'w-64'
-        }`}
+        className={cn(
+          'hidden md:flex flex-col h-full border-r border-border bg-card shrink-0 transition-[width] duration-200 ease-out',
+          sidebarCollapsed ? 'w-16' : 'w-64',
+        )}
       >
         <AdminSidebar {...sidebarProps} />
       </aside>

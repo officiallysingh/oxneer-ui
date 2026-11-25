@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import type { AwardState, NoSaleAction } from '../../../_lib/wizard/types';
 import { ChoiceCardGroup, WizardRow, inputClass, type ChoiceCardOption } from '../ui/wizard-ui';
+import { cn } from '@oxneer/ui';
 
 /** No-sale handling and result confirmation. These are auction-level choices,
  *  so they sit outside the three collapsible award policy cards. */
@@ -111,7 +112,7 @@ export function AwardSettings({
                 max={30}
                 value={form.confirmDays}
                 onChange={(event) => onChange({ confirmDays: event.target.value })}
-                className={`${inputClass} h-8 w-20`}
+                className={cn(inputClass, 'h-8 w-20')}
               />
             </div>
           )}

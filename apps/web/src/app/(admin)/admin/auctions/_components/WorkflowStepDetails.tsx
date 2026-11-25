@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { CreditCard, Landmark, ShieldCheck, UserCheck, FileText, Upload } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { AuctionWorkflowStep } from '@oxneer/api';
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle } from '@oxneer/ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, cn } from '@oxneer/ui';
 import { resolveStr, fmtLabel, paymentStepData, formatOffsetLabel } from './PolicyShared';
 import { PropertyFormPreview } from '@/app/(admin)/admin/metadata/_components/PropertyFormPreview';
 
@@ -77,11 +77,10 @@ export function WorkflowStepPhaseBadge({ phase }: { phase?: unknown }) {
   const isPre = value === 'PRE_AUCTION';
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0 ${
-        isPre
-          ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-          : 'bg-orange-500/10 text-orange-600 dark:text-orange-400'
-      }`}
+      className={cn(
+        'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0',
+        isPre ? 'bg-info/10 text-info' : 'bg-warning/15 text-warning',
+      )}
     >
       {isPre ? 'Pre Auction' : 'Post Auction'}
     </span>

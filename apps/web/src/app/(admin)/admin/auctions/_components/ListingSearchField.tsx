@@ -11,7 +11,16 @@ import {
   CategoryVM,
 } from '@oxneer/api';
 import { Search, X, Loader2, Eye, Package, Tag } from 'lucide-react';
-import { Input, Button, Dialog, DialogContent, DialogHeader, DialogTitle, Label } from '@oxneer/ui';
+import {
+  Input,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  Label,
+  cn,
+} from '@oxneer/ui';
 import Select from 'react-select';
 import type { MultiValue } from 'react-select';
 import {
@@ -140,11 +149,12 @@ function AddListingModal({
                         key={b.id}
                         type="button"
                         onClick={() => setActiveImg(b.id)}
-                        className={`w-12 h-12 rounded-lg border-2 overflow-hidden shrink-0 transition-colors ${
+                        className={cn(
+                          'w-12 h-12 rounded-lg border-2 overflow-hidden shrink-0 transition-colors',
                           activeImg === b.id
                             ? 'border-primary'
-                            : 'border-border hover:border-primary/50'
-                        }`}
+                            : 'border-border hover:border-primary/50',
+                        )}
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
@@ -192,11 +202,12 @@ function AddListingModal({
                   <div className="flex items-center gap-2 text-xs">
                     <span className="text-muted-foreground">Status</span>
                     <span
-                      className={`px-2 py-0.5 rounded-full font-medium ${
+                      className={cn(
+                        'px-2 py-0.5 rounded-full font-medium',
                         detail.available
                           ? 'bg-success/15 text-success'
-                          : 'bg-muted text-muted-foreground'
-                      }`}
+                          : 'bg-muted text-muted-foreground',
+                      )}
                     >
                       {detail.status}
                     </span>

@@ -16,7 +16,7 @@ import {
   List,
 } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
-import { Button, Label } from '@oxneer/ui';
+import { Button, Label, cn } from '@oxneer/ui';
 import Select from 'react-select';
 import type { MultiValue } from 'react-select';
 import { GroupedSubcategorySelect } from '@/components/common/admin/GroupedSubcategorySelect';
@@ -441,7 +441,12 @@ export default function ListingsPage() {
               <button
                 type="button"
                 onClick={() => setViewMode('list')}
-                className={`px-2.5 py-1.5 transition-colors ${viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}
+                className={cn(
+                  'px-2.5 py-1.5 transition-colors',
+                  viewMode === 'list'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-muted',
+                )}
                 title="List view"
               >
                 <List className="h-4 w-4" />
@@ -449,7 +454,12 @@ export default function ListingsPage() {
               <button
                 type="button"
                 onClick={() => setViewMode('card')}
-                className={`px-2.5 py-1.5 border-l border-border transition-colors ${viewMode === 'card' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}
+                className={cn(
+                  'px-2.5 py-1.5 border-l border-border transition-colors',
+                  viewMode === 'card'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-muted',
+                )}
                 title="Card view"
               >
                 <LayoutGrid className="h-4 w-4" />
@@ -473,7 +483,7 @@ export default function ListingsPage() {
               }
               disabled={isLoading}
             >
-              <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={cn('h-4 w-4 mr-1', isLoading ? 'animate-spin' : '')} />
               Refresh
             </Button>
           </div>

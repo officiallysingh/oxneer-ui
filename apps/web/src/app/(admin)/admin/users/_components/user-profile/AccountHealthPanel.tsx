@@ -1,6 +1,7 @@
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import type { UserDetailVM } from '@oxneer/api';
 import { accountHealthChecks } from '../../_lib/account-health';
+import { cn } from '@oxneer/ui';
 
 /** Sign-in checks with a segmented progress bar. */
 export function AccountHealthPanel({ user }: { user: UserDetailVM }) {
@@ -23,7 +24,7 @@ export function AccountHealthPanel({ user }: { user: UserDetailVM }) {
           {checks.map((c) => (
             <span
               key={c.label}
-              className={`h-1.5 flex-1 rounded-full ${c.ok ? 'bg-success' : 'bg-warning'}`}
+              className={cn('h-1.5 flex-1 rounded-full', c.ok ? 'bg-success' : 'bg-warning')}
             />
           ))}
         </div>

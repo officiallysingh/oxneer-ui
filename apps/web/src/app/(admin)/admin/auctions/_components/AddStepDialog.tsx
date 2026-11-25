@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
   RichTextEditor,
+  cn,
 } from '@oxneer/ui';
 import {
   auctionsApi,
@@ -82,11 +83,12 @@ function StepChoiceTile({
       type="button"
       disabled={disabled}
       onClick={() => !disabled && onClick()}
-      className={`w-full text-left rounded-lg border p-3.5 transition-colors space-y-1 bg-background/70 ${
+      className={cn(
+        'w-full text-left rounded-lg border p-3.5 transition-colors space-y-1 bg-background/70',
         disabled
           ? 'border-border/50 opacity-50 cursor-not-allowed'
-          : 'border-border hover:border-primary/50 hover:bg-background'
-      }`}
+          : 'border-border hover:border-primary/50 hover:bg-background',
+      )}
     >
       <div className="flex items-center gap-2">
         {icon}
@@ -517,8 +519,8 @@ export function AddStepDialog({
         {mode === 'choose' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 py-2 items-start">
             {/* Pre Auction block */}
-            <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 dark:bg-blue-500/10 p-3 space-y-2">
-              <h3 className="px-1 text-xs font-bold uppercase tracking-wide text-blue-700 dark:text-blue-400">
+            <div className="rounded-xl border border-info/20 bg-info/5 p-3 space-y-2">
+              <h3 className="px-1 text-xs font-bold uppercase tracking-wide text-info">
                 Pre Auction
               </h3>
               <div className="space-y-2">
@@ -590,8 +592,8 @@ export function AddStepDialog({
             </div>
 
             {/* Post Auction block */}
-            <div className="rounded-xl border border-orange-500/20 bg-orange-500/5 dark:bg-orange-500/10 p-3 space-y-2">
-              <h3 className="px-1 text-xs font-bold uppercase tracking-wide text-orange-700 dark:text-orange-400">
+            <div className="rounded-xl border border-warning/20 bg-warning/5 p-3 space-y-2">
+              <h3 className="px-1 text-xs font-bold uppercase tracking-wide text-warning">
                 Post Auction
               </h3>
               <div className="space-y-2">
@@ -667,9 +669,10 @@ export function AddStepDialog({
                       key={t.id}
                       type="button"
                       onClick={() => selectType(t)}
-                      className={`w-full text-left px-3 py-2.5 transition-colors ${
-                        selectedType?.id === t.id ? 'bg-primary/10' : 'hover:bg-muted/30'
-                      }`}
+                      className={cn(
+                        'w-full text-left px-3 py-2.5 transition-colors',
+                        selectedType?.id === t.id ? 'bg-primary/10' : 'hover:bg-muted/30',
+                      )}
                     >
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-foreground">{t.name}</span>

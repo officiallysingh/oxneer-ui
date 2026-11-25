@@ -13,6 +13,7 @@ import {
   InputOTP,
   InputOTPGroup,
   InputOTPSlot,
+  cn,
 } from '@oxneer/ui';
 import { authApi } from '@oxneer/api';
 import { useAuthStore, useAuthHydrated } from '@/store/authStore';
@@ -196,31 +197,45 @@ export default function VerifyPage() {
                   <div key={s.label} className="flex items-center gap-4">
                     <div className={`flex flex-col items-center gap-1.5`}>
                       <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${
+                        className={cn(
+                          'w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all',
                           done
                             ? 'bg-primary border-primary'
                             : active
                               ? 'border-primary bg-primary/10'
-                              : 'border-border bg-muted'
-                        }`}
+                              : 'border-border bg-muted',
+                        )}
                       >
                         {done ? (
                           <CheckCircle2 className="h-5 w-5 text-primary-foreground" />
                         ) : (
                           <Icon
-                            className={`h-5 w-5 ${active ? 'text-primary' : 'text-muted-foreground'}`}
+                            className={cn(
+                              'h-5 w-5',
+                              active ? 'text-primary' : 'text-muted-foreground',
+                            )}
                           />
                         )}
                       </div>
                       <span
-                        className={`font-body text-xs font-medium ${active ? 'text-primary' : done ? 'text-foreground' : 'text-muted-foreground'}`}
+                        className={cn(
+                          'font-body text-xs font-medium',
+                          active
+                            ? 'text-primary'
+                            : done
+                              ? 'text-foreground'
+                              : 'text-muted-foreground',
+                        )}
                       >
                         {s.label}
                       </span>
                     </div>
                     {i < steps.length - 1 && (
                       <div
-                        className={`h-px w-8 mb-5 ${i < currentStepIndex ? 'bg-primary' : 'bg-border'}`}
+                        className={cn(
+                          'h-px w-8 mb-5',
+                          i < currentStepIndex ? 'bg-primary' : 'bg-border',
+                        )}
                       />
                     )}
                   </div>

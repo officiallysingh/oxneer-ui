@@ -17,7 +17,7 @@ import {
   ChevronUp,
   Plus,
 } from 'lucide-react';
-import { Button, toast } from '@oxneer/ui';
+import { Button, toast, cn } from '@oxneer/ui';
 import { blobsApi, BlobVM, BlobProperties } from '@oxneer/api';
 import type { BlobPropertyPatch } from '@oxneer/api';
 
@@ -305,40 +305,40 @@ function MediaBlock({
 
   const Icon = classifier === 'IMAGE' ? ImageIcon : classifier === 'VIDEO' ? Film : FileText;
   const iconColor =
-    classifier === 'IMAGE'
-      ? 'text-info'
-      : classifier === 'VIDEO'
-        ? 'text-purple-500'
-        : 'text-warning';
+    classifier === 'IMAGE' ? 'text-info' : classifier === 'VIDEO' ? 'text-primary' : 'text-warning';
   const borderColor =
     classifier === 'IMAGE'
       ? 'border-info/30'
       : classifier === 'VIDEO'
-        ? 'border-purple-200 dark:border-purple-900'
+        ? 'border-primary/30'
         : 'border-warning/30';
   const headerBg =
     classifier === 'IMAGE'
       ? 'bg-info/10'
       : classifier === 'VIDEO'
-        ? 'bg-purple-10 dark:bg-purple-950/30'
+        ? 'bg-primary/10'
         : 'bg-warning/10';
   const label = classifier === 'IMAGE' ? 'Images' : classifier === 'VIDEO' ? 'Videos' : 'Documents';
 
   return (
-    <div className={`rounded-xl border ${borderColor} overflow-hidden flex flex-col`}>
+    <div className={cn('rounded-xl border', borderColor, 'overflow-hidden flex flex-col')}>
       {/* Block header */}
       <div
-        className={`${headerBg} px-4 py-3 flex items-center justify-between border-b ${borderColor}`}
+        className={cn(
+          headerBg,
+          'px-4 py-3 flex items-center justify-between border-b',
+          borderColor,
+        )}
       >
         <div className="flex items-center gap-2">
-          <Icon className={`h-4 w-4 ${iconColor}`} />
+          <Icon className={cn('h-4 w-4', iconColor)} />
           <span className="text-sm font-semibold text-foreground">{label}</span>
         </div>
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <span>{FORMATS[classifier]}</span>
           <span>·</span>
           {/* Slot indicator */}
-          <span className={`font-medium ${atLimit ? 'text-destructive' : 'text-foreground'}`}>
+          <span className={cn('font-medium', atLimit ? 'text-destructive' : 'text-foreground')}>
             {total}/{MAX_PER_TYPE}
           </span>
         </div>
@@ -350,17 +350,18 @@ function MediaBlock({
           {Array.from({ length: MAX_PER_TYPE }).map((_, i) => (
             <div
               key={i}
-              className={`h-1 flex-1 rounded-full transition-colors ${
+              className={cn(
+                'h-1 flex-1 rounded-full transition-colors',
                 i < total
                   ? atLimit
                     ? 'bg-destructive'
                     : classifier === 'IMAGE'
                       ? 'bg-info'
                       : classifier === 'VIDEO'
-                        ? 'bg-purple-500'
+                        ? 'bg-primary'
                         : 'bg-warning'
-                  : 'bg-muted'
-              }`}
+                  : 'bg-muted',
+              )}
             />
           ))}
         </div>
@@ -374,9 +375,10 @@ function MediaBlock({
               return (
                 <div
                   key={blob.id}
-                  className={`relative rounded-lg border overflow-hidden bg-muted/20 flex flex-col ${
-                    isThumbnail ? 'border-primary ring-2 ring-primary/30' : 'border-border'
-                  }`}
+                  className={cn(
+                    'relative rounded-lg border overflow-hidden bg-muted/20 flex flex-col',
+                    isThumbnail ? 'border-primary ring-2 ring-primary/30' : 'border-border',
+                  )}
                 >
                   <div className="relative aspect-square bg-muted flex items-center justify-center overflow-hidden">
                     {classifier === 'IMAGE' ? (
@@ -388,7 +390,7 @@ function MediaBlock({
                         unoptimized
                       />
                     ) : classifier === 'VIDEO' ? (
-                      <Film className="h-8 w-8 text-purple-400" />
+                      <Film className="h-8 w-8 text-primary" />
                     ) : (
                       <FileText className="h-8 w-8 text-warning" />
                     )}
@@ -421,9 +423,10 @@ function MediaBlock({
                           className="accent-primary h-3 w-3"
                         />
                         <span
-                          className={`text-[10px] font-medium ${
-                            isThumbnail ? 'text-primary' : 'text-muted-foreground'
-                          }`}
+                          className={cn(
+                            'text-[10px] font-medium',
+                            isThumbnail ? 'text-primary' : 'text-muted-foreground',
+                          )}
                         >
                           {isThumbnail ? '✓ Thumbnail' : 'Set as thumbnail'}
                         </span>
@@ -447,15 +450,16 @@ function MediaBlock({
             {myUploads.map((u) => (
               <div
                 key={u.originalIdx}
-                className={`relative rounded-lg border overflow-hidden bg-muted/20 flex flex-col ${
-                  u.thumbnail ? 'border-primary ring-2 ring-primary/30' : 'border-border'
-                }`}
+                className={cn(
+                  'relative rounded-lg border overflow-hidden bg-muted/20 flex flex-col',
+                  u.thumbnail ? 'border-primary ring-2 ring-primary/30' : 'border-border',
+                )}
               >
                 <div className="relative aspect-square bg-muted flex items-center justify-center overflow-hidden">
                   {classifier === 'IMAGE' && u.previewUrl ? (
                     <Image src={u.previewUrl} alt={u.file.name} fill className="object-cover" />
                   ) : classifier === 'VIDEO' ? (
-                    <Film className="h-8 w-8 text-purple-400" />
+                    <Film className="h-8 w-8 text-primary" />
                   ) : (
                     <FileText className="h-8 w-8 text-warning" />
                   )}
@@ -497,9 +501,10 @@ function MediaBlock({
                         className="accent-primary h-3 w-3"
                       />
                       <span
-                        className={`text-[10px] font-medium ${
-                          u.thumbnail ? 'text-primary' : 'text-muted-foreground'
-                        }`}
+                        className={cn(
+                          'text-[10px] font-medium',
+                          u.thumbnail ? 'text-primary' : 'text-muted-foreground',
+                        )}
                       >
                         {u.thumbnail ? '✓ Thumbnail' : 'Set as thumbnail'}
                       </span>
@@ -535,11 +540,12 @@ function MediaBlock({
               onAddFiles(e.dataTransfer.files, classifier);
             }}
             onClick={() => inputRef.current?.click()}
-            className={`border-2 border-dashed rounded-lg py-6 px-4 text-center cursor-pointer transition-all duration-200 ${
+            className={cn(
+              'border-2 border-dashed rounded-lg py-6 px-4 text-center cursor-pointer transition-all duration-200',
               dragOver
                 ? 'border-primary bg-primary/5 scale-[1.02] shadow-md'
-                : 'border-border hover:border-primary/40 hover:bg-muted/20'
-            }`}
+                : 'border-border hover:border-primary/40 hover:bg-muted/20',
+            )}
           >
             <Upload className="h-5 w-5 text-muted-foreground mx-auto mb-1" />
             <div className="text-center">

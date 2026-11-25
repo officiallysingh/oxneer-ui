@@ -13,6 +13,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  cn,
 } from '@oxneer/ui';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';
 import { parseApiError } from '@/lib/api-errors';
@@ -76,7 +77,10 @@ function BankFields({
           placeholder="ICIC"
           maxLength={4}
           autoComplete="off"
-          className={`font-mono ${fieldErrors.ifscPrefix ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+          className={cn(
+            'font-mono',
+            fieldErrors.ifscPrefix ? 'border-destructive focus-visible:ring-destructive' : '',
+          )}
         />
         {fieldErrors.ifscPrefix && (
           <p className="text-xs text-destructive">{fieldErrors.ifscPrefix}</p>

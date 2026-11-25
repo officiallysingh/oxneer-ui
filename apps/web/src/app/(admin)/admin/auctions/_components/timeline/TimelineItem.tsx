@@ -171,7 +171,10 @@ export function TimelineItem({
             {noCard ? (
               badge && (
                 <span
-                  className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${badgeClass}`}
+                  className={cn(
+                    'text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full',
+                    badgeClass,
+                  )}
                 >
                   {badge}
                 </span>
@@ -186,7 +189,10 @@ export function TimelineItem({
                 <div className="flex items-start justify-between gap-3 flex-wrap">
                   {badge && (
                     <span
-                      className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${badgeClass}`}
+                      className={cn(
+                        'text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full',
+                        badgeClass,
+                      )}
                     >
                       {badge}
                     </span>
@@ -261,7 +267,10 @@ export function TimelineItem({
           {noCard ? (
             badge && (
               <span
-                className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${badgeClass}`}
+                className={cn(
+                  'text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full',
+                  badgeClass,
+                )}
               >
                 {badge}
               </span>
@@ -276,7 +285,10 @@ export function TimelineItem({
               {badge && (
                 <div className="flex items-center gap-2 mb-1">
                   <span
-                    className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${badgeClass}`}
+                    className={cn(
+                      'text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full',
+                      badgeClass,
+                    )}
                   >
                     {badge}
                   </span>

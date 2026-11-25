@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { metadataApi, PropertyDef } from '@oxneer/api';
 import { Loader2, ArrowLeft, ArrowRight } from 'lucide-react';
-import { Button, Input, Label } from '@oxneer/ui';
+import { Button, Input, Label, cn } from '@oxneer/ui';
 import PageHeader from '@/components/common/admin/PageHeader';
 import { parseApiError } from '@/lib/api-errors';
 import { PropertyBuilder } from '../../_components/PropertyBuilder';
@@ -326,11 +326,12 @@ export function ComponentForm({
                     key={tab.key}
                     type="button"
                     onClick={() => setPreviewTab(tab.key)}
-                    className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                    className={cn(
+                      'px-3 py-1 rounded-md text-xs font-medium transition-colors',
                       previewTab === tab.key
                         ? 'bg-background text-foreground shadow-xs'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
+                        : 'text-muted-foreground hover:text-foreground',
+                    )}
                   >
                     {tab.label}
                   </button>

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronDown, ChevronRight, LogOut } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@oxneer/ui';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, cn } from '@oxneer/ui';
 import { UserAvatar } from '@/components/common/admin/UserAvatar';
 import { BrandLogo } from '@/components/common/BrandLogo';
 import { navEntries, groupHasActive } from './nav-config';
@@ -50,11 +50,13 @@ function NavLink({
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
       aria-label={collapsed ? label : undefined}
-      className={`${itemBase} ${active ? itemActive : itemIdle} ${
-        collapsed ? 'justify-center w-full' : 'px-3'
-      }`}
+      className={cn(
+        itemBase,
+        active ? itemActive : itemIdle,
+        collapsed ? 'justify-center w-full' : 'px-3',
+      )}
     >
-      <Icon className={`h-4 w-4 shrink-0 ${active ? 'text-primary' : ''}`} />
+      <Icon className={cn('h-4 w-4 shrink-0', active ? 'text-primary' : '')} />
       {!collapsed && <span className="font-body flex-1 truncate">{label}</span>}
     </Link>
   );
@@ -107,7 +109,7 @@ export function AdminSidebar({
           <Link
             href="/admin"
             aria-label="Oxneer admin home"
-            className={`flex items-center gap-3 overflow-hidden py-1 rounded-lg ${focusRing}`}
+            className={cn('flex items-center gap-3 overflow-hidden py-1 rounded-lg', focusRing)}
           >
             {collapsed ? (
               <img
@@ -180,13 +182,18 @@ export function AdminSidebar({
                   onClick={() => toggleGroup(entry.label)}
                   aria-expanded={isOpen}
                   aria-controls={groupId}
-                  className={`w-full flex items-center gap-2 h-7 px-3 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors ${focusRing} ${
-                    hasActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                  className={cn(
+                    'w-full flex items-center gap-2 h-7 px-3 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors',
+                    focusRing,
+                    hasActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+                  )}
                 >
                   <span className="flex-1 text-left truncate">{entry.label}</span>
                   <ChevronDown
-                    className={`h-3.5 w-3.5 transition-transform duration-200 ${isOpen ? '' : '-rotate-90'}`}
+                    className={cn(
+                      'h-3.5 w-3.5 transition-transform duration-200',
+                      isOpen ? '' : '-rotate-90',
+                    )}
                   />
                 </button>
 
@@ -206,7 +213,10 @@ export function AdminSidebar({
             <Link
               href="/profile"
               onClick={onNavClick}
-              className={`flex items-center gap-3 px-2.5 py-2 rounded-lg hover:bg-sidebar-accent transition-colors group ${focusRing}`}
+              className={cn(
+                'flex items-center gap-3 px-2.5 py-2 rounded-lg hover:bg-sidebar-accent transition-colors group',
+                focusRing,
+              )}
             >
               <UserAvatar
                 src={userInfo?.profilePicture}
@@ -230,7 +240,10 @@ export function AdminSidebar({
                   href="/profile"
                   onClick={onNavClick}
                   aria-label="Profile"
-                  className={`flex justify-center py-1 rounded-lg hover:bg-sidebar-accent transition-colors ${focusRing}`}
+                  className={cn(
+                    'flex justify-center py-1 rounded-lg hover:bg-sidebar-accent transition-colors',
+                    focusRing,
+                  )}
                 >
                   <UserAvatar
                     src={userInfo?.profilePicture}
@@ -252,7 +265,10 @@ export function AdminSidebar({
             <button
               type="button"
               onClick={onSignOut}
-              className={`${itemBase} w-full px-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10`}
+              className={cn(
+                itemBase,
+                'w-full px-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10',
+              )}
             >
               <LogOut className="h-4 w-4 shrink-0" />
               <span className="font-body">Sign out</span>
@@ -264,7 +280,10 @@ export function AdminSidebar({
                   type="button"
                   onClick={onSignOut}
                   aria-label="Sign out"
-                  className={`${itemBase} w-full justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10`}
+                  className={cn(
+                    itemBase,
+                    'w-full justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10',
+                  )}
                 >
                   <LogOut className="h-4 w-4 shrink-0" />
                 </button>

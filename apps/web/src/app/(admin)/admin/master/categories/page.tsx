@@ -14,7 +14,7 @@ import {
   ChevronUp,
   Tag,
 } from 'lucide-react';
-import { Button } from '@oxneer/ui';
+import { Button, cn } from '@oxneer/ui';
 import { PhraseSearchBar } from '@/components/common/admin/PhraseSearchBar';
 import { CategoryIcon } from '@/components/common/CategoryIcon';
 import PageHeader from '@/components/common/admin/PageHeader';
@@ -152,7 +152,7 @@ export default function CategoriesPage() {
               onClick={() => fetchCategories(phrases.length ? phrases : undefined)}
               disabled={isLoading}
             >
-              <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={cn('h-4 w-4 mr-1', isLoading ? 'animate-spin' : '')} />
               Refresh
             </Button>
           </div>

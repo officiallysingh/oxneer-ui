@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { ChevronDown, ExternalLink, Menu, User } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import { DropdownMenuItem } from '@oxneer/ui';
+import { DropdownMenuItem, cn } from '@oxneer/ui';
 import { resolveTitle } from './nav-config';
 import { SidebarToggle } from './SidebarToggle';
 import { UserMenu, type UserInfoLike } from './UserMenu';
@@ -38,7 +38,7 @@ export function AdminTopbar({
       <div className="flex items-center gap-3 min-w-0">
         <button
           type="button"
-          className={`flex md:hidden ${iconButton}`}
+          className={cn('flex md:hidden', iconButton)}
           onClick={onToggleSidebar}
           aria-label="Open navigation menu"
         >
@@ -48,7 +48,7 @@ export function AdminTopbar({
         <SidebarToggle
           collapsed={sidebarCollapsed}
           onClick={onToggleCollapse}
-          className={`hidden md:flex ${iconButton}`}
+          className={cn('hidden md:flex', iconButton)}
         />
 
         <h2 className="font-body text-base font-semibold text-foreground truncate">{label}</h2>

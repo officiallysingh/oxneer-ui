@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Loader2, Mail, Phone, Search, Send, UserPlus } from 'lucide-react';
-import { Button } from '@oxneer/ui';
+import { Button, cn } from '@oxneer/ui';
 import { participantsApi, usersApi, type UserSummary } from '@oxneer/api';
 import { parseApiError } from '@/lib/api-errors';
 import { UserAvatar } from '@/components/common/admin/UserAvatar';
@@ -217,7 +217,7 @@ export function InvitePanel({
                   }}
                   placeholder="Search by name, company or email"
                   aria-label="Search people already on the platform"
-                  className={`${inputClass} pl-8`}
+                  className={cn(inputClass, 'pl-8')}
                 />
               </div>
 
@@ -306,7 +306,7 @@ export function InvitePanel({
                       value={emailId}
                       onChange={(event) => handleEmailChange(event.target.value)}
                       placeholder="name@company.com"
-                      className={`${inputClass} pl-8`}
+                      className={cn(inputClass, 'pl-8')}
                     />
                   </div>
                 </Field>

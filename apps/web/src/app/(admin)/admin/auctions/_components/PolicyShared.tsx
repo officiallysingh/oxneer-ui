@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
-import { Input, Label } from '@oxneer/ui';
+import { Input, Label, cn } from '@oxneer/ui';
 import type {
   AuctionWorkflowStep,
   PolicyEvaluationMap,
@@ -577,7 +577,10 @@ export function NameDescriptionFields({
           value={name ?? ''}
           onChange={(e) => onNameChange(e.target.value)}
           placeholder="Policy name"
-          className={`text-sm ${nameError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+          className={cn(
+            'text-sm',
+            nameError ? 'border-destructive focus-visible:ring-destructive' : '',
+          )}
         />
         {nameError && <p className="text-xs text-destructive">{nameError}</p>}
       </div>

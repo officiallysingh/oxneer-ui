@@ -5,7 +5,16 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { metadataApi, ManagedTypeVM } from '@oxneer/api';
 import { Loader2, Trash2, RefreshCw, Plus, Pencil, Eye, Copy } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Input, Label } from '@oxneer/ui';
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  Label,
+  cn,
+} from '@oxneer/ui';
 import { DataTable } from '@/components/common/data-table';
 import PageHeader from '@/components/common/admin/PageHeader';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';
@@ -248,7 +257,7 @@ export default function CustomFormsPage() {
               onClick={() => fetchTypes(phrases.length ? phrases : undefined, pageIndex)}
               disabled={isLoading}
             >
-              <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={cn('h-4 w-4 mr-1', isLoading ? 'animate-spin' : '')} />
               Refresh
             </Button>
           </div>

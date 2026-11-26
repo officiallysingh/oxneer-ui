@@ -296,6 +296,19 @@ export const masterApi = {
     await apiClient.delete(`/api/v1/master/banks/${id}`);
   },
 
+  // Address deletes
+  deleteState: async (id: string): Promise<void> => {
+    await apiClient.delete(`/api/v1/master/states/${id}`);
+  },
+
+  deleteCity: async (id: string): Promise<void> => {
+    await apiClient.delete(`/api/v1/master/cities/${id}`);
+  },
+
+  deleteArea: async (id: string): Promise<void> => {
+    await apiClient.delete(`/api/v1/master/areas/${id}`);
+  },
+
   // Categories
   getCategories: async (
     includeSubCategories = false,

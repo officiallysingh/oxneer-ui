@@ -3,6 +3,7 @@
 import type { BankDetailVM } from '@oxneer/api';
 import { FileCheck2, Landmark, Loader2 } from 'lucide-react';
 import { BankAccountSummary, hasCheque, useBankAccounts } from '@/components/common/bank';
+import { cn } from '@oxneer/ui';
 
 /** Read-only bank accounts for a user, loading them itself (details drawer). */
 export function UserBankAccounts({ username }: { username: string }) {
@@ -48,7 +49,10 @@ export function UserBankAccountList({ accounts, isLoading, error }: UserBankAcco
       {accounts.map((a) => (
         <li
           key={a.id}
-          className={`flex flex-col gap-2 rounded-lg border p-3.5 ${a.primary ? 'border-primary/40 bg-primary/[0.04]' : 'border-border'}`}
+          className={cn(
+            'flex flex-col gap-2 rounded-lg border p-3.5',
+            a.primary ? 'border-primary/40 bg-primary/[0.04]' : 'border-border',
+          )}
         >
           <BankAccountSummary account={a} />
           {hasCheque(a) && (

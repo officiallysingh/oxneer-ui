@@ -10,6 +10,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  cn,
 } from '@oxneer/ui';
 
 interface UsersBulkBarProps {
@@ -70,7 +71,7 @@ export function UsersBulkBar({
       <div className="flex-1" />
       <Button
         size="sm"
-        className={`${BAR_BUTTON} border-transparent`}
+        className={cn(BAR_BUTTON, 'border-transparent')}
         onClick={onClear}
         aria-label="Clear selection"
       >

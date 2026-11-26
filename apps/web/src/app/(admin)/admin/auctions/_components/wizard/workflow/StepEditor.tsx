@@ -572,7 +572,7 @@ export function StepEditor({
                           disabled
                           aria-label={`${label} (preview)`}
                           placeholder={placeholder}
-                          className={`${inputClass} h-8`}
+                          className={cn(inputClass, 'h-8')}
                         />
                       </label>
                     ))}

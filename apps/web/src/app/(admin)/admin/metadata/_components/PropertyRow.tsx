@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { ChevronDown, ChevronUp, Trash2, Plus } from 'lucide-react';
-import { Input, Label, Button } from '@oxneer/ui';
+import { Input, Label, Button, cn } from '@oxneer/ui';
 import { metadataApi } from '@oxneer/api';
 import type { PropertyDef, ValidatorDef, DataType, PropertyType } from '@oxneer/api';
 import { ValidatorRow } from './ValidatorRow';
@@ -142,14 +142,17 @@ export function PropertyRow({
   const bgClass = depth === 0 ? 'bg-muted/20' : depth === 1 ? 'bg-muted/10' : 'bg-background';
 
   return (
-    <div className={`rounded-lg border border-border overflow-hidden ${depthIndent} ${bgClass}`}>
+    <div className={cn('rounded-lg border border-border overflow-hidden', depthIndent, bgClass)}>
       {/* Header */}
       <div
         className="flex items-center gap-2 px-3 py-2.5 cursor-pointer hover:bg-muted/30 transition-colors select-none"
         onClick={() => setOpen((o) => !o)}
       >
         <ChevronDown
-          className={`h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform ${open ? '' : '-rotate-90'}`}
+          className={cn(
+            'h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform',
+            open ? '' : '-rotate-90',
+          )}
         />
         <span className="flex-1 text-sm font-medium text-foreground truncate">{displayName}</span>
         {!open && (
@@ -199,7 +202,10 @@ export function PropertyRow({
           <div className="grid grid-cols-2 gap-3 pt-3">
             <div className="space-y-1">
               <Label
-                className={`text-xs ${nameTouched && !prop.name.trim() ? 'text-destructive' : ''}`}
+                className={cn(
+                  'text-xs',
+                  nameTouched && !prop.name.trim() ? 'text-destructive' : '',
+                )}
               >
                 Name <span className="text-destructive">*</span>
               </Label>
@@ -208,7 +214,12 @@ export function PropertyRow({
                 onChange={(e) => onUpdate({ name: e.target.value })}
                 onBlur={() => setNameTouched(true)}
                 placeholder="fieldName"
-                className={`h-8 text-sm ${nameTouched && !prop.name.trim() ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                className={cn(
+                  'h-8 text-sm',
+                  nameTouched && !prop.name.trim()
+                    ? 'border-destructive focus-visible:ring-destructive'
+                    : '',
+                )}
               />
               {nameTouched && !prop.name.trim() && (
                 <p className="text-xs text-destructive">Required</p>
@@ -216,7 +227,10 @@ export function PropertyRow({
             </div>
             <div className="space-y-1">
               <Label
-                className={`text-xs ${labelTouched && !prop.label.trim() ? 'text-destructive' : ''}`}
+                className={cn(
+                  'text-xs',
+                  labelTouched && !prop.label.trim() ? 'text-destructive' : '',
+                )}
               >
                 Label <span className="text-destructive">*</span>
               </Label>
@@ -225,7 +239,12 @@ export function PropertyRow({
                 onChange={(e) => onUpdate({ label: e.target.value })}
                 onBlur={() => setLabelTouched(true)}
                 placeholder="Field Label"
-                className={`h-8 text-sm ${labelTouched && !prop.label.trim() ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                className={cn(
+                  'h-8 text-sm',
+                  labelTouched && !prop.label.trim()
+                    ? 'border-destructive focus-visible:ring-destructive'
+                    : '',
+                )}
               />
               {labelTouched && !prop.label.trim() && (
                 <p className="text-xs text-destructive">Required</p>
@@ -235,7 +254,10 @@ export function PropertyRow({
 
           {/* Type + DataType */}
           <div
-            className={`grid gap-3 ${HAS_CHILDREN.includes(prop.type) ? 'grid-cols-1' : 'grid-cols-2'}`}
+            className={cn(
+              'grid gap-3',
+              HAS_CHILDREN.includes(prop.type) ? 'grid-cols-1' : 'grid-cols-2',
+            )}
           >
             <div className="space-y-1">
               <Label className="text-xs">Property type</Label>

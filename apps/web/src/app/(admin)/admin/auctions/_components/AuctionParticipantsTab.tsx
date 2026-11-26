@@ -135,7 +135,7 @@ export function AuctionParticipantsTab({ auctionId }: Props) {
       {/* ── Invite section ──────────────────────────────────────────────── */}
       <div className="rounded-xl border border-border bg-card p-6 space-y-4">
         <div className="flex items-start gap-3">
-          <div className="p-2 rounded-xl bg-violet-500/10 text-violet-600 shrink-0">
+          <div className="p-2 rounded-xl bg-primary/10 text-primary shrink-0">
             <UserPlus className="h-5 w-5" />
           </div>
           <div>

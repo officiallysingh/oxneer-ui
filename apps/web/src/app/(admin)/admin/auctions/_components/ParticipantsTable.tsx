@@ -12,7 +12,7 @@ import {
   ChevronRight,
   Users,
 } from 'lucide-react';
-import { Button, Label } from '@oxneer/ui';
+import { Button, Label, cn } from '@oxneer/ui';
 import { participantsApi, type ParticipantVM, type InvitationStatus } from '@oxneer/api';
 import { UserAvatar } from '@/components/common/admin/UserAvatar';
 import { parseApiError } from '@/lib/api-errors';
@@ -231,7 +231,7 @@ export function ParticipantsTable({ auctionId, onParticipantRemoved }: Props) {
               }
               disabled={loading}
             >
-              <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={cn('h-3.5 w-3.5', loading ? 'animate-spin' : '')} />
             </Button>
           </div>
         </div>
@@ -246,11 +246,12 @@ export function ParticipantsTable({ auctionId, onParticipantRemoved }: Props) {
                 key={s}
                 type="button"
                 onClick={() => toggleStatus(s)}
-                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border transition-colors ${
+                className={cn(
+                  'text-[10px] font-semibold px-2 py-0.5 rounded-full border transition-colors',
                   active
                     ? statusBadgeClass(s) + ' ring-1 ring-current'
-                    : 'border-border text-muted-foreground hover:border-primary/40 hover:text-foreground'
-                }`}
+                    : 'border-border text-muted-foreground hover:border-primary/40 hover:text-foreground',
+                )}
               >
                 {s}
               </button>
@@ -351,7 +352,10 @@ export function ParticipantsTable({ auctionId, onParticipantRemoved }: Props) {
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${statusBadgeClass(status)}`}
+                        className={cn(
+                          'text-[10px] font-semibold px-2 py-0.5 rounded-full border',
+                          statusBadgeClass(status),
+                        )}
                       >
                         {status}
                       </span>

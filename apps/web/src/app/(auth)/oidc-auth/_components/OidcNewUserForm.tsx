@@ -18,6 +18,7 @@ import {
   InputOTP,
   InputOTPGroup,
   InputOTPSlot,
+  cn,
 } from '@oxneer/ui';
 import { authApi, usersApi } from '@oxneer/api';
 import { useAuthStore } from '@/store/authStore';
@@ -396,7 +397,10 @@ export function OidcNewUserForm({
                           setMobile(e.target.value);
                           setMobileError(null);
                         }}
-                        className={`pl-9 ${mobileError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                        className={cn(
+                          'pl-9',
+                          mobileError ? 'border-destructive focus-visible:ring-destructive' : '',
+                        )}
                       />
                     </div>
                     {mobileError && <p className="text-xs text-destructive">{mobileError}</p>}
@@ -504,7 +508,10 @@ export function OidcNewUserForm({
                           setPassword(e.target.value);
                           setPasswordError(null);
                         }}
-                        className={`pr-10 ${passwordError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                        className={cn(
+                          'pr-10',
+                          passwordError ? 'border-destructive focus-visible:ring-destructive' : '',
+                        )}
                       />
                       <button
                         type="button"

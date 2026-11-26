@@ -1,6 +1,7 @@
 'use client';
 
 import { Building2, FileEdit, CheckCircle, Clock } from 'lucide-react';
+import { cn } from '@oxneer/ui';
 
 interface ListingsStatsSummaryProps {
   counts: {
@@ -58,13 +59,14 @@ export function ListingsStatsSummary({
           <button
             key={card.key}
             onClick={() => onSelectFilter?.(card.key)}
-            className={`flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all duration-200 ${
+            className={cn(
+              'flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all duration-200',
               isSelected
                 ? 'bg-card border-primary shadow-xs ring-2 ring-primary/20'
-                : 'bg-card/60 hover:bg-card border-border/70 hover:border-border'
-            }`}
+                : 'bg-card/60 hover:bg-card border-border/70 hover:border-border',
+            )}
           >
-            <div className={`p-2.5 rounded-xl border shrink-0 ${card.color}`}>
+            <div className={cn('p-2.5 rounded-xl border shrink-0', card.color)}>
               <Icon className="h-4 w-4" />
             </div>
             <div>

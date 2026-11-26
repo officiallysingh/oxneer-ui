@@ -81,7 +81,7 @@ export function makeReactSelectStyles<IsMulti extends boolean = false>(): Styles
       backgroundColor: 'var(--card)',
       border: '1px solid var(--border)',
       borderRadius: '8px',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+      boxShadow: 'var(--shadow-admin-lg)',
       zIndex: 9999,
     }),
     menuPortal: (base) => ({ ...base, zIndex: 9999 }),

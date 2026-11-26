@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  cn,
 } from '@oxneer/ui';
 import { metadataApi, type ComponentVM, type PropertyDef } from '@oxneer/api';
 import { normalizeProperties } from './types';
@@ -99,14 +100,15 @@ function ComponentPickerContent({
               key={c.id}
               type="button"
               onClick={() => setSelected(c)}
-              className={`w-full text-left rounded-lg px-3 py-2.5 transition-colors flex items-start gap-3 border ${
+              className={cn(
+                'w-full text-left rounded-lg px-3 py-2.5 transition-colors flex items-start gap-3 border',
                 selected?.id === c.id
                   ? 'bg-primary/10 border-primary/30'
-                  : 'border-transparent hover:bg-muted'
-              }`}
+                  : 'border-transparent hover:bg-muted',
+              )}
             >
-              <div className="h-7 w-7 rounded-md bg-violet-500/10 border border-violet-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                <Puzzle className="h-3.5 w-3.5 text-violet-500" />
+              <div className="h-7 w-7 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 mt-0.5">
+                <Puzzle className="h-3.5 w-3.5 text-primary" />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">

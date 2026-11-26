@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { masterApi, type StateVM, type AreaVM } from '@oxneer/api';
+import { useState } from 'react';
+import type { AreaVM } from '@oxneer/api';
 import { MapPinned } from 'lucide-react';
 import { Button } from '@oxneer/ui';
 import { SearchInput } from '@/components/common/admin/SearchInput';
@@ -11,80 +11,32 @@ import ConfirmDialog from '@/components/common/admin/ConfirmDialog';
 import { PaginationBar } from '@/components/common/admin/PaginationBar';
 import { ListToolbarActions } from '@/components/common/admin/ListToolbarActions';
 import { LoadingBlock, EmptyState } from '@/components/common/admin/ListState';
-import { RowActions } from '@/components/common/admin/RowActions';
-import { useConfirmDialog } from '@/hooks/admin/useConfirmDialog';
-import { useFetchPaginatedList } from '@/hooks/admin/useFetchPaginatedList';
+import { useConfirmDialog } from '@/hooks/admin';
 import { AddAreaPickerDialog, EditAreaDialog } from '@/components/common/master';
-
-const PAGE_SIZE = 16;
+import { AreasList } from './_components/AreasList';
+import { AREAS_PAGE_SIZE, useAreasList } from './_hooks/useAreasList';
 
 export default function AreasPage() {
-  const [states, setStates] = useState<StateVM[]>([]);
-  const [search, setSearch] = useState('');
-
-  const {
-    data: areas,
-    setData: setAreas,
-    isLoading,
-    error,
-    pageIndex,
-    totalPages,
-    totalRecords,
-    fetchPage,
-    refresh,
-  } = useFetchPaginatedList<AreaVM>(
-    useCallback(
-      (page) =>
-        masterApi.searchAreas({
-          searchText: search.trim() || undefined,
-          page,
-          size: PAGE_SIZE,
-        }),
-      [search],
-    ),
-    search,
-    { errorMessage: 'Failed to load areas.' },
-  );
-
+  const list = useAreasList();
+  const { confirm, openConfirm, closeConfirm } = useConfirmDialog();
   const [addOpen, setAddOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<AreaVM | null>(null);
-  const { confirm, openConfirm, closeConfirm } = useConfirmDialog();
 
-  useEffect(() => {
-    masterApi
-      .getStates()
-      .then(setStates)
-      .catch(() => setStates([]));
-  }, []);
+  const reloadPage = () => void list.fetchPage(list.pageIndex);
 
-  return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Areas"
-        description="All areas across every city"
-        actions={
-          <ListToolbarActions
-            onAdd={() => setAddOpen(true)}
-            addLabel="Add area"
-            addDisabled={!states.length}
-            onRefresh={refresh}
-            refreshing={isLoading}
-          />
-        }
-      />
+  const confirmDelete = (area: AreaVM) =>
+    openConfirm({
+      title: 'Delete area?',
+      description: `"${area.name}" will be permanently removed.`,
+      onConfirm: () => void list.deleteArea(area),
+    });
 
-      {error && <ErrorAlert message={error} />}
-
-      <SearchInput
-        value={search}
-        onChange={setSearch}
-        placeholder="Search areas, cities, pin codes..."
-        className="max-w-sm"
-      />
-
-      {isLoading ? (
-        <LoadingBlock message="Loading areas..." />
-      ) : areas.length === 0 ? (
+  const renderContent = () => {
+    if (list.isLoading) return <LoadingBlock message="Loading areas..." />;
+    if (list.data.length === 0) {
+      return list.search.trim() ? (
+        <EmptyState icon={MapPinned} message="No areas match your search." />
+      ) : (
         <EmptyState
           icon={MapPinned}
           message="No areas found."
@@ -95,68 +47,63 @@ export default function AreasPage() {
             </Button>
           }
         />
-      ) : (
-        <div className="rounded-lg border border-border bg-card overflow-hidden divide-y divide-border">
-          {areas.map((area) => (
-            <div
-              key={area.id}
-              className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors"
-            >
-              <MapPinned className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <div className="flex-1 min-w-0">
-                <span className="font-medium text-foreground text-sm">{area.name}</span>
-                {area.pinCode && (
-                  <span className="text-xs text-muted-foreground ml-2">{area.pinCode}</span>
-                )}
-                {(area.city?.name ?? area.city?.state?.name) && (
-                  <span className="text-xs text-muted-foreground ml-2">
-                    {[area.city?.name, area.city?.state?.name].filter(Boolean).join(', ')}
-                  </span>
-                )}
-              </div>
-              <RowActions
-                size="sm"
-                editLabel="Edit area"
-                deleteLabel="Delete area"
-                onEdit={() => setEditTarget(area)}
-                onDelete={() =>
-                  openConfirm({
-                    title: 'Delete area?',
-                    description: `"${area.name}" will be permanently removed.`,
-                    onConfirm: () => setAreas((prev) => prev.filter((a) => a.id !== area.id)),
-                  })
-                }
-              />
-            </div>
-          ))}
-        </div>
-      )}
+      );
+    }
+    return <AreasList areas={list.data} onEdit={setEditTarget} onDelete={confirmDelete} />;
+  };
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title="Areas"
+        description="All areas across every city"
+        actions={
+          <ListToolbarActions
+            onAdd={() => setAddOpen(true)}
+            addLabel="Add area"
+            addDisabled={!list.states.length}
+            onRefresh={list.refresh}
+            refreshing={list.isLoading}
+          />
+        }
+      />
+
+      {list.error && <ErrorAlert message={list.error} />}
+
+      <SearchInput
+        value={list.search}
+        onChange={list.setSearch}
+        placeholder="Search areas, cities, pin codes..."
+        className="max-w-sm"
+      />
+
+      {renderContent()}
 
       <PaginationBar
-        pageIndex={pageIndex}
-        pageCount={totalPages}
-        pageSize={PAGE_SIZE}
-        itemCount={areas.length}
-        totalRecords={totalRecords}
-        onPageChange={fetchPage}
-        isLoading={isLoading}
+        pageIndex={list.pageIndex}
+        pageCount={list.totalPages}
+        pageSize={AREAS_PAGE_SIZE}
+        itemCount={list.data.length}
+        totalRecords={list.totalRecords}
+        onPageChange={list.fetchPage}
+        isLoading={list.isLoading}
       />
 
       <AddAreaPickerDialog
         open={addOpen}
-        states={states}
+        states={list.states}
         onClose={() => setAddOpen(false)}
         onCreated={() => {
           setAddOpen(false);
-          fetchPage(pageIndex);
+          reloadPage();
         }}
       />
 
       <EditAreaDialog
         area={editTarget}
-        states={states}
+        states={list.states}
         onClose={() => setEditTarget(null)}
-        onUpdated={() => fetchPage(pageIndex)}
+        onUpdated={reloadPage}
       />
 
       <ConfirmDialog

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { type AuctionWorkflowStep, type PropertyDef } from '@oxneer/api';
-import { Button, Label, cn } from '@oxneer/ui';
+import { Button, Input, Label, cn } from '@oxneer/ui';
 import { Loader2, ArrowRight, AlertCircle } from 'lucide-react';
 import { resolveStr, formatLabel } from '@/components/common/admin/format';
 import { buildPathWiseState } from '@/lib/pathWiseState';
@@ -279,12 +279,12 @@ export function SingleField({ prop, value, onChange }: SingleFieldProps) {
     );
   } else if (attrs['ui:component'] === 'color') {
     input = (
-      <input
+      <Input
         id={fieldId}
         type="color"
         value={strVal || '#000000'}
         onChange={(e) => onChange(e.target.value)}
-        className="h-9 w-14 rounded-xl border border-input bg-background p-1"
+        className="h-9 w-14 cursor-pointer p-1"
       />
     );
   } else if (

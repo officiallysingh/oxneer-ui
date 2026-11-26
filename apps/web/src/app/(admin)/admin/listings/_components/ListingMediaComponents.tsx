@@ -1,7 +1,7 @@
 'use client';
 
 import { blobsApi, type ListingBlobRef, type ListingVM } from '@oxneer/api';
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle } from '@oxneer/ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, cn } from '@oxneer/ui';
 import {
   ImageIcon,
   Film,
@@ -44,13 +44,13 @@ export function MediaCountBadge({ blobs, type, onClick }: MediaCountBadgeProps) 
     type === 'image'
       ? 'text-info hover:text-info/80'
       : type === 'video'
-        ? 'text-purple-600 hover:text-purple-700'
+        ? 'text-primary hover:text-primary/80'
         : 'text-warning hover:text-warning/80';
 
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-1 text-xs font-medium ${colorClass} hover:underline`}
+      className={cn('flex items-center gap-1 text-xs font-medium', colorClass, 'hover:underline')}
     >
       <Icon className="h-3 w-3" />
       {label}: {filtered.length}
@@ -287,7 +287,14 @@ export function ListingCardGrid({
 
               <div className="flex items-center justify-between mt-auto pt-1 border-t border-border">
                 <span
-                  className={`text-xs font-medium ${listing.available === false ? 'text-destructive' : listing.available ? 'text-success' : 'text-muted-foreground'}`}
+                  className={cn(
+                    'text-xs font-medium',
+                    listing.available === false
+                      ? 'text-destructive'
+                      : listing.available
+                        ? 'text-success'
+                        : 'text-muted-foreground',
+                  )}
                 >
                   {listing.available === false
                     ? 'Unavailable'

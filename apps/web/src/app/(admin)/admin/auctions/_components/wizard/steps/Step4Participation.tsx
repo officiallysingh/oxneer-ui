@@ -12,6 +12,7 @@ import type { ReviewIssue } from '../../../_lib/wizard/validation';
 import { Field, InfoNote, MutedNote, WizardRow, inputClass } from '../ui/wizard-ui';
 import { PolicyOffRow, PolicyRow } from '../ui/PolicyRow';
 import { StepList } from '../workflow/StepList';
+import { cn } from '@oxneer/ui';
 
 export function Step4Participation({
   auctionId,
@@ -118,7 +119,7 @@ export function Step4Participation({
                       min={2}
                       value={form.minimumCount}
                       onChange={(e) => onChange({ minimumCount: e.target.value })}
-                      className={`${inputClass} h-9 w-20`}
+                      className={cn(inputClass, 'h-9 w-20')}
                     />
                     <span className="text-xs text-muted-foreground">participants</span>
                   </div>

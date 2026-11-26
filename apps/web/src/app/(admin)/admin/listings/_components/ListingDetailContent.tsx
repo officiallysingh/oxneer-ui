@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { blobsApi, ListingVM, ListingBlobRef, ManagedTypeVM } from '@oxneer/api';
 import { Tag, Play, FileText, Download } from 'lucide-react';
-import { Badge } from '@oxneer/ui';
+import { Badge, cn } from '@oxneer/ui';
 import { ICON_REGISTRY } from '@/components/common/iconRegistry';
 import { AttrPropertySections } from '@/components/common/attributes/AttrValue';
 import { embeddedToValues, mergeDefs, type EmbeddedProp } from '@/lib/attributes/values';
@@ -82,11 +82,12 @@ function MediaGallery({ blobs }: { blobs: ListingBlobRef[] }) {
               type="button"
               title={color}
               onClick={() => setSelectedColor(selectedColor === color ? null : color)}
-              className={`flex flex-col items-center gap-1 p-1.5 rounded-lg border-2 transition-all ${
+              className={cn(
+                'flex flex-col items-center gap-1 p-1.5 rounded-lg border-2 transition-all',
                 selectedColor === color
                   ? 'border-primary scale-105'
-                  : 'border-transparent hover:border-border'
-              }`}
+                  : 'border-transparent hover:border-border',
+              )}
             >
               <span
                 className="w-6 h-6 rounded-full border border-border/40 block"
@@ -140,11 +141,12 @@ function MediaGallery({ blobs }: { blobs: ListingBlobRef[] }) {
                 key={blob.id}
                 type="button"
                 onClick={() => setActiveId(blob.id)}
-                className={`shrink-0 w-16 h-16 rounded-lg border-2 overflow-hidden transition-all relative ${
+                className={cn(
+                  'shrink-0 w-16 h-16 rounded-lg border-2 overflow-hidden transition-all relative',
                   blob.id === effectiveActiveId
                     ? 'border-primary ring-2 ring-primary/30'
-                    : 'border-border hover:border-primary/40'
-                }`}
+                    : 'border-border hover:border-primary/40',
+                )}
               >
                 {isVideo ? (
                   <div className="w-full h-full bg-muted flex items-center justify-center">

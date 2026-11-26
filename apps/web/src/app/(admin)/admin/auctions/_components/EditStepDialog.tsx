@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
   RichTextEditor,
+  cn,
 } from '@oxneer/ui';
 import {
   auctionsApi,
@@ -412,9 +413,10 @@ export function EditStepDialog({
                           key={t.id}
                           type="button"
                           onClick={() => selectFormType(t)}
-                          className={`w-full text-left px-3 py-2.5 transition-colors ${
-                            selectedTypeId === t.id ? 'bg-primary/10' : 'hover:bg-muted/30'
-                          }`}
+                          className={cn(
+                            'w-full text-left px-3 py-2.5 transition-colors',
+                            selectedTypeId === t.id ? 'bg-primary/10' : 'hover:bg-muted/30',
+                          )}
                         >
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-medium text-foreground">{t.name}</span>

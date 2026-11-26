@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter, Space_Grotesk } from 'next/font/google';
-import { ThemeProvider, TooltipProvider, Toaster } from '@oxneer/ui';
+import { ThemeProvider, TooltipProvider, Toaster, cn } from '@oxneer/ui';
 import { ApiSessionWatcher } from '@/components/common/ApiSessionWatcher';
 import './globals.css';
 
@@ -26,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
-      <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased`}>
+      <body className={cn(inter.variable, spaceGrotesk.variable, 'font-sans antialiased')}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

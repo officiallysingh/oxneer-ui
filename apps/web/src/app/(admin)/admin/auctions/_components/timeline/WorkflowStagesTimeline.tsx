@@ -77,10 +77,9 @@ export function WorkflowStagesTimeline({
       phase: 'POST_AUCTION',
       iso: endIso ?? undefined,
       contextLabel: 'After',
-      badgeClass: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300',
-      iconWrapClass: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-300',
-      cardClassName:
-        'bg-indigo-50/60 border border-indigo-200/70 dark:bg-indigo-950/20 dark:border-indigo-900/40',
+      badgeClass: 'bg-warning/15 text-warning',
+      iconWrapClass: 'bg-warning/15 text-warning',
+      cardClassName: 'bg-warning/5 border border-warning/20',
       subLine:
         'Steps that occur after the auction closes (winner determination, payment settlement).',
       nodes: postAuctionNodes,
@@ -145,7 +144,7 @@ export function WorkflowStagesTimeline({
                       time={node.time}
                       timeSecondary={node.timeSecondary}
                       timeTo={node.timeTo}
-                      icon={<node.Icon className={`h-5 w-5 ${node.labelClass}`} />}
+                      icon={<node.Icon className={cn('h-5 w-5', node.labelClass)} />}
                       title={node.title}
                       description={node.subs?.[0]}
                       badge={node.label}

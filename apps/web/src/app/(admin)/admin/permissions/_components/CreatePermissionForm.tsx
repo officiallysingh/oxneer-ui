@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { Check, Info, Loader2 } from 'lucide-react';
 import { adminApi, type PermissionVM } from '@oxneer/api';
-import { Badge, Button, Label, toast } from '@oxneer/ui';
+import { Badge, Button, Label, toast, cn } from '@oxneer/ui';
 import { FormField } from '@/components/common/admin/FormField';
 import { SaveButton } from '@/components/common/admin/SaveButton';
 import { SegmentedControl, type SegmentOption } from '@/components/common/admin/SegmentedControl';
@@ -173,7 +173,10 @@ export function CreatePermissionForm({
             );
           }}
           aria-invalid={!!errors.resourceKey && !values.newResource}
-          className={`h-10 w-full rounded-md border bg-background px-3 text-sm outline-hidden focus:ring-2 focus:ring-ring ${errors.resourceKey && !values.newResource ? 'border-destructive' : 'border-input'}`}
+          className={cn(
+            'h-10 w-full rounded-md border bg-background px-3 text-sm outline-hidden focus:ring-2 focus:ring-ring',
+            errors.resourceKey && !values.newResource ? 'border-destructive' : 'border-input',
+          )}
         >
           <option value="">Select a resource…</option>
           {resourceGroups.map((g) => (

@@ -108,7 +108,7 @@ export function ChargesEditor({
                 placeholder={`Shown to ${forWhom} · optional`}
                 value={head.description ?? ''}
                 onChange={(event) => update(index, { description: event.target.value })}
-                className={`${inputClass} col-span-2 h-9 lg:col-span-1`}
+                className={cn(inputClass, 'col-span-2 h-9 lg:col-span-1')}
               />
               <select
                 aria-label="Charged as"
@@ -121,7 +121,7 @@ export function ChargesEditor({
                     ...(basis === 'PERCENTAGE_BASED' && value > 100 ? { value: 100 } : {}),
                   });
                 }}
-                className={`${selectClass} h-9`}
+                className={cn(selectClass, 'h-9')}
               >
                 <option value="AMOUNT_BASED">Fixed amount ({symbol})</option>
                 <option value="PERCENTAGE_BASED">% of the {baseName}</option>

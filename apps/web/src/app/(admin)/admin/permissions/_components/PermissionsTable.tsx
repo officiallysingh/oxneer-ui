@@ -2,7 +2,7 @@
 
 import { ChevronDown, ChevronRight, Pencil } from 'lucide-react';
 import type { PermissionVM, RoleVM } from '@oxneer/api';
-import { Button } from '@oxneer/ui';
+import { Button, cn } from '@oxneer/ui';
 import { Pill } from '@/components/common/admin/Pill';
 import Tip from '@/components/common/admin/Tip';
 import type { ResourceGroup } from '@/lib/access/permission-matrix';
@@ -34,7 +34,10 @@ export function PermissionsTable({
         <div className="min-w-[1000px]" role="table" aria-label="Permissions">
           <div
             role="row"
-            className={`${GRID} h-11 border-b border-border bg-muted/50 px-5 text-[13px] font-medium text-muted-foreground`}
+            className={cn(
+              GRID,
+              'h-11 border-b border-border bg-muted/50 px-5 text-[13px] font-medium text-muted-foreground',
+            )}
           >
             <div role="columnheader">Permission</div>
             <div role="columnheader">Description</div>
@@ -96,7 +99,7 @@ function PermissionRow({
   return (
     <div
       role="row"
-      className={`${GRID} min-h-14 border-b border-border py-2 pl-[46px] pr-5 last:border-b-0`}
+      className={cn(GRID, 'min-h-14 border-b border-border py-2 pl-[46px] pr-5 last:border-b-0')}
     >
       <div role="cell" className="min-w-0">
         <button

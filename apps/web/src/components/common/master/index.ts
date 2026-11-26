@@ -6,3 +6,5 @@ export { EditCityDialog } from './EditCityDialog';
 export { AddAreaDialog } from './AddAreaDialog';
 export { AddAreaPickerDialog } from './AddAreaPickerDialog';
 export { EditAreaDialog } from './EditAreaDialog';
+export { AreaChips } from './AreaChips';
+export { ExpandToggle, NestedState, TreeRowActions } from './TreeRowParts';

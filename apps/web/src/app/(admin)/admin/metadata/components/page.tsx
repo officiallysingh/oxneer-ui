@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { metadataApi, ComponentVM } from '@oxneer/api';
 import { Eye, Loader2, Trash2, RefreshCw, Plus, Pencil, Puzzle } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
-import { Button } from '@oxneer/ui';
+import { Button, cn } from '@oxneer/ui';
 import { DataTable } from '@/components/common/data-table';
 import PageHeader from '@/components/common/admin/PageHeader';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';
@@ -93,8 +93,8 @@ export default function ComponentsPage() {
       header: 'Name',
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-md bg-violet-500/10 border border-violet-500/20 flex items-center justify-center shrink-0">
-            <Puzzle className="h-3.5 w-3.5 text-violet-500" />
+          <div className="h-7 w-7 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+            <Puzzle className="h-3.5 w-3.5 text-primary" />
           </div>
           <span className="font-medium text-foreground text-sm">{row.original.name}</span>
         </div>
@@ -208,7 +208,7 @@ export default function ComponentsPage() {
               onClick={() => fetchComponents(phrases.length ? phrases : undefined, pageIndex)}
               disabled={isLoading}
             >
-              <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={cn('h-4 w-4 mr-1', isLoading ? 'animate-spin' : '')} />
               Refresh
             </Button>
           </div>

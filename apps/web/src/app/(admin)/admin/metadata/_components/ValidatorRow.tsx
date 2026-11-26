@@ -1,7 +1,7 @@
 'use client';
 
 import { Trash2 } from 'lucide-react';
-import { Input } from '@oxneer/ui';
+import { Input, cn } from '@oxneer/ui';
 import type { ValidatorDef } from '@oxneer/api';
 import type { KV } from './types';
 
@@ -113,7 +113,10 @@ export function ValidatorRow({
                 onChange={(e) =>
                   onChange({ min: e.target.value === '' ? undefined : Number(e.target.value) })
                 }
-                className={`h-7 text-xs w-24 ${minMissing ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                className={cn(
+                  'h-7 text-xs w-24',
+                  minMissing ? 'border-destructive focus-visible:ring-destructive' : '',
+                )}
               />
               {minMissing && <p className="text-[10px] text-destructive">Required</p>}
             </div>
@@ -131,7 +134,10 @@ export function ValidatorRow({
                 onChange={(e) =>
                   onChange({ max: e.target.value === '' ? undefined : Number(e.target.value) })
                 }
-                className={`h-7 text-xs w-24 ${maxMissing ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                className={cn(
+                  'h-7 text-xs w-24',
+                  maxMissing ? 'border-destructive focus-visible:ring-destructive' : '',
+                )}
               />
               {maxMissing && <p className="text-[10px] text-destructive">Required</p>}
             </div>
@@ -159,7 +165,10 @@ export function ValidatorRow({
                   value={regexVal}
                   placeholder="e.g. ^[a-zA-Z]+$"
                   onChange={(e) => onChange({ regex: e.target.value })}
-                  className={`h-7 text-xs font-mono flex-1 ${regexMissing ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                  className={cn(
+                    'h-7 text-xs font-mono flex-1',
+                    regexMissing ? 'border-destructive focus-visible:ring-destructive' : '',
+                  )}
                 />
               </div>
               {regexMissing && <p className="text-[10px] text-destructive">Required</p>}

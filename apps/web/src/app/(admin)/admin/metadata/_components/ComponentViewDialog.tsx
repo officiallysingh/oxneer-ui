@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { metadataApi, ComponentVM } from '@oxneer/api';
-import { Dialog, DialogContent, DialogTitle } from '@oxneer/ui';
+import { Dialog, DialogContent, DialogTitle, cn } from '@oxneer/ui';
 import { TagList } from '@/components/common/admin/TagList';
 import { PropertyFormPreview, ListingViewPreview } from './PropertyFormPreview';
 
@@ -82,11 +82,12 @@ export function ComponentViewDialog({ componentId, onClose }: ComponentViewDialo
                     key={tab.key}
                     type="button"
                     onClick={() => setPreviewTab(tab.key)}
-                    className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                    className={cn(
+                      'px-3 py-1 rounded-md text-xs font-medium transition-colors',
                       previewTab === tab.key
                         ? 'bg-background text-foreground shadow-xs'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
+                        : 'text-muted-foreground hover:text-foreground',
+                    )}
                   >
                     {tab.label}
                   </button>

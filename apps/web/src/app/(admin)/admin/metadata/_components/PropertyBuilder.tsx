@@ -63,13 +63,7 @@ export function PropertyBuilder({ properties, onChange, dataTypes }: PropertyBui
           <Plus className="h-4 w-4 mr-1" />
           Add property
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => setPickerOpen(true)}
-          className="text-violet-600 border-violet-200 hover:bg-violet-50 hover:text-violet-700 dark:text-violet-400 dark:border-violet-800 dark:hover:bg-violet-950"
-        >
+        <Button type="button" variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
           <Puzzle className="h-4 w-4 mr-1" />
           Insert component
         </Button>

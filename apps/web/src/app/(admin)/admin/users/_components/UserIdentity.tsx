@@ -3,6 +3,7 @@ import Link from 'next/link';
 import type { UserDetailVM } from '@oxneer/api';
 import { UserAvatar } from '@/components/common/admin/UserAvatar';
 import { fullName } from '../_lib/user-display';
+import { cn } from '@oxneer/ui';
 
 type IdentityUser = Pick<UserDetailVM, 'firstName' | 'lastName' | 'username' | 'profilePicture'>;
 
@@ -43,7 +44,7 @@ export function UserIdentity({
         size={s.avatar}
       />
       <div className="min-w-0">
-        <NameTag className={`truncate text-foreground ${s.name}`}>
+        <NameTag className={cn('truncate text-foreground', s.name)}>
           {href ? (
             <Link href={href} className="hover:underline">
               {fullName(user)}
@@ -54,7 +55,7 @@ export function UserIdentity({
         </NameTag>
         <div className="flex flex-wrap items-center gap-2">
           {user.username && (
-            <span className={`truncate text-muted-foreground ${s.meta}`}>@{user.username}</span>
+            <span className={cn('truncate text-muted-foreground', s.meta)}>@{user.username}</span>
           )}
           {meta}
         </div>

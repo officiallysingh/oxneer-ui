@@ -1,101 +1,74 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { masterApi, type StateVM, type CityVM, type AreaVM } from '@oxneer/api';
-import { Loader2, Trash2, Pencil, Building2, ChevronDown, ChevronRight, Plus } from 'lucide-react';
+import { useState } from 'react';
+import type { AreaVM, CityVM } from '@oxneer/api';
+import { Building2 } from 'lucide-react';
 import { Button } from '@oxneer/ui';
 import { SearchInput } from '@/components/common/admin/SearchInput';
 import PageHeader from '@/components/common/admin/PageHeader';
 import ErrorAlert from '@/components/common/admin/ErrorAlert';
 import ConfirmDialog from '@/components/common/admin/ConfirmDialog';
-import Tip from '@/components/common/admin/Tip';
 import { PaginationBar } from '@/components/common/admin/PaginationBar';
 import { ListToolbarActions } from '@/components/common/admin/ListToolbarActions';
 import { LoadingBlock, EmptyState } from '@/components/common/admin/ListState';
-import { useConfirmDialog } from '@/hooks/admin/useConfirmDialog';
-import { useFetchPaginatedList } from '@/hooks/admin/useFetchPaginatedList';
+import { useConfirmDialog } from '@/hooks/admin';
 import {
   AddCityPickerDialog,
   EditCityDialog,
   AddAreaDialog,
   EditAreaDialog,
 } from '@/components/common/master';
-
-const PAGE_SIZE = 16;
+import { CitiesList, type CitiesListActions } from './_components/CitiesList';
+import { CITIES_PAGE_SIZE, useCitiesList } from './_hooks/useCitiesList';
 
 export default function CitiesPage() {
-  const [states, setStates] = useState<StateVM[]>([]);
-  const [search, setSearch] = useState('');
-
-  const {
-    data: cities,
-    setData: setCities,
-    isLoading,
-    error,
-    setError,
-    pageIndex,
-    totalPages,
-    totalRecords,
-    fetchPage,
-    refresh,
-  } = useFetchPaginatedList<CityVM>(
-    useCallback(
-      (page) =>
-        masterApi.searchCities({
-          searchText: search.trim() || undefined,
-          page,
-          size: PAGE_SIZE,
-        }),
-      [search],
-    ),
-    search,
-    { errorMessage: 'Failed to load cities.' },
-  );
-
-  const [addOpen, setAddOpen] = useState(false);
+  const list = useCitiesList();
   const { confirm, openConfirm, closeConfirm } = useConfirmDialog();
 
-  const [expandedCities, setExpandedCities] = useState<Set<string>>(new Set());
-  const [areasMap, setAreasMap] = useState<Record<string, AreaVM[]>>({});
-  const [areasLoading, setAreasLoading] = useState<Record<string, boolean>>({});
-  const [addAreaTarget, setAddAreaTarget] = useState<CityVM | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
   const [editCityTarget, setEditCityTarget] = useState<CityVM | null>(null);
+  const [addAreaTarget, setAddAreaTarget] = useState<CityVM | null>(null);
   const [editAreaTarget, setEditAreaTarget] = useState<AreaVM | null>(null);
 
-  useEffect(() => {
-    masterApi
-      .getStates()
-      .then(setStates)
-      .catch(() => setStates([]));
-  }, []);
-
-  const toggleCity = async (cityId: string) => {
-    setExpandedCities((prev) => {
-      const next = new Set(prev);
-      if (next.has(cityId)) next.delete(cityId);
-      else next.add(cityId);
-      return next;
-    });
-    if (!areasMap[cityId]) {
-      setAreasLoading((prev) => ({ ...prev, [cityId]: true }));
-      try {
-        const areas = await masterApi.getAreasByCity(cityId);
-        setAreasMap((prev) => ({ ...prev, [cityId]: areas }));
-      } catch {
-        setError('Failed to load areas.');
-      } finally {
-        setAreasLoading((prev) => ({ ...prev, [cityId]: false }));
-      }
-    }
+  const actions: CitiesListActions = {
+    onEditCity: setEditCityTarget,
+    onAddArea: setAddAreaTarget,
+    onDeleteCity: (city) =>
+      openConfirm({
+        title: 'Delete city?',
+        description: `"${city.name}" and all its areas will be permanently removed.`,
+        onConfirm: () => void list.deleteCity(city),
+      }),
+    onEditArea: (area, city) => setEditAreaTarget({ ...area, city }),
+    onDeleteArea: (area, city) =>
+      openConfirm({
+        title: 'Delete area?',
+        description: `"${area.name}" will be permanently removed.`,
+        onConfirm: () => void list.deleteArea(city.id, area),
+      }),
   };
 
-  const refreshAreasForCity = async (cityId: string) => {
-    try {
-      const areas = await masterApi.getAreasByCity(cityId);
-      setAreasMap((prev) => ({ ...prev, [cityId]: areas }));
-    } catch {
-      setError('Failed to refresh areas.');
+  const reloadPage = () => void list.fetchPage(list.pageIndex);
+
+  const renderContent = () => {
+    if (list.isLoading) return <LoadingBlock message="Loading cities..." />;
+    if (list.data.length === 0) {
+      return list.search.trim() ? (
+        <EmptyState icon={Building2} message="No cities match your search." />
+      ) : (
+        <EmptyState
+          icon={Building2}
+          message="No cities found."
+          hint="Add a city to get started."
+          action={
+            <Button variant="gold" size="sm" onClick={() => setAddOpen(true)}>
+              Add city
+            </Button>
+          }
+        />
+      );
     }
+    return <CitiesList cities={list.data} areas={list.areas} {...actions} />;
   };
 
   return (
@@ -107,216 +80,67 @@ export default function CitiesPage() {
           <ListToolbarActions
             onAdd={() => setAddOpen(true)}
             addLabel="Add city"
-            addDisabled={!states.length}
-            onRefresh={refresh}
-            refreshing={isLoading}
+            addDisabled={!list.states.length}
+            onRefresh={list.refresh}
+            refreshing={list.isLoading}
           />
         }
       />
 
-      {error && <ErrorAlert message={error} />}
+      {list.error && <ErrorAlert message={list.error} />}
 
       <SearchInput
-        value={search}
-        onChange={setSearch}
+        value={list.search}
+        onChange={list.setSearch}
         placeholder="Search cities or states..."
         className="max-w-sm"
       />
 
-      {isLoading ? (
-        <LoadingBlock message="Loading cities..." />
-      ) : cities.length === 0 ? (
-        <EmptyState
-          icon={Building2}
-          message="No cities found."
-          hint="Add a city to get started."
-          action={
-            <Button variant="gold" size="sm" onClick={() => setAddOpen(true)}>
-              Add city
-            </Button>
-          }
-        />
-      ) : (
-        <div className="rounded-lg border border-border bg-card overflow-hidden divide-y divide-border">
-          {cities.map((city) => {
-            const cityExpanded = expandedCities.has(city.id);
-            const areas = areasMap[city.id] ?? [];
-            const areasLoaded = !!areasMap[city.id];
-
-            return (
-              <div key={city.id}>
-                <div className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors">
-                  <button
-                    onClick={() => toggleCity(city.id)}
-                    className="flex items-center gap-2 flex-1 min-w-0 text-left"
-                    aria-expanded={cityExpanded}
-                  >
-                    {areasLoading[city.id] ? (
-                      <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
-                    ) : cityExpanded ? (
-                      <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    )}
-                    <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    <span className="font-medium text-foreground text-sm">{city.name}</span>
-                    {city.state?.name && (
-                      <span className="text-xs text-muted-foreground ml-1">{city.state.name}</span>
-                    )}
-                    {areasLoaded && (
-                      <span className="text-xs text-muted-foreground ml-1">
-                        ({areas.length} {areas.length === 1 ? 'area' : 'areas'})
-                      </span>
-                    )}
-                  </button>
-                  <div className="flex items-center gap-0.5 shrink-0">
-                    <Tip label="Edit city">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground hover:bg-muted"
-                        onClick={() => setEditCityTarget(city)}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                    </Tip>
-                    <Tip label="Add area">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2 text-xs text-primary hover:text-primary hover:bg-primary/10 gap-1"
-                        onClick={() => setAddAreaTarget(city)}
-                      >
-                        <Plus className="h-3 w-3" />
-                        Area
-                      </Button>
-                    </Tip>
-                    <Tip label="Delete city">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={() =>
-                          openConfirm({
-                            title: 'Delete city?',
-                            description: `"${city.name}" and all its areas will be permanently removed.`,
-                            onConfirm: () =>
-                              setCities((prev) => prev.filter((c) => c.id !== city.id)),
-                          })
-                        }
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </Tip>
-                  </div>
-                </div>
-
-                {cityExpanded && (
-                  <div className="bg-muted/10 border-t border-border px-10 py-3">
-                    {areasLoading[city.id] ? (
-                      <div className="flex items-center gap-2 text-muted-foreground text-xs">
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        Loading areas...
-                      </div>
-                    ) : areas.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">
-                        No areas yet.{' '}
-                        <button
-                          onClick={() => setAddAreaTarget(city)}
-                          className="text-primary underline underline-offset-2 hover:text-primary/80"
-                        >
-                          Add one
-                        </button>
-                      </p>
-                    ) : (
-                      <div className="flex flex-wrap gap-1.5">
-                        {areas.map((area) => (
-                          <div
-                            key={area.id}
-                            className="group flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-xs"
-                          >
-                            <span className="text-foreground font-medium">{area.name}</span>
-                            <button
-                              onClick={() => setEditAreaTarget({ ...area, city })}
-                              className="text-muted-foreground hover:text-foreground transition-colors ml-0.5"
-                              aria-label={`Edit ${area.name}`}
-                            >
-                              <Pencil className="h-3 w-3" />
-                            </button>
-                            <button
-                              onClick={() =>
-                                openConfirm({
-                                  title: 'Delete area?',
-                                  description: `"${area.name}" will be permanently removed.`,
-                                  onConfirm: () =>
-                                    setAreasMap((prev) => ({
-                                      ...prev,
-                                      [city.id]: (prev[city.id] ?? []).filter(
-                                        (a) => a.id !== area.id,
-                                      ),
-                                    })),
-                                })
-                              }
-                              className="text-muted-foreground hover:text-destructive transition-colors"
-                              aria-label={`Delete ${area.name}`}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+      {renderContent()}
 
       <PaginationBar
-        pageIndex={pageIndex}
-        pageCount={totalPages}
-        pageSize={PAGE_SIZE}
-        itemCount={cities.length}
-        totalRecords={totalRecords}
-        onPageChange={fetchPage}
-        isLoading={isLoading}
+        pageIndex={list.pageIndex}
+        pageCount={list.totalPages}
+        pageSize={CITIES_PAGE_SIZE}
+        itemCount={list.data.length}
+        totalRecords={list.totalRecords}
+        onPageChange={list.fetchPage}
+        isLoading={list.isLoading}
       />
 
       <AddCityPickerDialog
         open={addOpen}
-        states={states}
+        states={list.states}
         onClose={() => setAddOpen(false)}
         onCreated={() => {
           setAddOpen(false);
-          fetchPage(pageIndex);
+          reloadPage();
         }}
       />
 
       <EditCityDialog
         city={editCityTarget}
-        states={states}
+        states={list.states}
         onClose={() => setEditCityTarget(null)}
-        onUpdated={() => fetchPage(pageIndex)}
+        onUpdated={reloadPage}
       />
 
       <AddAreaDialog
         city={addAreaTarget}
         onClose={() => setAddAreaTarget(null)}
         onCreated={(cityId, areas) => {
-          setAreasMap((prev) => ({ ...prev, [cityId]: areas }));
-          setExpandedCities((prev) => new Set([...prev, cityId]));
+          list.areas.showChildren(cityId, areas);
           setAddAreaTarget(null);
         }}
       />
 
       <EditAreaDialog
         area={editAreaTarget}
-        states={states}
+        states={list.states}
         onClose={() => setEditAreaTarget(null)}
         onUpdated={() => {
-          if (editAreaTarget?.city?.id) refreshAreasForCity(editAreaTarget.city.id);
+          const cityId = editAreaTarget?.city?.id;
+          if (cityId) void list.areas.reload(cityId, 'Failed to refresh areas.');
         }}
       />
 
